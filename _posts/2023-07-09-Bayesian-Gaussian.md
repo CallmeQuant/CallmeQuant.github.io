@@ -51,6 +51,7 @@ W\Sigma & W \Sigma W^{\intercal} + \Omega
 \end{pmatrix}
 \end{align*}
 $$
+
 **Proof.**
 We will working with the log of distribution to get rid of the cumbersome of exponential notation. Consider the log of the joint distribution 
 
@@ -64,13 +65,11 @@ $$
 
 Now we will expand the log of joint distribution and isolate the second order terms and the first order term to determine the covariance matrix and the mean vector:
 
-$$
-\begin{multline*}
-(\ast) = -\frac{1}{2}  \bigl( z^{\intercal} \Sigma^{-1} z - 2 z^{\intercal} \Sigma^{-1} \mu + \mu^\intercal \Sigma^{-1} \mu + y^\intercal \Omega^{-1} y \\
-{} -\underbrace{y^\intercal \Omega^{-1} (Wz + b)}_{y^\intercal \Omega^{-1} Wz + y^\intercal \Omega^{-1} b} 
--\underbrace{(Wz + b)^\intercal \Omega^{-1} y}_{z^\intercal W^\intercal \Omega^{-1} y + b^\intercal \Omega^{-1} y} + \text{const} \bigr) \\
-\end{multline*}
-$$
+\begin{align*}
+(\ast) & = -\frac{1}{2} z^{\intercal} \Sigma^{-1} z - 2 z^{\intercal} \Sigma^{-1} \mu + \mu^\intercal \Sigma^{-1} \mu + y^\intercal \Omega^{-1} y \\
+&= -\underbrace{y^\intercal \Omega^{-1} (Wz + b)}_{y^\intercal \Omega^{-1} Wz + y^\intercal \Omega^{-1} b} 
+-\underbrace{(Wz + b)^\intercal \Omega^{-1} y}_{z^\intercal W^\intercal \Omega^{-1} y + b^\intercal \Omega^{-1} y} + \text{const} 
+\end{align*}
 
 
 
@@ -85,8 +84,9 @@ $$
 
 
 # Inference normal distribution with known variance
+There are three key components in traditional Bayesian settings: prior, likelihood, and posterior. Let's derive all of them.
 
-
+**Likelihood**
 $$
 \begin{align}
 p(D \mid \mu, \sigma^2)
@@ -95,3 +95,7 @@ p(D \mid \mu, \sigma^2)
 &= \frac{1}{(2 \pi \sigma^2)^{N/2}} \exp \Big\lbrace -\frac{1}{2 \sigma^2} \sum_{n=1}^{N} (x_n - \mu)^2 \Big\rbrace
 \end{align}
 $$
+
+**Prior**
+$$
+p(\mu) = \mathcal{N}(
