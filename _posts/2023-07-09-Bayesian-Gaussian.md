@@ -65,11 +65,11 @@ $$
 
 Now we will expand the log of joint distribution and isolate the second order terms and the first order term to determine the covariance matrix and the mean vector:
 
-\begin{align*}
-(\ast) & = -\frac{1}{2} z^{\intercal} \Sigma^{-1} z - 2 z^{\intercal} \Sigma^{-1} \mu + \mu^\intercal \Sigma^{-1} \mu + y^\intercal \Omega^{-1} y \\
-&= -\underbrace{y^\intercal \Omega^{-1} (Wz + b)}_{y^\intercal \Omega^{-1} Wz + y^\intercal \Omega^{-1} b} 
--\underbrace{(Wz + b)^\intercal \Omega^{-1} y}_{z^\intercal W^\intercal \Omega^{-1} y + b^\intercal \Omega^{-1} y} + \text{const} 
-\end{align*}
+$$
+(\ast) = -\frac{1}{2} \bigl( z^{\intercal} \Sigma^{-1} z - 2 z^{\intercal} \Sigma^{-1} \mu + \mu^\intercal \Sigma^{-1} \mu + y^\intercal \Omega^{-1} y 
+-\underbrace{y^\intercal \Omega^{-1} (Wz + b)}_{y^\intercal \Omega^{-1} Wz + y^\intercal \Omega^{-1} b} 
+-\underbrace{(Wz + b)^\intercal \Omega^{-1} y}_{z^\intercal W^\intercal \Omega^{-1} y + b^\intercal \Omega^{-1} y} + \text{const} \bigr)
+$$
 
 
 
@@ -87,6 +87,7 @@ Now we will expand the log of joint distribution and isolate the second order te
 There are three key components in traditional Bayesian settings: prior, likelihood, and posterior. Let's derive all of them.
 
 **Likelihood**
+
 $$
 \begin{align}
 p(D \mid \mu, \sigma^2)
@@ -97,5 +98,30 @@ p(D \mid \mu, \sigma^2)
 $$
 
 **Prior**
+
+We can show that the conjugate prior on $\mu$ is another Gaussian distribution 
+
 $$
-p(\mu) = \mathcal{N}(
+p(\mu) = \mathcal{N}(\mu \lvert m, \tau^2) = \frac{1}{(2 \pi \tau^2)^{1/2}} \exp{ \Big\lbrace-\frac{1}{2 \tau^2} (\mu - m)^2 \Big\rbrace }
+$$ 
+
+**Posterior** 
+
+By applying the Bayes'rule for Gaussians, we can obtain the Gaussian posterior distribution. Note that here we will only focus on the functional form of our parameters of interest and discard all constants that do not depend on the parameters
+
+$$
+\begin{align*}
+p(\mu \lvert D) & \propto p(D \lvert \mu, \sigma^2) p(\mu) \\
+&\triangleq \Biggl( \frac{1}{(2 \pi \sigma^2)^{N/2}} \exp \Big\lbrace -\frac{1}{2 \sigma^2} \sum_{n=1}^{N} (x_n - \mu)^2 \Big\rbrace \Biggr) 
+\Biggl( \frac{1}{(2 \pi \tau^2)^{1/2}} \exp{ \Big\lbrace -\frac{1}{2 \tau^2} (\mu - m)^2 \Big\rbrace} \Biggr) \\
+&= \color{WildStrawberry}{\frac{1}{( 2 \pi \sigma^2 )^{N/2} (2 \pi \tau^2)^{1/2})} } \exp{ \Bigg\lbrace -\frac{1}{2 \sigma^2} \sum_{n=1}^{N} (x_n - \mu)^2 - \frac{1}{2 \tau^2}(\mu - m)^2 \Bigg \rbrace} \\
+& \propto \exp{ \Bigg\lbrace -\frac{1}{2 \sigma^2} \sum_{n=1}^{N} (x_n - \mu)^2 - \frac{1}{2 \tau^2}(\mu - m)^2 \Bigg \rbrace} \\
+&= \exp{ \Bigg\lbrace -\frac{1}{2 \sigma^2} \Big( \sum_{n=1}^{N} x_{n}^2 + \mu^2 - 2x_{n}\mu \Big) - \frac{1}{2 \tau^2} \Big( \mu^2 + m^2 - 2\mu m \Big) \Bigg\rbrace } \\
+&= \exp{ \Bigg\lbrace -\frac{1}{2 \sigma^2} \Big( \color{WildStrawberry}{ \sum_{n=1}^{N} x_{n}^2} + N \mu^2 - 2 \mu \sum_{n=1}^{N} x_{n} \Big) - \frac{1}{2 \tau^2} \Big( \mu^2 + \color{WildStrawberry}{m^2} - 2\mu m \Big) \Bigg\rbrace } \quad (\ast) \\ 
+&\propto \exp{ \Bigg\lbrace -\frac{1}{2 \sigma^2} \Bigg( N \mu^2 - 2\mu \sum_{n=1}^{N} x_{n} \Bigg) - \frac{1}{2 \tau^2} \Big( \mu^2 - 2 \mu m \Big) \Bigg\rbrace } \\
+& = \exp{ \Bigg\lbrace -\frac{1}{2} \Bigg( \frac{N \mu^2}{\sigma^2} - \frac{2 \mu N \bar{x}}{\sigma^2} + \frac{\mu^2}{\tau^2} - \frac{2 \mu m}{\tau^2} \Bigg) \Bigg\rbrace }
+\end{align*}
+$$
+
+
+
