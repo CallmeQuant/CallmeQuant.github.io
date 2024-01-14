@@ -1,0 +1,6 @@
+{% assign words_per_minute = 200 %}
+{% assign post_words = content | number_of_words %}
+{% assign read_time_minutes = post_words | divided_by: words_per_minute %}
+{% assign read_time = read_time_minutes | round: 0 %}
+
+{{ read_time }} min read
