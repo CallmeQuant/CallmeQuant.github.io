@@ -2,12 +2,6 @@
 ---
 
 <!doctype html>
-<!--
-  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
-  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
-  Free for personal and commercial use under the MIT license
-  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
--->
 <html lang="{{ site.locale | slice: 0,2 | default: " en" }}" class="no-js">
 
 <head>
@@ -23,6 +17,11 @@
   {% include masthead.html %}
 
   <div class="initial-content">
+    <h1 class="page__title">
+      {{ page.title }}
+      {% include read-time.html %}
+    </h1>
+
     {{ content }}
   </div>
 
