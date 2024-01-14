@@ -23,7 +23,9 @@
 
     <p class="page__meta">
       {{ page.date | date: "%B %-d, %Y" }}
-      {% include read-time.html %}
+      {% if page.layout == 'post' %}
+        {% include read-time.html %}
+      {% endif %}
     </p>
 
     {{ content }}
