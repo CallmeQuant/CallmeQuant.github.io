@@ -19,8 +19,12 @@
   <div class="initial-content">
     <h1 class="page__title">
       {{ page.title }}
-      {% include read-time.html %}
     </h1>
+
+    <p class="page__meta">
+      {{ page.date | date: "%B %-d, %Y" }}
+      {% include read-time.html %}
+    </p>
 
     {{ content }}
   </div>
