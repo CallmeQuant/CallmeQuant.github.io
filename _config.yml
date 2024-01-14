@@ -15,8 +15,8 @@
 # in the templates via {{ site.myvariable }}.
 remote_theme: "mmistakes/minimal-mistakes@4.24.0"
 
-minimal_mistakes_skin: "default"
-minimal_mistakes_skin2: "dark"
+minimal_mistakes_skin: "dark"
+minimal_mistakes_skin2: "contrast"
 
 title: "Binh Ho"
 subtitle: ""
