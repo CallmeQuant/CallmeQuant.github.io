@@ -1,0 +1,59 @@
+I"�<p>The “Gumbel max trick” is a method for sampling from discrete distributions using only a deterministic function of the distributions’ parameters.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Often in statistics and machine learning, it’s useful to be able to “reparameterize” a problem in a different form. Reparameterization in general refers to any method for changing the representation of parameters in some statistical/probability model, but in this post we’ll focus on one specific type of reparameterization. In particular, we’ll consider reparameterizing distributions so that sampling from them involves a deterministic function of the distribution’s parameters, as well as sampling from a <strong>fixed</strong> distribution.</p>
+
+<p>As a simple example, we can consider a univariate Gaussian paramterized by a mean $\mu$ and variance $\sigma^2$. Instead of sampling directly from the Gaussian, $x_1 \sim \mathcal{N}(\mu, \sigma^2)$, we could instead take $x_2 = \mu + z \sigma$, where $z \sim \mathcal{N}(0, 1)$. Notice that $x_1$ and $x_2$ will have the same distribution, but the randomness in $x_1$ comes directly from the Gaussian $\mathcal{N}(\mu, \sigma^2)$, so parameters $\mu$ and $\sigma^2$ can’t be dissociated from the randomness. On the other hand, the randomness in $x_2$ comes from a fixed distribution $\mathcal{N}(0, 1)$, and the sample $x_2$ depends on $\mu$ and $\sigma^2$ in a deterministic fashion.</p>
+
+<p>This idea turns out to be useful for a variety of purposes. One of the most popular and recent applications of reparameterization has been in performing variational Bayesian inference using stochastic optimization. Intuitively, reparametrizations such as $x = \mu + z \sigma$ allow us to directly take derivatives of a loss function with respect to model parameters, and so stochastic optimization can be performed.</p>
+
+<p>An important question is: what kinds of distributions can or cannot be reparameterized in this way? The Gaussian case above seems especially nice, but perhaps not generalizable. It turns out that there are certain families of distributions that are amenable to this (e.g., the location-scale family), but many distributions do not admit an easy reparameterization that we know of.</p>
+
+<p>Discrete distributions present a particularly tricky case, and this is the focus of the trick below.</p>
+
+<h2 id="the-gumbel-max-trick">The Gumbel max trick</h2>
+
+<p>How can we sample from an arbitrary discrete distribution using only randomness from a fixed distribution, and a deterministic function of the distribution’s parameters? The “Gumbel max trick” gives the following solution.</p>
+
+<p>Given a discrete distribution over $k$ states with unnormalized probabilities $p_1, p_2, \dots, p_k$, consider the following quantity $x$:</p>
+
+\[x = \text{arg}\max \left\{ \log(p_1) + G_1, \log(p_2) + G_2, \dots, \log(p_k) + G_k \right\}\]
+
+<p>where $G_i \sim \text{Gumbel}(0, 1)$. Then,</p>
+
+\[\mathbb{P}[x = i] = \frac{p_i}{\sum\limits_{j=1}^k p_j}.\]
+
+<p>In other words, drawing samples using the above recipe will give us samples from the desired distribution.</p>
+
+<p>Let’s take a closer look at the reparameterization. For each unnormalized state probability $p_i$, we took its logarithm, then added some noise from a Gumbel distribution. Finally, we take the state $i$ that had the maximum value $\log(p_i) + G_i$.</p>
+
+<p>The Gumbel distribution is often used in extreme value theory (i.e., modeling maxima and minima of phenomena). It looks similar to a Gaussian, but has a longer right tail. Intuitively, this means that adding Gumbel noise will randomly bump up lower-probability states some of the time. A more rigorous proof of why this trick works can be found <a href="https://www.hsfzxjy.site/2019-08-01-proof-of-gumbel-max-trick/">here</a>. Also, note that the Gumbel itself can be reparameterized as $-\log(-\log U)$, where $U \sim \text{Uniform}(0, 1)$.</p>
+
+<h2 id="simulations">Simulations</h2>
+
+<p>We can show how this works with a simple simulation. Consider a discrete (Bernoulli) distribution with two states, with unnormalized state-specific probabilities $p_1 = 1$ and $p_2 = 9$. The following code generates samples from this distribution:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">n</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># number of samples
+</span><span class="n">num_states</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">initial_parameterization</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">]</span>
+<span class="n">gumbel_rvs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">gumbel</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">num_states</span><span class="p">))</span>
+<span class="n">transformed_rvs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">initial_parameterization</span><span class="p">)</span> <span class="o">+</span> <span class="n">gumbel_rvs</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">transformed_rvs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Inspecting the samples (here, I ran it multiple times to included error bars), we can see that they approximately follow the desired distribution: state $0$ is chosen 10% of the time, and state $1$ is chosen 90% of the time.</p>
+
+<p><img src="/assets/gumbel_max_samples.png" alt="Gumbel max samples" /></p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://www.hsfzxjy.site/2019-08-01-proof-of-gumbel-max-trick/">Proof of the Gumbel max trick</a> by Xie Jingyi.</li>
+  <li>Kingma, Diederik P., and Max Welling. “Auto-encoding variational bayes.” arXiv preprint arXiv:1312.6114 (2013).</li>
+  <li>Maddison, Chris J., Andriy Mnih, and Yee Whye Teh. “The concrete distribution: A continuous relaxation of discrete random variables.” arXiv preprint arXiv:1611.00712 (2016).</li>
+  <li>Jang, Eric, Shixiang Gu, and Ben Poole. “Categorical reparameterization with gumbel-softmax.” arXiv preprint arXiv:1611.01144 (2016).</li>
+</ul>
+
+:ET

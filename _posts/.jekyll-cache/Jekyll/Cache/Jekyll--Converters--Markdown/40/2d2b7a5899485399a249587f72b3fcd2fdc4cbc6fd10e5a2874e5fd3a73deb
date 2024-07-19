@@ -1,0 +1,321 @@
+I"Ӊ<p>Probabilistic models are flexible tools for understanding a data generating process. There are many ways to do inference and estimation in these models, and it continues to be an active area of research. Here, our goal will be to understand a few of the most general classes of probabilistic model fitting, while trying to understand the important differences between them. We’ll demonstrate how to implement each one with a very simple example: the Beta-Bernoulli model.</p>
+
+<h2 id="setup">Setup</h2>
+
+<p>Consider the following model for some data we observe $X_1, \dots, X_n \in {0, 1}$.</p>
+
+<p>\begin{align} X_i &amp;\sim \text{Bernoulli}(\rho), \;\; i = 1, \dots, n \\ \rho &amp;\sim \text{Beta}(\alpha, \beta) \\ \end{align}</p>
+
+<p>This is one of the simplest possible probabilistic models: each of the $X_i$ is drawn from a Bernoulli distribution with parameter $\rho$, and $\rho$ in turn is drawn from a Beta distribution with parameters $\alpha$ and $\beta$. We’ll treat $\rho$ as a parameter we’d like to estimate, and $\alpha$ and $\beta$ as hyperparameters which we’ll fix to some values beforehand. The simplicity of this model will make it easier to understand each estimation and inference method, as well as the trade-offs between them.</p>
+
+<p>Recall that the PDFs for the Bernoulli and Beta distributions are</p>
+
+\[f_\text{Bern}(x; \rho) = \rho^x (1-\rho)^{1-x}\]
+
+<p>and</p>
+
+\[f_\text{Beta}(x; \alpha, \beta) = \frac{x^{\alpha - 1} (1-x)^{\beta - 1}}{B(\alpha, \beta)}\]
+
+<p>where $B(\cdot, \cdot)$ is the Beta function</p>
+
+\[B(\alpha, \beta) = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}\]
+
+<p>and $\Gamma$ is the Gamma function. Note that an alternative definition of the Beta function is</p>
+
+\[B(\alpha, \beta) = \int_0^1 t^{\alpha - 1} (1-t)^{\beta - 1} dt.\]
+
+<h2 id="full-bayesian-inference">Full Bayesian inference</h2>
+
+<p>In full Bayesian inference, we seek to estimate the full posterior of the parameters given the data. In our case, since we have just one parameter, we want to estimate $p(\rho | X)$. By Bayes rule, we have</p>
+
+<p>\begin{align} p(\rho | X) &amp;= \frac{p(X | \rho) p(\rho)}{p(X)} \\ &amp;= \frac{p(X | \rho) p(\rho)}{\int_0^1 p(X | \rho) p(\rho) d\rho}. \\ \end{align}</p>
+
+<p>We already know how to express $p(X | \rho)$ and $p(\rho)$ from above (the Bernoulli and Beta density functions, respectively). However, it’s less obvious how to express the integral in the denominator in a nicer way.</p>
+
+<p>Let’s write the integral out and see what pops out. Again suppose we have $n$ data points $X_1, \dots, X_n$.</p>
+
+<p>\begin{align} \int_0^1 p(X_1, \dots, X_n | \rho) p(\rho) d\rho &amp;= \int_0^1 \prod\limits_{i=1}^n \left[ \rho^{X_i} (1-\rho)^{1-X_i} \right] \frac{\rho^{\alpha - 1} (1-\rho)^{\beta - 1}}{B(\alpha, \beta)} d\rho \\ &amp;= \int_0^1  \rho^{\sum\limits_{i=1}^n X_i} (1-\rho)^{\sum\limits_{i=1}^n (1-X_i)} \frac{\rho^{\alpha - 1} (1-\rho)^{\beta - 1}}{B(\alpha, \beta)} d\rho \\ &amp;= \int_0^1  \rho^{\alpha - 1 + \sum\limits_{i=1}^n X_i} (1-\rho)^{\beta - 1 + \sum\limits_{i=1}^n (1-X_i)} \frac{1}{B(\alpha, \beta)} d\rho \\ &amp;= \frac{1}{B(\alpha, \beta)} \int_0^1  \rho^{\alpha - 1 + \sum\limits_{i=1}^n X_i} (1-\rho)^{\beta - 1 + \sum\limits_{i=1}^n (1-X_i)}  d\rho \\ &amp;= \frac{1}{B(\alpha, \beta)} B\left(\alpha + \sum\limits_{i=1}^n X_i, \beta + \sum\limits_{i=1}^n (1-X_i)\right) \\ \end{align}</p>
+
+<p>where the last equality follows from the second definition of the Beta function that we gave above.</p>
+
+<p>Putting these together, we have that the posterior distribution is</p>
+
+<p>\begin{align} p(\rho | X) &amp;= \frac{p(X | \rho) p(\rho)}{\int_0^1 p(X | \rho) p(\rho) d\rho} \\ &amp;= \frac{\rho^{\sum\limits_{i=1}^n X_i} (1-\rho)^{\sum\limits_{i=1}^n (1-X_i)}  \frac{\rho^{\alpha - 1} (1-\rho)^{\beta - 1}}{B(\alpha, \beta)}}{\frac{1}{B(\alpha, \beta)} B\left(\alpha + \sum\limits_{i=1}^n X_i, \beta + \sum\limits_{i=1}^n (1-X_i)\right)}  \\ &amp;= \frac{\rho^{\sum\limits_{i=1}^n X_i} (1-\rho)^{\sum\limits_{i=1}^n (1-X_i)}  \rho^{\alpha - 1} (1-\rho)^{\beta - 1}}{B \left(\alpha + \sum\limits_{i=1}^n X_i, \beta + \sum\limits_{i=1}^n (1-X_i)\right)}  \\ &amp;= \frac{\rho^{\alpha - 1 + \sum\limits_{i=1}^n X_i} (1-\rho)^{\beta - 1 + \sum\limits_{i=1}^n (1-X_i)}}{B \left(\alpha + \sum\limits_{i=1}^n X_i, \beta + \sum\limits_{i=1}^n (1-X_i)\right)}  \\ \end{align}</p>
+
+<p>The last line is the PDF of the beta distribution with parameters $\alpha^* = \alpha + \sum\limits_{i=1}^n X_i$ and $\beta^* = \beta + \sum\limits_{i=1}^n (1-X_i)$. So we started with a Beta prior on $\rho$, and after seeing some data, we have another Beta distribution for $\rho$, but it has been updated. This type of prior — where the prior has the same distribution as the likelihood — is called a <strong>conjugate prior</strong>. In this case, the Beta distribution is a conjugate prior for the Bernoulli distribution.</p>
+
+<p>Notice that in this case, the integral in the denominator of the posterior,</p>
+
+\[\int_0^1 p(X | \rho) p(\rho) d\rho,\]
+
+<p>could be solved analytically and had a very nice form. This will not be true in general, and the general intractability of this integral is the motivation for many other methods of fitting probabilistic models.</p>
+
+<p>Let’s see how to implement this in Python (it just amounts to adding new values to $\alpha$ and $\beta$.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">beta</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">p</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">b</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="c1">## Full Bayesian
+</span><span class="n">anew</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">bnew</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Here, we set $\alpha = \beta = 0.5$, which puts more weight on values of $\rho$ that are closer to the edges of its support: near $0$ or $1$.</p>
+
+<p>We can then plot the prior and posterior, with the true value of $\rho$ shown as a dotten red line on the right:</p>
+
+<p><img src="/assets/beta_bernoulli_full_bayes.png" alt="beta_bernoulli_full_bayes" /></p>
+
+<p>It’s worth playing with the hyperparameters $\alpha$ and $\beta$ (as well as the size of the dataset $n$) to see how their values affect the outcome.</p>
+
+<h2 id="maximum-likelihood-estimation">Maximum likelihood estimation</h2>
+
+<p>Maximum likelihood estimation (MLE) is a family of estimation procedures that seeks the parameter value(s) that maximize the likelihood of having observed the data at hand. In our Beta-Bernoulli case, this means that we effectively ignore the prior, and focus on maximizing $p(X | \rho)$.</p>
+
+<p>Recall that this Bernoulli likelihood for $n$ data points is given as</p>
+
+<p>\begin{align} p(X | \rho) &amp;= \prod\limits_{i=1}^n \left[ \rho^{X_i} (1-\rho)^{1-X_i} \right] \\ &amp;= \rho^{\sum\limits_{i=1}^n X_i} (1-\rho)^{\sum\limits_{i=1}^n 1-X_i} \\ \end{align}</p>
+
+<p>It’s often easier to maximize the log-likelihood:</p>
+
+<p>\begin{align} \log p(X | \rho) &amp;= \left[\sum\limits_{i=1}^n X_i \right] \log \rho + \left[\sum\limits_{i=1}^n 1-X_i \right] \log (1-\rho) \\ &amp;= \left[\sum\limits_{i=1}^n X_i \right] \log \rho + \left[n - \sum\limits_{i=1}^n X_i \right] \log (1-\rho) \\ \end{align}</p>
+
+<p>We can then differentiate with respect to $\rho$, set to $0$, and solve:</p>
+
+<p>\begin{align} &amp;\frac{d}{d \rho} \log p(X | \rho) = \frac1\rho \sum\limits_{i=1}^n X_i - \frac{1}{1-\rho} \left[n - \sum\limits_{i=1}^n X_i \right] = 0 \\ \implies&amp; \frac1\rho \sum\limits_{i=1}^n X_i = \frac{1}{1-\rho} \left[n - \sum\limits_{i=1}^n X_i \right] \\ \implies&amp; (1 - \rho) \sum\limits_{i=1}^n X_i = \rho \left[n - \sum\limits_{i=1}^n X_i \right] \\ \implies&amp; \sum\limits_{i=1}^n X_i - \rho \sum\limits_{i=1}^n X_i = \rho n - \rho \sum\limits_{i=1}^n X_i \\ \implies&amp; \hat{\rho}_{\text{MLE}} = \frac1n \sum\limits_{i=1}^n X_i \\ \end{align}</p>
+
+<p>Thus, the maximum likelihood estimate for the Bernoulli model is simply the sample average.</p>
+
+<p>In general, if the MLE isn’t available in closed form, we can also estimate it using iterative methods like gradient ascent, as shown for the Bernoulli model in Python below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">## Maximum likelihood
+# max p(x | theta)
+#
+# LL = sum(x) * log(p) + sum(1-x) * log(1-p)
+</span>
+<span class="k">def</span> <span class="nf">LL</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p</span><span class="p">)</span>
+
+<span class="c1"># Derivative wrt p
+</span><span class="k">def</span> <span class="nf">LL_grad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="n">p</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p</span><span class="p">))</span> <span class="o">/</span> <span class="n">n</span>
+
+<span class="n">curr_p</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">curr_p</span> <span class="o">+=</span> <span class="n">LL_grad</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">curr_p</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
+    
+<span class="k">print</span><span class="p">(</span><span class="s">"MLE estimate: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">curr_p</span><span class="p">,</span> <span class="mi">4</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<h2 id="maximum-a-posteriori-map-estimation">Maximum a posteriori (MAP) estimation</h2>
+
+<p>Another family estimation procedures that provides a point estimate is called maximum a posteriori (MAP) estimation. In MAP estimation, we also incorporate the prior into the point estimate. In particular, we find the parameter value(s) that maximize the posterior $p(\rho | X)$. Recall that, using Bayes rule, we can rewrite the posterior as</p>
+
+\[\frac{p(X | \rho) p(\rho)}{\int_0^1 p(X | \rho) p(\rho) d\rho}.\]
+
+<p>Notice that the denominator, $\int_0^1 p(X | \rho) p(\rho) d\rho = p(X)$ will not depend on $\rho$, and is thus constant for the purposes of maximizing w.r.t $\rho$. Thus, in MAP we seek to maximize the numerator only, which will always be proportional to the posterior:</p>
+
+\[p(\rho | X) \propto p(X | \rho) p(\rho).\]
+
+<p>Writing this out, we have</p>
+
+\[p(X | \rho) p(\rho) = \rho^{\sum\limits_{i=1}^n X_i} (1-\rho)^{\sum\limits_{i=1}^n (1-X_i)}  \frac{\rho^{\alpha - 1} (1-\rho)^{\beta - 1}}{B(\alpha, \beta)}.\]
+
+<p>Similar to MLE, taking the $\log$, we have</p>
+
+\[\log p(X | \rho) p(\rho) = \left[\sum\limits_{i=1}^n X_i \right] \log \rho + \left[\sum\limits_{i=1}^n (1-X_i) \right] \log (1-\rho) + (\alpha - 1) \log \rho + (\beta - 1) \log (1-\rho) - \underbrace{\log B(\alpha, \beta)}_{C}\]
+
+<p>where the final term is constant w.r.t. $\rho$. To maximize this value, we take the derivative w.r.t. $\rho$ and set to $0$:</p>
+
+<p>\begin{align} &amp;\frac{d}{d\rho} \left[\log p(X | \rho) p(\rho)\right] = \frac1\rho \sum\limits_{i=1}^n X_i - \frac{1}{1-\rho} \sum\limits_{i=1}^n (1-X_i) + \frac{\alpha - 1}{\rho} - \frac{\beta - 1}{1 - \rho} = 0 \\ \implies&amp; \frac1\rho \left{\sum\limits_{i=1}^n X_i  + \alpha - 1 \right} = \frac{1}{1-\rho} \left{ \sum\limits_{i=1}^n (1-X_i) + \beta - 1 \right} \\ \implies&amp; (1-\rho) \left{\sum\limits_{i=1}^n X_i  + \alpha - 1 \right} = \rho \left{ \sum\limits_{i=1}^n (1-X_i) + \beta - 1 \right} \\ \implies&amp; \sum\limits_{i=1}^n X_i  + \alpha - 1 - \rho \alpha + \rho  = \rho n + \rho \beta - \rho \\ \implies&amp; \sum\limits_{i=1}^n X_i  + \alpha - 1  = \rho n + \rho \beta - \rho + \rho \alpha - \rho \\ \implies&amp; \sum\limits_{i=1}^n X_i  + \alpha - 1  = \rho (n + \beta + \alpha - 2) \\ \implies&amp; \hat{\rho}_{\text{MAP}} = \frac{\sum\limits_{i=1}^n X_i  + \alpha - 1}{n + \beta + \alpha - 2}  \\ \end{align}</p>
+
+<p>So again, similar to the MLE, we have a nice closed-form solution for the MAP estimate.</p>
+
+<h1 id="approximations-to-full-bayesian-inference">Approximations to full Bayesian inference</h1>
+
+<p>Recall that the denominator of the posterior distribution is usually intractable to compute in closed-form, except for a few special cases. Many methods have been developed to avoid computing it directly, and instead focus on finding a good approximation. In this section, we’ll see three of these classes of methods: variational inference, Markov Chain Monte Carlo, and the Laplace approximation.</p>
+
+<h2 id="variational-inference">Variational inference</h2>
+
+<p>In variational inference, instead of directly finding the posterior $p(\theta | X)$, we posit a simpler class of distributions $q_\lambda(\theta)$ (indexed by their parameters $\lambda$), and find the member of this family that is “closest” to the true posterior.</p>
+
+<p>Typically, we define the “closest” distribution to be the one with the minimum KL divergence, although other divergences can also be used. The KL divergence is a measure of dissimilarity between distributions, defined as</p>
+
+\[D_{KL}(p || q) = \int q(\theta) \log \frac{q(\theta)}{p(\theta |X)} d\theta.\]
+
+<p>After some algebra, it can be shown that a lower bound on the evidence (ELBO) is given by</p>
+
+\[\log p(X) \geq \mathbb{E}[\log p(X, \theta) - \log q(\theta)]\]
+
+<p>where $p(X, \theta)$ can be unnormalized.</p>
+
+<p>Then, by maximizing this lower bound w.r.t. $\theta$, we can find the best variational approximation. Although some models will have closed-form updates for this maximization, a more general approach is to perform “black-box” variational inference by performing gradient ascent.</p>
+
+<p>As shown in <a href="http://www.cs.columbia.edu/~blei/papers/RanganathGerrishBlei2014.pdf">Ranganath et al.</a>, the gradient of the ELBO with respect to the variational parameters is</p>
+
+\[\nabla_\lambda \mathcal{L} = \mathbb{E}\_q [\nabla_\lambda \log q(\theta | \lambda) (\log p(x, \theta) - \log q(\theta | \lambda)].\]
+
+<p>Let’s try this out on our Beta-Bernoulli model. Suppose we let $q(\theta)$ be the family of univariate Gaussian distributions with unknown mean and known variance $\sigma^2 = 0.1$. In effect, this means we’re approximating a beta distribution with a Gaussian (since we already know that the true posterior is a beta).</p>
+
+<p>Recall that the PDF of the Gaussian (where $\rho$ is the variable of interest) is</p>
+
+\[f(\rho; \mu) = \frac{1}{\sqrt{2\pi} \sigma^2} \exp \left\{ -\frac{1}{2\sigma^2} (\rho - \mu)^2 \right\}\]
+
+<p>where $\sigma^2 = 0.1$ is a constant in this case. We now need to find three quantities before we can compute the gradient of the ELBO: $\log q(\rho | \mu)$, $\nabla_\rho \log q(\rho | \mu)$, and $\log p(X, \rho)$.</p>
+
+<p>For $\log q(\rho | \mu)$, we have</p>
+
+\[\log q(\rho | \mu) = -\log \sqrt{2\pi} \sigma^2 - \frac{1}{2\sigma^2} (\rho - \mu)^2.\]
+
+<p>We have</p>
+
+\[\nabla_\rho \log q(\rho | \mu) = \frac{1}{\sigma^2}(\rho - \mu),\]
+
+<p>and</p>
+
+\[\log p(X, \rho) = \left[a - 1 + \sum\limits_{i=1}^n X_i \right] \log(\rho) + \left[ \beta - 1 + \sum\limits_{i=1}^n X_i \right] \log(1 - \rho).\]
+
+<p>We can then put these together to form the gradient of the ELBO. In practice, we approximate the expectation over $q$ by taking a number of samples from $q(\mu)$ and averaging over these. To update the value of $\mu, the procedure is then:</p>
+
+<ol>
+  <li>Draw $\widetilde{\mu}_1, \dots, \widetilde{\mu}_k \sim q(\rho; \mu)$.</li>
+  <li>Compute $\nabla_\mu \mathcal{L}_j$ for each $\widetilde{\mu}_j$</li>
+  <li>Average these gradients and add this value to the current value of $\mu$.</li>
+</ol>
+
+<p>A Python implementation is below:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">## Variational inference
+# Assert Gaussian variational distribution for p
+</span>
+<span class="n">sigma_2</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="n">num_iter</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">num_samples</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">curr_mu</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">mu_estimates</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">p_samples</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">mu_estimates</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr_mu</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iter</span><span class="p">):</span>
+    <span class="n">grads</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
+        
+        <span class="c1"># Draw sample from q
+</span>        <span class="n">curr_p</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">curr_mu</span><span class="p">,</span> <span class="n">sigma_2</span><span class="p">)</span>
+        <span class="n">curr_p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">curr_p</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="mf">1e-4</span><span class="p">)</span>
+        <span class="n">curr_p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">curr_p</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+        <span class="n">p_samples</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr_p</span><span class="p">)</span>
+
+        <span class="c1"># Compute gradient
+</span>        <span class="n">logq</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sigma_2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma_2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">curr_p</span> <span class="o">-</span> <span class="n">curr_mu</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">logq_grad</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma_2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">curr_p</span> <span class="o">-</span> <span class="n">curr_mu</span><span class="p">)</span>
+        <span class="n">logp</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">X</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">curr_p</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">curr_p</span><span class="p">))</span>
+        <span class="n">curr_elbo_grad</span> <span class="o">=</span> <span class="n">logq_grad</span> <span class="o">*</span> <span class="p">(</span><span class="n">logp</span> <span class="o">-</span> <span class="n">logq</span><span class="p">)</span>
+        
+        <span class="c1"># Do one step of gradient ascent
+</span>        <span class="n">grads</span> <span class="o">+=</span> <span class="n">curr_elbo_grad</span>
+                
+    <span class="n">curr_mu</span> <span class="o">+=</span> <span class="mf">0.01</span> <span class="o">/</span> <span class="n">n</span> <span class="o">*</span> <span class="n">grads</span> <span class="o">/</span> <span class="n">num_samples</span>
+    <span class="n">curr_mu</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">curr_mu</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">curr_mu</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">curr_mu</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">mu_estimates</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr_mu</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>And the results:</p>
+
+<p><img src="/assets/beta_bernoulli_vi.png" alt="beta_bernoulli_vi" /></p>
+
+<p>We can see that it finds a similar solution as the fully Bayesian approach, although we fixed the variance, which limits the flexibility of the variational approach.</p>
+
+<h2 id="mcmc">MCMC</h2>
+
+<p>A second major family of approximations to full Bayesian inference is the class of Markov Chain Monte Carlo methods. The main idea behind this suite of methods is that we find ways to sample from the unnormalized posterior, and the collection of these samples then represent a finite approximation to the true posterior. Although this is still an approximation, in the limit of infinite samples (and some regularity conditions), we should be able to recover the true posterior. This stands in contrast to variational inference, where we will always be limited in how closely we can approximate the posterior depending on which variational family $Q$ we choose.</p>
+
+<p>Most variants of MCMC differ in the way that they perform the sampling step. Here, let’s take a look at one of the most well-known MCMC algorithms, Metropolis-Hastings.</p>
+
+<p>In Metropolis-Hastings, we iteratively sample from the support of the parameter of interest, with the intent that we explore regions of high density more. Then, the goal is that the resulting set of samples is representative of the true posterior distribution.</p>
+
+<p>In particular, we start at a random point $\rho_0$ in the support, and then we sample new points around this point using a <em>proposal distribution</em> $g(\rho)$. We center the distribution $g(\rho)$ around $\rho_0$, then sample a new point $\hat{\rho}$. To decide whether to jump to $\hat{\rho}$ next, we check whether $\hat{\rho}$ is more probable under our model. Specifically, we compute the ratio</p>
+
+\[\frac{p(\hat{\rho} | X)}{p(\rho_0 | X)} = \frac{\frac{p(X | \hat{\rho}) p(\hat{\rho})}{p(X)}}{\frac{p(X | \rho_0) p(\rho_0)}{p(X)}} = \frac{p(X | \hat{\rho}) p(\hat{\rho})}{p(X | \rho_0) p(\rho_0)}.\]
+
+<p>Notice that this lets us avoid computing the denominator directly.</p>
+
+<p>An example for the Beta-Bernoulli model in Python is below, which uses a Gaussian proposal function.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">## MCMC 
+</span>
+<span class="k">def</span> <span class="nf">beta_bernoulli_unnorm_posterior</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">X</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p</span><span class="p">))</span>
+
+<span class="n">curr_p</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">proposal_width</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">burnin_len</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="n">p_history</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter</span><span class="p">):</span>
+    
+    <span class="c1"># Unnormalized Beta-bernoulli log-posterior
+</span>    <span class="n">curr_lik</span> <span class="o">=</span> <span class="n">beta_bernoulli_unnorm_posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">curr_p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    
+    <span class="c1"># Propose new value of p using gaussian
+</span>    <span class="n">proposed_p</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">curr_p</span><span class="p">,</span> <span class="n">proposal_width</span><span class="p">).</span><span class="n">rvs</span><span class="p">()</span>
+    <span class="n">proposed_p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">proposed_p</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">proposed_p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">proposed_p</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">proposed_lik</span> <span class="o">=</span> <span class="n">beta_bernoulli_unnorm_posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">proposed_p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    
+    <span class="c1"># Check if we should accept this new value
+</span>    <span class="n">p_accept</span> <span class="o">=</span> <span class="n">proposed_lik</span> <span class="o">-</span> <span class="n">curr_lik</span>
+    <span class="n">accept</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">rand</span><span class="p">())</span> <span class="o">&lt;</span> <span class="n">p_accept</span>
+    
+    <span class="k">if</span> <span class="n">accept</span><span class="p">:</span>
+        <span class="n">curr_p</span> <span class="o">=</span> <span class="n">proposed_p</span>
+    
+    <span class="c1"># Only save values after some burn-in length
+</span>    <span class="k">if</span> <span class="n">ii</span> <span class="o">&gt;</span> <span class="n">burnin_len</span><span class="p">:</span>
+        <span class="n">p_history</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr_p</span><span class="p">)</span>
+        
+<span class="c1"># p_history should now contain samples from the posterior
+</span></code></pre></div></div>
+
+<p>And the result:</p>
+
+<p><img src="/assets/beta_bernoulli_mcmc.png" alt="beta_bernoulli_mcmc" /></p>
+
+<h2 id="laplace-approximation">Laplace approximation</h2>
+
+<p>Finally, the Laplace approximation is a straightforward way to approximate the posterior: simply fit a Gaussian around the MAP estimate. In particular <a href="http://www2.stat.duke.edu/~st118/sta250/laplace.pdf">it can be shown by Taylor expansion</a> that the distribution will be approximated by a Gaussian at its maximum.</p>
+
+<p>In particular, we take the Gaussian’s mean to be the MAP estimate, and its variance to be the negative inverse of the second derivative at the MAP estimate (this essentially estimates the curvature at the maximum of the posterior.</p>
+
+<p>An example for our Beta-Bernoulli example is shown in Python below:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">## Laplace approximation
+</span>
+<span class="n">laplace_mean</span> <span class="o">=</span> <span class="n">map_estimate</span>
+<span class="n">second_deriv_ll</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">map_estimate</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">map_estimate</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">laplace_var</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">second_deriv_ll</span>
+</code></pre></div></div>
+
+<p>And the result:</p>
+
+<p><img src="/assets/beta_bernoulli_laplace.png" alt="beta_bernoulli_laplace" /></p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Ranganath, Rajesh, Sean Gerrish, and David M. Blei. “Black Box Variational Inference.” Proceedings of the Seventeenth International Conference on Artificial Intelligence and Statistics. 2014.</li>
+  <li>Prof. Surya Tapas Tokdar’s <a href="http://www2.stat.duke.edu/~st118/sta250/laplace.pdf">notes on the Laplace approximation</a></li>
+</ul>
+
+:ET

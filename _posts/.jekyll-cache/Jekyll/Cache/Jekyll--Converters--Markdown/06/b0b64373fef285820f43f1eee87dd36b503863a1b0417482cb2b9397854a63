@@ -1,0 +1,55 @@
+I"\<p>When thinking about the convergence of random quantities, two types of convergence that are often confused with one another are convergence in probability and almost sure convergence. Here, I give the definition of each and a simple example that illustrates the difference. The example comes from the textbook <em>Statistical Inference</em> by Casella and Berger, but I’ll step through the example in more detail.</p>
+
+<h2 id="definitions">Definitions</h2>
+
+<p>A sequence of random variables $X_1, X_2, \dots X_n$ converges in probability to a random variable $X$ if, for every $\epsilon &gt; 0$,</p>
+
+<p>\begin{align}\lim_{n \rightarrow \infty} P(\lvert X_n - X \rvert &lt; \epsilon) = 1.\end{align}</p>
+
+<p>A sequence of random variables $X_1, X_2, \dots X_n$ converges almost surely to a random variable $X$ if, for every $\epsilon &gt; 0$,</p>
+
+<p>\begin{align}P(\lim_{n \rightarrow \infty} \lvert X_n - X \rvert &lt; \epsilon) = 1.\end{align}</p>
+
+<p>As you can see, the difference between the two is whether the limit is inside or outside the probability. To assess convergence in probability, we look at the limit of the probability value $P(\lvert X_n - X \rvert &lt; \epsilon)$, whereas in almost sure convergence we look at the limit of the quantity $\lvert X_n - X \rvert$ and then compute the probability of this limit being less than $\epsilon$.</p>
+
+<h2 id="example">Example</h2>
+
+<p>Let’s look at an example of sequence that converges in probability, but not almost surely. Let $s$ be a uniform random draw from the interval $[0, 1]$, and let $I_{[a, b]}(s)$ denote the indicator function, i.e., takes the value $1$ if $s \in [a, b]$ and $0$ otherwise. Here’s the sequence, defined over the interval $[0, 1]$:</p>
+
+<p>\begin{align}X_1(s) &amp;= s + I_{[0, 1]}(s) \\ X_2(s) &amp;= s + I_{[0, \frac{1}{2}]}(s) \\ X_3(s) &amp;= s + I_{[\frac{1}{2}, 1]}(s) \\ X_4(s) &amp;= s + I_{[0, \frac{1}{3}]}(s) \\ X_5(s) &amp;= s + I_{[\frac{1}{3}, \frac{2}{3}]}(s) \\ X_6(s) &amp;= s + I_{[\frac{2}{3}, 1]}(s) \\ &amp;\dots \\ \end{align}</p>
+
+<p>As you can see, each value in the sequence will either take the value $s$ or $1 + s$, and it will jump between these two forever, but the jumping will become less frequent as $n$ become large. For example, the plot below shows the first part of the sequence for $s = 0.78$. Notice that the $1 + s$ terms are becoming more spaced out as the index $n$ increases.</p>
+
+<p><img src="/assets/sequence_plot.png" alt="Convergence plot" /></p>
+
+<p>We can explicitly show that the “waiting times” between $1 + s$ terms is increasing:</p>
+
+<p><img src="/assets/waiting_time_plot.png" alt="Waiting plot" /></p>
+
+<p>Now, consider the quantity $X(s) = s$, and let’s look at whether the sequence converges to $X(s)$ in probability and/or almost surely.</p>
+
+<p>For convergence in probability, recall that we want to evaluate whether the following limit holds</p>
+
+<p>\begin{align}\lim_{n \rightarrow \infty} P(\lvert X_n(s) - X(s) \rvert &lt; \epsilon) = 1.\end{align}</p>
+
+<p>Notice that the probability that as the sequence goes along, the probability that $X_n(s) = X(s) = s$ is increasing. In the plot above, you can notice this empirically by the points becoming more clumped at $s$ as $n$ increases. Thus, the probability that the difference $X_n(s) - X(s)$ is large will become arbitrarily small. Said another way, for any $\epsilon$, we’ll be able to find a term in the sequence such that $P(\lvert X_n(s) - X(s) \rvert &lt; \epsilon)$ is true. We can conclude that the sequence converges in probability to $X(s)$.</p>
+
+<p>Now, recall that for almost sure convergence, we’re analyzing the statement</p>
+
+<p>\begin{align}P(\lim_{n \rightarrow \infty} \lvert X_n - X \rvert &lt; \epsilon) = 1.\end{align}</p>
+
+<p>Here, we essentially need to examine whether for every $\epsilon$, we can find a term in the sequence such that all following terms satisfy $\lvert X_n - X \rvert &lt; \epsilon$. However, recall that although the gaps between the $1 + s$ terms will become large, the sequence will always bounce between $s$ and $1 + s$ with some nonzero frequency. Thus, the probability that $\lim_{n \rightarrow \infty} \lvert X_n - X \rvert &lt; \epsilon$ does not go to one as $n \rightarrow \infty$, and we can conclude that the sequence does not converge to $X(s)$ almost surely.</p>
+
+<h2 id="strong-and-weak-laws-of-large-numbers">Strong and weak laws of large numbers</h2>
+
+<p>An important application where the distinction between these two types of convergence is important is the law of large numbers. Recall that there is a “strong” law of large numbers and a “weak” law of large numbers, each of which basically says that the sample mean will converge to the true population mean as the sample size becomes large. Importantly, the strong LLN says that it will converge almost surely, while the weak LLN says that it will converge in probability. We have seen that almost sure convergence is stronger, which is the reason for the naming of these two LLNs.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In conclusion, we walked through an example of a sequence that converges in probability but does not converge almost surely. In general, almost sure convergence is stronger than convergence in probability, and a.s. convergence implies convergence in probability.</p>
+
+<h2 id="references">References</h2>
+
+<p>Casella, G. and R. L. Berger (2002): <em>Statistical Inference</em>, Duxbury.</p>
+
+:ET

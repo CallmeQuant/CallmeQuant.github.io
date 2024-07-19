@@ -1,0 +1,112 @@
+I"N1<p>The radial basis function (RBF) kernel is one of the most commonly-used kernels in kernel methods. Here, we show how the kernel arises from taking an infinite polynomial feature expansion. We show this in the setting of linear regression.</p>
+
+<p>Recall the RBF kernel (AKA squared exponential, exponentiated quadratic, Gaussian, …),</p>
+
+\[k(x, x^\prime) = \sigma^2 \exp\left\{-\frac{(x - x^\prime)^2}{2\ell^2}\right\}.\]
+
+<p>We can recover this kernel by considering a linear model with infinite feature expansions. In particular, consider the linear function</p>
+
+\[f(x_i) = w^\top \phi(x_i),~~~w\sim\mathcal{N}(0, \sigma^2 I).\]
+
+<p>where $\phi: \mathbb{R} \mapsto \mathbb{R}^q$ is a function that maps our features to a higher-dimensional space. Notice that the covariance of this function has the following form:</p>
+
+<p>\begin{align} cov(f(x_i), f(x_j)) &amp;= \mathbb{E}[(w^\top \phi(x_i))^\top (w^\top \phi(x_j))] \\ &amp;= \mathbb{E}[\phi(x_i)^\top ww^\top \phi(x_j)] \\ &amp;= \phi(x_i)^\top \mathbb{E}[ww^\top] \phi(x_j) \\ &amp;= \sigma^2 \phi(x_i)^\top \phi(x_j). \\ \end{align}</p>
+
+<p>Consider the following form for $\phi$,</p>
+
+\[\phi(x)_k = \exp\{-\frac{1}{2\ell^2} x^2\} \frac{x^k}{\ell^k \sqrt{k!}},~~~k=1,\dots,q.\]
+
+<p>where $\phi(x)_k$ denotes the $k$th element of $\phi(x)$. Notice that this is essentially a polynomial feature expansion,</p>
+
+\[\phi(x) = \begin{bmatrix} x^0 &amp; x^1 &amp; x^2 &amp; \cdots &amp; x^q \end{bmatrix}^\top,\]
+
+<p>but scaled by a constant term.</p>
+
+<p>Plugging this into our covariance above, we have</p>
+
+<p>\begin{align} cov(f(x_i), f(x_j)) &amp;= \sigma^2 \phi(x_i)^\top \phi(x_j) \\ &amp;= \sigma^2 \exp\{-\frac{1}{2\ell^2} x_i^2\} \exp\{-\frac{1}{2\ell^2} x_j^2\} \sum\limits_{k=0}^q \frac{(x_i)^k}{\ell^k \sqrt{k!}} \cdot \frac{(x_j)^k}{\ell^k\sqrt{k!}} \\ &amp;= \sigma^2 \exp\{-\frac{1}{2\ell^2} (x_i^2 + x_j^2)\} \sum\limits_{k=0}^q \frac{(x_i x_j)^k}{\ell^{2k} k!} \\ &amp;= \sigma^2 \exp\{-\frac{1}{2\ell^2} (x_i^2 + x_j^2)\} \sum\limits_{k=0}^q \left(\frac{x_i x_j}{\ell^2}\right)^k \frac{1}{k!}. \\ \end{align}</p>
+
+<p>If we let $q\to\infty$, then we can recognize the sum as the Taylor expansion of $\exp\left\{\frac{x_i x_j}{\ell^2}\right\}$. We then have</p>
+
+<p>\begin{align} cov(f(x_i), f(x_j)) &amp;= \sigma^2 \exp\{-\frac{1}{2\ell^2} (x_i^2 + x_j^2)\} \exp\{\frac{1}{\ell^2} x_i x_j\} \\ &amp;= \sigma^2 \exp\{-\frac{1}{2\ell^2} (x_i^2 + x_j^2 - 2x_ix_j)\} \\ &amp;= \sigma^2 \exp\{-\frac{1}{2\ell^2} (x_i - x_j)^2\} \\ \end{align}</p>
+
+<p>Thus, we can see that the kernel arises from a feature expansion of infinite polynomials. Notice that the $\sigma^2$ paramters is determined by our prior variance on the linear model weights $w$, and the length scale parameter $\ell$ is determined by our chosen constant in the feature expansion.</p>
+
+<h2 id="visualization">Visualization</h2>
+
+<p>One way to visualize kernels is to plot heatmaps of the kernel’s values over a grid of space. Below, I show a simple example using just a finite sum of the polynomial features above. In other words, I just truncate the sum up to a finite $q$. Here, I take $q \in \{1, 2, 3, 10\}$ for demonstration.</p>
+
+<p float="center">
+  <img src="/assets/finite_rbf.png" width="700" />
+</p>
+
+<p>We can see that as $q$ increases, the kernel more closely resembles the true limiting kernel. Below is the analogous heatmap using the full RBF kernel.</p>
+
+<p float="center">
+  <img src="/assets/rbf_heatmap_true.png" width="400" />
+</p>
+
+<h2 id="code">Code</h2>
+
+<p>The code for the visualization above can be found below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">font</span> <span class="o">=</span> <span class="p">{</span><span class="s">"size"</span><span class="p">:</span> <span class="mi">20</span><span class="p">}</span>
+<span class="n">matplotlib</span><span class="p">.</span><span class="n">rc</span><span class="p">(</span><span class="s">"font"</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
+<span class="n">matplotlib</span><span class="p">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">"text.usetex"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="k">def</span> <span class="nf">finite_rbf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">sigma2</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">length_scale</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+	<span class="c1"># Constant term
+</span>	<span class="n">C</span> <span class="o">=</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">length_scale</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+	<span class="c1"># Interaction between x, y
+</span>	<span class="n">qsum</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+		<span class="n">curr_summand</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">y</span> <span class="o">/</span> <span class="n">length_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="n">k</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">math</span><span class="p">.</span><span class="n">factorial</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+		<span class="n">qsum</span> <span class="o">+=</span> <span class="n">curr_summand</span>
+
+	<span class="k">return</span> <span class="n">C</span> <span class="o">*</span> <span class="n">qsum</span>
+
+
+<span class="k">def</span> <span class="nf">getK</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+	<span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+	<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+		<span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+			<span class="n">curr_k</span> <span class="o">=</span> <span class="n">finite_rbf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+			<span class="n">K</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+			<span class="n">K</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+
+	<span class="k">assert</span> <span class="n">np</span><span class="p">.</span><span class="nb">all</span><span class="p">(</span><span class="n">K</span> <span class="o">==</span> <span class="n">K</span><span class="p">.</span><span class="n">T</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">K</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+<span class="n">qs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">qs</span><span class="p">):</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">K</span> <span class="o">=</span> <span class="n">getK</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+	<span class="n">sns</span><span class="p">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">xticks</span><span class="p">([])</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">yticks</span><span class="p">([])</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$x$"</span><span class="p">)</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$x^\prime$"</span><span class="p">)</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s">"$q={}$"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/finite_rbf.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Matthew N. Bernstein’s <a href="http://pages.cs.wisc.edu/~matthewb/pages/notes/pdf/svms/RBFKernel.pdf">notes</a> on the RBF kernel.</li>
+  <li>Yaser Abu-Mostafa’s <a href="https://www.youtube.com/watch?v=XUj5JbQihlU&amp;t=1553s">lecture video</a> on kernel methods.</li>
+</ul>
+:ET

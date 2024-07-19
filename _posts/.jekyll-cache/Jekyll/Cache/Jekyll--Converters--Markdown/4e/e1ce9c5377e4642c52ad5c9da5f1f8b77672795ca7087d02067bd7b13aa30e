@@ -1,0 +1,138 @@
+I"�8<p>Probabilistic PCA generalizes traditional PCA into a probabilistic model whose maximum likelihood estimate corresponds to the traditional version. Here, we give step-by-step derivations for some of the quantities of interest.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Probabilistic PCA, introduced by <a href="http://www.robots.ox.ac.uk/~cvrg/hilary2006/ppca.pdf">Tipping and Bishop in 1999</a> posits a probabilistic model that attempts to model high-dimensional data using a set of low-dimensional vectors.</p>
+
+<p>The probabilistic PCA model assumes that our $d$-dimensional data vectors $t, \dots, t_n$ lie on a lower-dimensional space spanned by some set of vectors $x_1, \dots, x_q$. It assumes the following distributions:</p>
+
+<p>\begin{align} x &amp;\sim \mathcal{N}(0, I) \\ t | x &amp;\sim \mathcal{N}(Wx + \mu, \sigma^2 I) \\ \end{align}</p>
+
+<p>We now go through a few derivations of quantities of interest in this model.</p>
+
+<h2 id="marginal-distribution-of-the-data">Marginal distribution of the data</h2>
+
+<p>We can find the marginal distribution of the data $t$ by integrating over the latent variables.</p>
+
+<p>\begin{align} p(t) &amp;= \int p(t | x) p(x) dx \\ &amp;= \int (2\pi)^{-d/2}  |\sigma^2 I|^{-1/2} \exp\left( -\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu) \right) (2\pi)^{-q/2}  |I|^{-1/2} \exp\left( -\frac12 x^\top x \right) dx \\ &amp;= (2\pi)^{-d/2}  |\sigma^2 I|^{-1/2} (2\pi)^{-q/2}  |I|^{-1/2} \int \exp\left( -\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu \right)  \exp\left( -\frac12 x^\top x \right) dx \\ &amp;= \underbrace{(2\pi)^{(-d-q)/2}  \frac{1}{\sigma}}_{c}  \int \exp\left( -\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu) - \frac12 x^\top x \right)   dx \\ \end{align}</p>
+
+<p>We can treat the expression in front of the integral as a constant $c$. Let’s pull out the expression in the exponential, and see how we can simplify it.</p>
+
+<p>\begin{align} &amp;-\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu) - \frac12 x^\top x \\ =&amp; -\frac{1}{2\sigma^2} (t^\top t - t^\top Wx - t^\top \mu - x^\top W^\top t + x^\top W^\top Wx + x^\top W^\top \mu - \mu^\top t + \mu^\top Wx + \mu^\top\mu) - \frac12 x^\top x \\ =&amp; -\frac{1}{2\sigma^2} (\sigma^2 x^\top x + x^\top W^\top Wx - x^\top W^\top t + x^\top W^\top \mu - t^\top Wx + \mu^\top Wx + t^\top t - t^\top \mu - \mu^\top t + \mu^\top\mu))  \\ =&amp; -\frac{1}{2\sigma^2} (x^\top (\sigma^2 I + W^\top W) x - x^\top (W^\top \mu - W^\top t) - (W^\top \mu - W^\top t)^\top x + (t - \mu)^\top (t - \mu))  \\ =&amp; -\frac{1}{2\sigma^2} (x^\top (\sigma^2 I + W^\top W) x - 2(W^\top \mu - W^\top t)^\top x + (t - \mu)^\top (t - \mu))  \\ =&amp; -\frac{1}{2\sigma^2} (x^\top (\sigma^2 I - W^\top W) x - 2(\mu - t)^\top Wx + (t - \mu)^\top (t - \mu))  \\ \end{align}</p>
+
+<p>Now, we can complete the square to be able to factor out the $x$ terms. Recall that for a matrix $A$ and a vector $b$, we can factor expressions like this as</p>
+
+\[x^\top A x - 2b^\top x = (x - A^{-1} b)^\top A (x - A^{-1} b) - b^\top A^{-1} b.\]
+
+<p>In our case, we can take</p>
+
+<p>\begin{align} A = \sigma^2 I + W^\top W \\ b = W^\top (\mu - t). \\ \end{align}</p>
+
+<p>Then we have</p>
+
+<p>\begin{align} &amp;-\frac{1}{2\sigma^2} (x^\top \overbrace{(\sigma^2 I + W^\top W)}^{A} x - 2\overbrace{(\mu - t)^\top W}^{b^\top} x + (t - \mu)^\top (t - \mu))  \\ =&amp; -\frac{1}{2\sigma^2} (x - (\sigma^2 I + W^\top W)^{-1} W^\top (\mu - t))^\top (\sigma^2 I + W^\top W) (x - (\sigma^2 I + W^\top W)^{-1} W^\top (\mu - t)) \\ &amp;- (\mu - t)^\top W (\sigma^2 I + W^\top W)^{-1} W^\top (\mu - t) + (t - \mu)^\top (t - \mu)) \\ \end{align}</p>
+
+<p>Notice that the last two terms don’t depend on $x$, so we will be able to pull them out of the integral. Then, the expression inside the integral will look like</p>
+
+<p>\begin{align} \int -\frac{1}{2\sigma^2} \exp\left( (x - (\sigma^2 I + W^\top W)^{-1} (W^\top \mu - W^\top t))^\top (\sigma^2 I + W^\top W) (x - (\sigma^2 I + W^\top W)^{-1} (W^\top \mu - W^\top t)) \right) \\ \end{align}</p>
+
+<p>This has the form of a Gaussian with mean $\mu_0 = (\sigma^2 I + W^\top W)^{-1} (W^\top \mu - W^\top t)$ and covariance $\Sigma_0 = (\sigma^2 I + W^\top W)^{-1}$. We will then be able to analytically solve this integral, whose result will end up being a constant (w.r.t. $t$) in our final expression.</p>
+
+<p>Now, dealing with the terms outside of the integral, we have</p>
+
+<p>\begin{align} &amp; -(W^\top \mu - W^\top t)^\top (\sigma^2 I + W^\top W)^{-1} (W^\top \mu - W^\top t) + (t - \mu)^\top (t - \mu)) \\ =&amp; -(\mu^\top W - t^\top W) (\sigma^2 I + W^\top W)^{-1} (W^\top \mu - W^\top t) + t^\top t - 2 \mu^\top t + \mu^\top \mu \\ =&amp; -(t - \mu)^\top W (\sigma^2 I + W^\top W)^{-1} W^\top (t - \mu) + t^\top t - 2 \mu^\top t + \mu^\top \mu \\ =&amp; -(t - \mu)^\top (I_d + W (\sigma^2 I_q + W^\top W)^{-1} W^\top) (t - \mu)\\ =&amp; -(t - \mu)^\top (\sigma^2 I + W W^\top)^{-1} (t - \mu) \\ \end{align}</p>
+
+<p>This implies that the marginal distribution of the data $t$ will be a multivariate Gaussian with mean $\mu$ and covariance $\sigma^2 I + WW^\top$. In other words,</p>
+
+\[t \sim \mathcal{N}(\mu, \sigma^2 I + WW^\top).\]
+
+<h2 id="conditional-distribution-of-the-latent-variables">Conditional distribution of the latent variables</h2>
+
+<p>The conditional distribution of the latent variables $x$ is given by</p>
+
+\[p(x | t) = \frac{p(t | x) p(x)}{p(t)} = \frac{p(t | x) p(x)}{\int p(t | x) p(x) dx}.\]
+
+<p>We already know the forms of the likelihood $p(t | x)$ and prior $p(x)$, so we mostly need to focus on computing the integral in the denominator. Luckily, since everything is Gaussian, this is one of the few cases in which we’ll be able to solve it analytically. Even more luckily, we already solved this integral in the previous section, and we found that $p(t)$ is a Gaussian with mean $\mu$ and covariance $\sigma^2 I + WW^\top$.</p>
+
+<p>Let’s go ahead and plug these expressions into Bayes’ rule and simplify.</p>
+
+<p>\begin{align} p(x | t) &amp;= \frac{(2\pi)^{-d/2}  |\sigma^2 I|^{-1/2} \exp\left( -\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu) \right) (2\pi)^{-q/2}  |I|^{-1/2} \exp\left( -\frac12 x^\top x \right)}{2\pi^{-d/2} |\sigma^2 I + WW^\top|^{-1/2} \exp\left( -\frac12(t-\mu)^\top (\sigma^2 I + WW^\top)^{-1} (t-\mu) \right)} \\ &amp;= (2\pi)^{-q/2} \frac{1}{\sigma} |\sigma^2 I + WW^\top|^{1/2} \exp\left( -\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu) -\frac12 x^\top x + \frac12 (t-\mu)^\top (\sigma^2 I + WW^\top)^{-1} (t-\mu)\right) \end{align}</p>
+
+<p>Pulling out the expression inside the exponential, we have</p>
+
+<p>\begin{align} &amp;-\frac12 (t - Wx - \mu)^\top (\sigma^2 I)^{-1} (t - Wx - \mu) -\frac12 x^\top x + \frac12 (t-\mu)^\top (\sigma^2 I + WW^\top)^{-1} (t-\mu) \\ =&amp; -\frac12 ( t^\top (\sigma^2 I)^{-1} t - t^\top (\sigma^2 I)^{-1} Wx - t^\top (\sigma^2 I)^{-1} \mu - x^\top W^\top (\sigma^2 I)^{-1} t + x^\top W^\top (\sigma^2 I)^{-1} Wx +  x^\top W^\top (\sigma^2 I)^{-1} \mu  \\ &amp; - \mu (\sigma^2 I)^{-1} t + \mu (\sigma^2 I)^{-1} Wx + \mu (\sigma^2 I)^{-1} \mu + x^\top x - t^\top (\sigma^2 I + WW^\top)^{-1} t + t^\top (\sigma^2 I + WW^\top)^{-1} \mu \\ &amp; + \mu^\top (\sigma^2 I + WW^\top)^{-1} t - \mu^\top (\sigma^2 I + WW^\top)^{-1} \mu) \\ \end{align}</p>
+
+<p>Pulling together like terms, we can see that the term quadratic in $x$ will be</p>
+
+<p>\begin{align} x^\top (I + W^\top (\sigma^2 I)^{-1} W) x = x^\top (\frac{1}{\sigma^2} (\sigma^2 I + W^\top W)) x. \end{align}</p>
+
+<p>When we complete the square (we’ll omit some of the details here, since it’s largely repetitive from the first section), this implies that the covariance of $x$ will be given by $\sigma^2 (\sigma^2 I + W^\top W)^{-1}$.</p>
+
+<p>Furthermore, if we collect the terms that are linear in $x$, we have</p>
+
+<p>\begin{align} &amp;- t^\top (\sigma^2 I)^{-1} Wx - x^\top W^\top (\sigma^2 I)^{-1} t + x^\top W^\top (\sigma^2 I)^{-1} \mu + \mu^\top (\sigma^2 I)^{-1} Wx \\ =&amp; - 2x^\top W^\top (\sigma^2 I)^{-1} t - 2 x^\top W^\top (\sigma^2 I)^{-1} \mu \\ =&amp; -2 x^\top ( W^\top (\sigma^2 I)^{-1} (t - \mu) ) \\ =&amp; -2 x^\top ( \frac{1}{\sigma^2} W^\top (t - \mu) ) \\ \end{align}</p>
+
+<p>By a standard completion of squares argument, the mean of $x$ will then be</p>
+
+\[\sigma^2 (\sigma^2 I + W^\top W)^{-1} \frac{1}{\sigma^2} W^\top (t - \mu) = (\sigma^2 I + W^\top W)^{-1} W^\top (t - \mu).\]
+
+<p>Thus, in conclusion, the conditional distribution of the latent variables, given the data is</p>
+
+\[x | t \sim \mathcal{N}((\sigma^2 I + W^\top W)^{-1} W^\top (t - \mu), \sigma^2 (\sigma^2 I + W^\top W)^{-1})\]
+
+<h2 id="maximum-likelihood-solution">Maximum likelihood solution</h2>
+
+<p>The MLE for $\mu$ will be the sample mean of the data. The ML estimator can be found through iterative methods or directly using an eigendecomposition. Using the direct method, we have that the MLE for $W$ is</p>
+
+\[\hat{W} = U_q(\Lambda_q - \sigma^2 I^{1/2}) R,\]
+
+<p>where $U_q$ is a matrix whose columns contains the first $q$ eigenvectors of the sample covariance matrix $S$, $\Lambda_q$ is a diagonal matrix containing the corresponding eigenvalues, and $R$ is an arbitrary rotation matrix.</p>
+
+<p>The MLE for $\sigma^2$ is then given by the sum of the eigenvalues that are not included in the MLE:</p>
+
+\[\hat{\sigma^2} = \frac{1}{d - q} \sum\limits_{j = q + t}^d \lambda_j.\]
+
+<h2 id="em-formulation">EM formulation</h2>
+
+<p>We can also fit the probabilistic PCA model using EM, which iteratively updates $W$ and $\sigma^2$.</p>
+
+<p>Recall that the complete data likelihood of the probabilistic PCA model is</p>
+
+\[p(t, x) = \prod\limits_{i=1}^n \underbrace{(2\pi \sigma^2)^{-d/2} \exp\left(  -\frac{1}{2\sigma^2} (t_i - Wx_i - \mu)^\top (t_i - Wx_i - \mu)) \right)}_{p(t_i | x_i)} \underbrace{(2\pi)^{-q/2} \exp\left( -\frac12 x_i^\top x_i \right)}_{p(x_i)}.\]
+
+<p>Ignoring terms that are constant w.r.t $W$ and $\sigma^2$, the complete data log-likelihood is then</p>
+
+\[\mathcal{L} = -\sum\limits_{i = 1}^n \left[\frac{d}{2} \log \sigma^2 + \frac{1}{2\sigma^2} (t_i - \mu)^\top (t_i - \mu) - \frac{1}{\sigma^2} x_i^\top W^\top (t_i - \mu) + \frac{1}{2\sigma^2} x_i^\top W^\top W x_i + \frac12 x^\top x \right].\]
+
+<p>In the E step of EM, we take the expectation of $\mathcal{L}$ w.r.t. $p(x | t, W, \sigma^2)$.</p>
+
+<p>Using the linearity of expectation, we have</p>
+
+<p>\begin{align} \mathbb{E}_{p(x | t)}[\mathcal{L}] &amp;= -\sum\limits_{i = 1}^n \left[\frac{d}{2} \log \sigma^2 + \frac{1}{2\sigma^2} (t_i - \mu)^\top (t_i - \mu) - \frac{1}{\sigma^2} \mathbb{E}[ x_i^\top W^\top (t_i - \mu)] + \frac{1}{2\sigma^2} \mathbb{E}[x_i^\top W^\top W x_i] + \frac12 \mathbb{E}[x^\top x] \right] \\ &amp;= -\sum\limits_{i = 1}^n \left[\frac{d}{2} \log \sigma^2 + \frac{1}{2\sigma^2} (t_i - \mu)^\top (t_i - \mu) - \frac{1}{\sigma^2} \mathbb{E}[ x_i]^\top W^\top (t_i - \mu) + \frac{1}{2\sigma^2} \text{tr}(W^\top W \mathbb{E}[x_i x_i^\top ]) + \frac12 \mathbb{E}[x^\top x] \right] \\ \end{align}</p>
+
+<p>Now, we need the expectations $\mathbb{E}[x_i]$ and $\mathbb{E}[x_i^\top x_i]$. From our derivation of the form of $x | t$ above, we know that $\mathbb{E}[x_i] = (\sigma^2 I + W^\top W)^{-1} W^\top (t - \mu)$. To find $\mathbb{E}[x_i^\top x_i]$, we can use the definition of covariance:</p>
+
+<p>\begin{align} &amp;\text{Cov}(x_i) = \mathbb{E}[x_i^\top x_i] - \mathbb{E}[x_i]^\top \mathbb{E}[x_i] \\ \implies&amp; \mathbb{E}[x_i^\top x_i] = \text{Cov}(x_i) + \mathbb{E}[x_i]^\top \mathbb{E}[x_i] \\ \implies&amp; \mathbb{E}[x_i^\top x_i] = \sigma^2 (\sigma^2 I + W^\top W)^{-1} + \mathbb{E}[x_i]^\top \mathbb{E}[x_i] \\ \end{align}</p>
+
+<p>where we have substituted our earlier derivation of the covariance of $x_i$.</p>
+
+<p>In the M step, we seek to maximize $\mathbb{E}_{p(x | t)}[\mathcal{L}]$ w.r.t. $W$ and $\sigma^2$.</p>
+
+<p>For $W$, we have</p>
+
+<p>\begin{align} \frac{\partial \mathbb{E}_{p(x | t)}[\mathcal{L}]}{\partial W} &amp;= -\sum\limits_{i = 1}^n \left[ -\frac{1}{\sigma^2} (t_i - \mu) \mathbb{E}[x_i]^\top  + \frac{1}{\sigma^2} W \mathbb{E}[x_i x_i^\top] \right] = 0 \\ \implies&amp; \frac{1}{\sigma^2} W \sum\limits_{i = 1}^n \mathbb{E}[x_i x_i^\top] = \frac{1}{\sigma^2} \sum\limits_{i = 1}^n (t_i - \mu) \mathbb{E}[x_i]^\top \\ \implies&amp; \frac{1}{\sigma^2} W \sum\limits_{i = 1}^n \mathbb{E}[x_i x_i^\top] = \frac{1}{\sigma^2} \sum\limits_{i = 1}^n (t_i - \mu) \mathbb{E}[x_i]^\top \\ \implies&amp; W = \left[ \sum\limits_{i = 1}^n (t_i - \mu) \mathbb{E}[x_i]^\top \right] \left[ \sum\limits_{i = 1}^n \mathbb{E}[x_i x_i^\top] \right]^{-1} \\ \end{align}</p>
+
+<p>For $\sigma^2$, we have</p>
+
+<p>\begin{align} \frac{\partial \mathbb{E}_{p(x | t)}[\mathcal{L}]}{\partial \sigma^2} &amp;= -\sum\limits_{i = 1}^n \left[ \frac{d}{2\sigma^2} - \frac{1}{2 \sigma^4}(t_i - \mu)^\top (t_i - \mu) + \frac{1}{\sigma^4} \mathbb{E}[x_i]^\top W^\top (t_i - \mu) - \frac{1}{2\sigma^4} \text{tr}(W^\top W \mathbb{E}[x_i x_i^\top ]) \right] = 0 \\ \implies&amp; - \frac{nd}{2\sigma^2} - \frac{1}{2\sigma^4} \sum\limits_{i = 1}^n \left[ (t_i - \mu)^\top (t_i - \mu) + 2 \mathbb{E}[x_i]^\top W^\top (t_i - \mu) - \text{tr}(W^\top W \mathbb{E}[x_i x_i^\top ]) \right] = 0 \\ \implies&amp; - \frac{1}{2\sigma^4} \sum\limits_{i = 1}^n \left[ (t_i - \mu)^\top (t_i - \mu) + 2 \mathbb{E}[x_i]^\top W^\top (t_i - \mu) - \text{tr}(W^\top W \mathbb{E}[x_i x_i^\top ]) \right] = \frac{nd}{2\sigma^2} \\ \implies&amp; - \sum\limits_{i = 1}^n \left[ (t_i - \mu)^\top (t_i - \mu) + 2 \mathbb{E}[x_i]^\top W^\top (t_i - \mu) - \text{tr}(W^\top W \mathbb{E}[x_i x_i^\top ]) \right] = nd \sigma^2 \\ \implies&amp; \sigma^2 = - \frac{1}{nd} \sum\limits_{i = 1}^n \left[ (t_i - \mu)^\top (t_i - \mu) + 2 \mathbb{E}[x_i]^\top W^\top (t_i - \mu) - \text{tr}(W^\top W \mathbb{E}[x_i x_i^\top ]) \right] \\ \end{align}</p>
+
+<p>where in this case, we would substitute in the new value of $W$.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Tipping, Michael E., and Christopher M. Bishop. “Probabilistic principal component analysis.” Journal of the Royal Statistical Society: Series B (Statistical Methodology) 61.3 (1999): 611-622.</li>
+  <li><a href="http://cs229.stanford.edu/section/more_on_gaussians.pdf">Chuong B. Do’s notes</a> on manipulating multivariate Gaussians</li>
+  <li>Prof. Ruye Wang’s <a href="http://fourier.eng.hmc.edu/e176/lectures/ch8/node12.html">notes on PPCA</a></li>
+</ul>
+:ET

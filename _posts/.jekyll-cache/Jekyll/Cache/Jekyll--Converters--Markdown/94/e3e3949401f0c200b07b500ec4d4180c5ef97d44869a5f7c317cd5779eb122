@@ -1,0 +1,129 @@
+I" 2<p>Variable selection is an important part of high-dimensional statistical modeling. Many popular approaches for variable selection, such as LASSO, suffer from bias. The smoothly clipped absolute deviation (SCAD) estimator attempts to alleviate this bias issue, while also retaining a continuous penalty that encourages sparsity.</p>
+
+<h2 id="penalized-least-squares">Penalized least squares</h2>
+
+<p>A large class of variable selection models can be described under the family of models called “penalized least squares”. The general form of these objective functions is</p>
+
+\[Q(\beta) = \frac1n ||\mathbf{Y} - \mathbf{X}\boldsymbol{\beta}||_2^2 + \sum\limits_{j = 1}^p p_\lambda(|\beta_j|)\]
+
+<p>where $\mathbf{X} \in \mathbb{R}^{n\times p}$ is the design matrix, $\mathbf{Y} \in \mathbb{R}^n$ is the vector of response variables, $\boldsymbol{\beta} \in \mathbb{R}^p$ is the vector of coefficients, and $p_\lambda(\cdot)$ is a penalty function indexed by regularization parameter $\lambda$.</p>
+
+<p>As special cases, notice that LASSO corresponds to a penalty function of $p_\lambda(\beta) = \lambda ||\beta||_1$, and ridge regression corresponds to $p_\lambda(\beta) = \lambda ||\beta||_2^2$. Recall the graphical shape of these univariate penalties below.</p>
+
+<p><img src="/assets/lasso_and_ridge.png" alt="scad_penalty" /></p>
+
+<h2 id="scad">SCAD</h2>
+
+<p>The smoothly clipped absolute deviation (SCAD) penalty, introduced by <a href="https://orfe.princeton.edu/~jqfan/papers/01/penlike.pdf">Fan and Li (2001)</a>, was designed to encourage sparse solutions to the least squares problem, while also allowing for large values of $\beta$. The SCAD penalty is part of a larger family known as “folded concave penalties”, which are concave on $\mathbb{R}_+$ and $\mathbb{R}_-$. Graphically, the SCAD penalty looks like this:</p>
+
+<p><img src="/assets/scad_penalty.png" alt="scad_penalty" /></p>
+
+<p>Somewhat oddly, the SCAD penalty is often defined primarily by its first derivative $p’(\beta)$, rather than $p(\beta)$. Its derivative is</p>
+
+\[p'_\lambda(\beta) = \lambda \left\{ I(\beta \leq \lambda) + \frac{(a\lambda - \beta)_+}{(a - 1) \lambda} I(\beta &gt; \lambda) \right\}\]
+
+<p>where $a$ is a tunable parameter that controls how quickly the penalty drops off for large values of $\beta$, and the function $f(z) = z_+$ is equal to $z$ if $z \geq 0$, and $0$ otherwise. We can gain some insight by breaking down the penalty function’s derivative for different values of $\lambda$:</p>
+
+<p>\begin{cases} \lambda &amp; \text{if }  |\beta| \leq \lambda \\ \frac{(a\lambda - \beta)}{(a - 1) } &amp; \text{if } \lambda &lt; |\beta| \leq a \lambda \\ 0 &amp; \text{if } |\beta| &gt; a \lambda \\ \end{cases}</p>
+
+<p>Notice that for large values of $\beta$ (where $|\beta| &gt; a \lambda$), the penalty is constant with respect to $\beta$. In other words, after $\beta$ becomes large enough, higher values of $\beta$ aren’t penalized more. This stands in contrast to the LASSO penalty, which has a monotonically increasing penalty with respect to $|\beta|$:</p>
+
+\[p_\text{LASSO}(\beta) = |\beta|\]
+
+\[p'_\text{LASSO}(\beta) = \text{sign}(\beta)\]
+
+<p>Unfortunately, this means that for large coefficient values, their LASSO estimates will be biased downwards.</p>
+
+<p>On the other end, for small values of $\beta$ (where $|\beta| \leq \lambda$), the SCAD penalty is linear in $\beta$. And for medium values of $\beta$ (where $\lambda &lt; |\beta| \leq a \lambda$), the penalty is quadratic.</p>
+
+<p>Defined piecewise, $p_\lambda(\beta)$ is</p>
+
+<p>\begin{cases} \lambda |\beta| &amp; \text{if }  |\beta| \leq \lambda \\ \frac{a \lambda |\beta| - \beta^2 - \lambda^2}{a - 1} &amp; \text{if } \lambda &lt; |\beta| \leq a \lambda \\ \frac{\lambda^2(a + 1)}{2} &amp; \text{if } |\beta| &gt; a \lambda \\ \end{cases}</p>
+
+<p>In Python, the SCAD penalty and its derivative can be defined as follows:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">scad_penalty</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">,</span> <span class="n">lambda_val</span><span class="p">,</span> <span class="n">a_val</span><span class="p">):</span>
+    <span class="n">is_linear</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">lambda_val</span><span class="p">)</span>
+    <span class="n">is_quadratic</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">lambda_val</span> <span class="o">&lt;</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">a_val</span> <span class="o">*</span> <span class="n">lambda_val</span><span class="p">)</span>
+    <span class="n">is_constant</span> <span class="o">=</span> <span class="p">(</span><span class="n">a_val</span> <span class="o">*</span> <span class="n">lambda_val</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">)</span>
+    
+    <span class="n">linear_part</span> <span class="o">=</span> <span class="n">lambda_val</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">)</span> <span class="o">*</span> <span class="n">is_linear</span>
+    <span class="n">quadratic_part</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a_val</span> <span class="o">*</span> <span class="n">lambda_val</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">)</span> <span class="o">-</span> <span class="n">beta_hat</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">lambda_val</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">a_val</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">is_quadratic</span>
+    <span class="n">constant_part</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_val</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">is_constant</span>
+    <span class="k">return</span> <span class="n">linear_part</span> <span class="o">+</span> <span class="n">quadratic_part</span> <span class="o">+</span> <span class="n">constant_part</span>
+    
+<span class="k">def</span> <span class="nf">scad_derivative</span><span class="p">(</span><span class="n">beta_hat</span><span class="p">,</span> <span class="n">lambda_val</span><span class="p">,</span> <span class="n">a_val</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">lambda_val</span> <span class="o">*</span> <span class="p">((</span><span class="n">beta_hat</span> <span class="o">&lt;=</span> <span class="n">lambda_val</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">a_val</span> <span class="o">*</span> <span class="n">lambda_val</span> <span class="o">-</span> <span class="n">beta_hat</span><span class="p">)</span><span class="o">*</span><span class="p">((</span><span class="n">a_val</span> <span class="o">*</span> <span class="n">lambda_val</span> <span class="o">-</span> <span class="n">beta_hat</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="n">a_val</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">lambda_val</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">beta_hat</span> <span class="o">&gt;</span> <span class="n">lambda_val</span><span class="p">))</span>
+</code></pre></div></div>
+
+<h2 id="fitting-models-with-scad">Fitting models with SCAD</h2>
+
+<p>One general approach for fitting penalized least squares models (including SCAD-penalized models) is to use local quadratic approximations. This approach amounts to fitting a quadratic function $q(\beta)$ around an initial point $\beta_0$ such that the approximation:</p>
+
+<ul>
+  <li>Is symmetric about 0,</li>
+  <li>Satisfies $q(\beta_0) = p_\lambda(|\beta_0|)$,</li>
+  <li>Satisfies $q’(\beta_0) = p’_\lambda(|\beta_0|)$.</li>
+</ul>
+
+<p>Thus, the approximation function must have the form</p>
+
+\[q(\beta) = a + b \beta^2\]
+
+<p>for coefficients $a$ and $b$ that don’t depend on $\beta$. The constraints above give us a system of two equations that we can solve:</p>
+
+<ol>
+  <li>$a + b \beta_0^2 = p_\lambda(|\beta_0|)$</li>
+  <li>$2b \beta_0 = p’_\lambda(|\beta_0|)$</li>
+</ol>
+
+<p>For completeness, let’s walk through the solution. Rearranging the second equation, we have</p>
+
+\[b = \frac{p'_\lambda(|\beta_0|)}{2 |\beta_0|}.\]
+
+<p>Plugging this into the first equation, we have</p>
+
+<p>\begin{align} &amp;a + \frac{p’_\lambda(|\beta_0|)}{2 |\beta_0|} \beta_0^2 = p_\lambda(|\beta_0|) \\ \implies&amp; a = p_\lambda(|\beta_0|) - \frac{p’_\lambda(|\beta_0|)}{2 |\beta_0|} \beta_0^2 \end{align}</p>
+
+<p>Thus, the full quadratic equation is</p>
+
+<p>\begin{align} q(\beta) &amp;= p_\lambda(|\beta_0|) - \frac{p’_\lambda(|\beta_0|)}{2 |\beta_0|} \beta_0^2 + \frac{p’_\lambda(|\beta_0|)}{2 |\beta_0|} \beta^2 \\ &amp;= p_\lambda(|\beta_0|) + \frac{p’_\lambda(|\beta_0|)}{2 |\beta_0|} (\beta^2 - \beta_0^2) \\ \end{align}</p>
+
+<p>Now, for any initial guess $\beta_0$ for the coefficient value, we can constsruct a quadratic estimate of the penalty using $q$ above. Then, it’s much easier to find the minimum of this quadratic compared to the initial SCAD penalty.</p>
+
+<p>Graphically, the quadratic approximation looks like this:</p>
+
+<p><img src="/assets/scad_lqa.png" alt="scad_lqa" /></p>
+
+<p>Putting the quadratic approximation to the SCAD penalty into the the full least-squares objective function, the optimization problem becomes:</p>
+
+\[\text{arg}\min_\beta Q(\beta) = \min_\beta \left[\frac1n ||Y - X \beta||_2^2 + p_\lambda(|\beta_0|) + \frac{p'_\lambda(|\beta_0|)}{2 |\beta_0|} (\beta^2 - \beta_0^2) \right].\]
+
+<p>Ignoring the terms that don’t depend on $\beta$, this minimization problem is equivalent to</p>
+
+\[\text{arg}\min_\beta \left[\frac1n ||Y - X \beta||_2^2 + \frac{p'_\lambda(|\beta_0|)}{2 |\beta_0|} \beta^2 \right].\]
+
+<p>Cleverly, we can notice that this is a ridge regression problem where $\lambda = \frac{p’_\lambda(|\beta_0|)}{2 |\beta_0|}$:</p>
+
+\[\min_\beta \left[\frac1n ||Y - X \beta||_2^2 + \lambda \beta^2 \right].\]
+
+<p>Recall that the <a href="https://andrewcharlesjones.github.io/posts/2020/02/ridgeLA/">ridge regression estimator</a> is</p>
+
+\[\hat{\beta} = (X^\top X + \lambda I)^{-1} X^\top Y\]
+
+<p>where $I$ is the identity matrix.</p>
+
+<p>This implies that the approximate SCAD solution is</p>
+
+\[\hat{\beta}_{\text{SCAD}} = \left(X^\top X + \left(\frac{p'_\lambda(|\beta_0|)}{2 |\beta_0|}\right) I\right)^{-1} X^\top Y.\]
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Fan, J., Li, R., Zhang, C.-H., and Zou, H. (2020). Statistical Foundations of Data Science. CRC Press, forthcoming.</li>
+  <li>Fan, Jianqing, and Runze Li. “Variable selection via nonconcave penalized likelihood and its oracle properties.” Journal of the American statistical Association 96.456 (2001): 1348-1360.</li>
+  <li>In-person lectures from Prof. Jianqing Fan in <a href="https://orfe.princeton.edu/~jqfan/fan/classes/525.html">ORF525</a>.</li>
+  <li>Kenneth Tay’s <a href="https://statisticaloddsandends.wordpress.com/2018/07/31/the-scad-penalty/">blog post on SCAD</a></li>
+</ul>
+
+:ET

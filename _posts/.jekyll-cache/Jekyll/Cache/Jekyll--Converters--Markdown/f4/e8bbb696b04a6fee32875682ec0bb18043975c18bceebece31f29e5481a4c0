@@ -1,0 +1,219 @@
+I"�z<p>Inducing points provide a strategy for lowering the computational cost of Gaussian process prediction by closely modeling only a subset of the input space.</p>
+
+<p>Computing the posterior predictive distribution for Gaussian processes is computationally expensive — typically $O(n^3)$ where $n$ is the number of data points. Inducing points lower this computation cost by selecting a few points in the input space to treat as “landmarks” for prediction.</p>
+
+<h2 id="gaussian-process-regression">Gaussian process regression</h2>
+
+<p>Recall that a Gaussian process is a collection of random variables $Y_1, Y_2, \dots$ such that any finite subset of these random variables follows a multivariate normal distribution. In particular,</p>
+
+\[\begin{bmatrix}
+Y_{i_1} \\ Y_{i_2} \\ \vdots \\ Y_{i_n}
+\end{bmatrix} \sim \mathcal{N}(0, \Sigma)\]
+
+<p>where ${i_1, \dots, i_n}$ is an arbitrary set of indices.</p>
+
+<p>Gaussian processes are commonly used to model regression functions. Given a set of response variables $Y_1, \dots, Y_n$, we can model their density as a multivariate normal whose covariance is a function of a set of corresponding input variables $X_1, \dots, X_n$. Specifically,</p>
+
+\[\begin{bmatrix}
+Y_1 \\ Y_2 \\ \vdots \\ Y_n
+\end{bmatrix} \sim \mathcal{N}(0, K(X, X)).\]
+
+<p>Here, $K(X, X)$ denotes a kernel function $k$ applied to the inputs,</p>
+
+\[K(X, X) = \begin{bmatrix}
+k(x_1, x_1) &amp; k(x_1, x_2) &amp; \cdots &amp; k(x_1, x_n) \\
+\vdots &amp; \vdots &amp; \vdots &amp; \vdots \\
+k(x_n, x_1) &amp; k(x_n, x_2) &amp; \cdots &amp; k(x_n, x_n) \\
+\end{bmatrix}\]
+
+<p>where $k(x, x^\prime)$ is a Mercer kernel.</p>
+
+<p>Another common (and equivalent) form of this model is to write it in terms of a Gaussian process prior over an arbitrary regression function $f$,</p>
+
+\[Y_i = f(X_i) + \epsilon,~~~f\sim \mathcal{GP}(0, K).\]
+
+<p>Note that the functional form is completely determined by the choice of kernel function (and the mean function, although we’ve set it to $0$ for simplicity here).</p>
+
+<p>A very attractive property of Gaussian processes is that we can exploit the nice properties of the multivariate normal distribution to get closed-form expressions for predictive and posterior distributions. To see this, suppose we have $t$ test points $X_1^\star, \dots, X_t^\star$. We can get a closed-form expression for the predictive distribution:</p>
+
+\[\begin{bmatrix}
+Y_1^\star &amp; \cdots &amp; Y_t^\star
+\end{bmatrix}^\top | X^\star, \dots, X_t^\star, X, Y \sim \mathcal{N}(\mu, \Sigma)\]
+
+<p>where</p>
+
+<p>\begin{align} \mu &amp;= K_{X^\star X} (K_{XX} + \sigma^2 I_n)^{-1} Y \\ \Sigma &amp;= K_{X^\star X} (K_{XX} + \sigma^2 I_n)^{-1} K_{XX^\star} + \sigma^2 I_t). \end{align}</p>
+
+<p>Notice that the computation time for computing this predictive distribution is dominated by the inversion of the $n\times n$ matrix $K_{XX} + \sigma^2 I_n$. This operation will cost $O(n^3)$ in general.</p>
+
+<h2 id="inducing-points">Inducing points</h2>
+
+<p>Inducing points are essentially motivated by the following question: Rather than modeling the entire set of inputs $X$, what if we instead focused on modeling a smaller subset of regions of the input space? If we were able to do this, we could exploit any redundancy and correlation in the input space to reduce computation time.</p>
+
+<p>To do this, we first have to choose a set of inducing points, which are a sort of “imaginary” data points. Let’s call the $m$ inducing points $\bar{x}_1, \dots, \bar{x}_m$ and their corresponding imaginary outputs $\bar{f}_1, \dots, \bar{f}_m$. We use the $f$ notation for the outputs because we assume they’re noiseless observations from the Gaussian process (we can do this because they’re imaginary).</p>
+
+<p>Of course, we can write down the predictive distribution for these inducing points using the equations above, $p(\bar{f} | \bar{X}, X, Y)$. The key idea is then that we assume that these inducing points and responses completely explain any new predictions, and these predictions are no longer directly dependent on the data $(X, Y)$. In particular, we assume</p>
+
+\[p(Y^\star | X^\star, X, Y, \bar{X}, \bar{f}) = p(Y^\star | X^\star, \bar{X}, \bar{f}) p(\bar{f} | X, Y, \bar{X}).\]
+
+<p>We can then integrate the inducing point outputs $\bar{f}$ in closed form:</p>
+
+\[p(Y^\star | X^\star, X, Y, \bar{X}) = \int p(Y^\star | X^\star, \bar{X}, \bar{f}) p(\bar{f} | X, Y, \bar{X}) d\bar{f}.\]
+
+<p>This turns out to be another Gaussian,</p>
+
+<p>\begin{align} Y^\star_j | X^\star_j, X, Y, \bar{X} &amp;\sim \mathcal{N}(\widehat{\mu}, \widehat{\sigma^2}) \\ \widehat{\mu} &amp;= K_{X^\star \bar{X}} Q_m^{-1} K_{\bar{X} X} (\Lambda + \sigma^2 I_n)^{-1} Y \\ \widehat{\sigma^2} &amp;= K_{X^\star X^\star} - K_{X^\star \bar{X}} (K_{\bar{X}\bar{X}}^{-1} - Q_m^{-1}) K_{\bar{X} X^\star} + \sigma^2 \\ Q_m &amp;= K_{\bar{X} \bar{X}} + K_{\bar{X} X} (\Lambda + \sigma^2 I_n)^{-1} K_{X \bar{X}} \\ \Lambda &amp;= \text{diag}(\lambda) \\ \lambda_i &amp;= k(X_i, X_i) - K_{X_i \bar{X}} K_{\bar{X}\bar{X}}^{-1} K_{\bar{X}X_i}. \end{align}</p>
+
+<p>Now we can analyze the computational cost of computing this predictive distribution. Notice that matrix inversion is no longer the bottleneck: inverting the diagonal matrix $\Lambda + \sigma^2 I_n$ will only cost $O(n)$. Rather, matrix multiplication will be the main source of any slow-down — in particular, the product of an $m \times n$ matrix with an $n \times m$ matrix. This will cost $O(m^2 n)$. If $m&lt;n$ (which we always assume, given that our initial goal was to focus on a small subset of the input space), then we immediately have a speedup compared to full GP regression, which cost $O(n^3)$.</p>
+
+<p>Of course, there is a price to be paid in accuracy. Since we’re only choosing a small set of inducing points, any predictions we make will be worse than our predictions using the full data set. Choosing “good” inducing points — ones that are representative of the dataset — is then the name of the game. One option is to optimize the locations of the inducing points by maximizing the marginal likelihood.</p>
+
+<p>Below, we show some simple examples in which we select the inducing points a priori, and show the resulting predictions.</p>
+
+<h2 id="experiments">Experiments</h2>
+
+<h3 id="gp-regression-with-inducing-points">GP regression with inducing points</h3>
+
+<p>Let’s try a simple experiment to visualize how inducing points work. To start, let’s sample some data from a GP regression model with an exponentiated quadratic kernel. This kernel’s form is given by</p>
+
+\[k(x, x^\prime) = \exp\left\{ -\frac{(x - x^\prime)^2}{2 \ell^2} \right\}\]
+
+<p>where $\ell$ is the length scale. We will take $\ell=1$ for all experiments here. Notice that this kernel is essentially measuring the density of a Gaussian with mean $x^\prime$ at point $x$ (or vice versa). Our $n=10$ sampled data points look like this:</p>
+
+<p float="left">
+  <img src="/assets/inducing_points_data.png" width="500" />
+</p>
+
+<p>Using the full GP regression predictive distribution, we can compute dense predictions along the $x$ axis. This gives us a measure of uncertainty. Below, we plot the predicted mean, as well as two times the standard deviation of each marginal predictive distribution.</p>
+
+<p float="left">
+  <img src="/assets/inducing_points_gp_predictions.png" width="500" />
+</p>
+
+<p>Now, let’s choose a set of inducing points. Here, I uniformly sample $m=2$ inducing points. The vertical lines represent their locations. Again, we can plot the predictions based on the inducing point method.</p>
+
+<p float="left">
+  <img src="/assets/inducing_points_ip_predictions.png" width="500" />
+</p>
+
+<p>We can see that the predictions near the inducing points resemble those for the full GP. However, as we move away from the inducing points, the predictions revert to the prior, even though we have data in those regions.</p>
+
+<h3 id="closer-look-with-just-one-data-point">Closer look with just one data point</h3>
+
+<p>To see the effect of the location of the inducing points more closely, consider the case when we have just one data point. Using the same kernel as above, our full GP predictions look like this:</p>
+
+<p float="left">
+  <img src="/assets/inducing_points_viz_gp_predictions.png" width="500" />
+</p>
+
+<p>Now, let’s use just one inducing point. (Of course, this doesn’t make much sense practically when $n=1$, but we’re just working for the sake of understanding right now). In the figure below, we show the predictive values for four different values of the inducing point.</p>
+
+<p float="left">
+  <img src="/assets/inducing_points_viz_ip_predictions.png" width="500" />
+</p>
+
+<p>We can see that, as the inducing point moves farther away from the data point, the predictions get closer and closer to the prior.</p>
+
+<h2 id="code">Code</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+<span class="kn">from</span> <span class="nn">sklearn.gaussian_process.kernels</span> <span class="kn">import</span> <span class="n">RBF</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">multivariate_normal</span> <span class="k">as</span> <span class="n">mvn</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span>
+
+
+<span class="n">font</span> <span class="o">=</span> <span class="p">{</span><span class="s">"size"</span><span class="p">:</span> <span class="mi">25</span><span class="p">}</span>
+<span class="n">matplotlib</span><span class="p">.</span><span class="n">rc</span><span class="p">(</span><span class="s">"font"</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
+<span class="n">matplotlib</span><span class="p">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">"text.usetex"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="c1"># Set up kernel
+</span><span class="n">k</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">()</span>
+
+<span class="c1"># Draw samples from GP
+</span><span class="n">n</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="p">.</span><span class="mi">05</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+<span class="n">Kxx</span> <span class="o">=</span> <span class="n">k</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">Kxx</span> <span class="o">+</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Data"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$x$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$y$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="n">prop</span><span class="o">=</span><span class="p">{</span><span class="s">'size'</span><span class="p">:</span> <span class="mi">15</span><span class="p">})</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/inducing_points_data.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="c1"># Get predictions from GP
+</span><span class="n">n_test</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">xstar</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">n_test</span><span class="p">)</span>
+<span class="n">Kxstarx</span> <span class="o">=</span> <span class="n">k</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">Kxstarxstar</span> <span class="o">=</span> <span class="n">k</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">ystar_mean</span> <span class="o">=</span> <span class="n">Kxstarx</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">Kxx</span> <span class="o">+</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">@</span> <span class="n">y</span>
+<span class="n">ystar_cov</span> <span class="o">=</span> <span class="n">Kxstarxstar</span> <span class="o">-</span> <span class="n">Kxstarx</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">Kxx</span> <span class="o">+</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">@</span> <span class="n">Kxstarx</span><span class="p">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">sigma2</span>
+<span class="n">band_width</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">diag</span><span class="p">(</span><span class="n">ystar_cov</span><span class="p">))</span>
+<span class="n">lower</span> <span class="o">=</span> <span class="n">ystar_mean</span> <span class="o">-</span> <span class="n">band_width</span>
+<span class="n">upper</span> <span class="o">=</span> <span class="n">ystar_mean</span> <span class="o">+</span> <span class="n">band_width</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Data"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="n">ystar_mean</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Predicted mean"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$x$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$y$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="n">prop</span><span class="o">=</span><span class="p">{</span><span class="s">'size'</span><span class="p">:</span> <span class="mi">15</span><span class="p">})</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/inducing_points_gp_predictions.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="c1"># Create inducing points
+</span><span class="n">m</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">xbar</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+
+<span class="c1"># Get predictions using inducing points
+</span><span class="n">Kxbarxbar</span> <span class="o">=</span> <span class="n">k</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xbar</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xbar</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">Kxbarx</span> <span class="o">=</span> <span class="n">k</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xbar</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">Kxstarxbar</span> <span class="o">=</span> <span class="n">k</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">xbar</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">Lambda</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="c1">#np.diag(np.diag(Kxx) - np.diag(Kxbarx.T @ inv(Kxbarxbar) @ Kxbarx))
+</span><span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+  <span class="n">Lambda</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">Kxx</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">-</span> <span class="n">Kxbarx</span><span class="p">.</span><span class="n">T</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">Kxbarxbar</span><span class="p">)</span> <span class="o">@</span> <span class="n">Kxbarx</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span>
+<span class="n">Lambda</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">diag</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">np</span><span class="p">.</span><span class="nb">all</span><span class="p">(</span><span class="n">Lambda</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">Qm</span> <span class="o">=</span> <span class="n">Kxbarxbar</span> <span class="o">+</span> <span class="n">Kxbarx</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">@</span> <span class="n">Kxbarx</span><span class="p">.</span><span class="n">T</span>
+<span class="n">ystar_mean</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_test</span><span class="p">)</span>
+<span class="n">ystar_vars</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_test</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_test</span><span class="p">):</span>
+  <span class="n">ystar_mean</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">Kxstarxbar</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">Qm</span><span class="p">)</span> <span class="o">@</span> <span class="n">Kxbarx</span> <span class="o">@</span> <span class="n">inv</span><span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">sigma2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">@</span> <span class="n">y</span>
+  <span class="n">ystar_vars</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">Kxstarxstar</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">-</span> <span class="n">Kxstarxbar</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">@</span> <span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">Kxbarxbar</span><span class="p">)</span> <span class="o">-</span> <span class="n">inv</span><span class="p">(</span><span class="n">Qm</span><span class="p">))</span> <span class="o">@</span> <span class="n">Kxstarxbar</span><span class="p">.</span><span class="n">T</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="n">sigma2</span>
+
+
+
+
+<span class="n">band_width</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ystar_vars</span><span class="p">)</span>
+<span class="n">lower</span> <span class="o">=</span> <span class="n">ystar_mean</span> <span class="o">-</span> <span class="n">band_width</span>
+<span class="n">upper</span> <span class="o">=</span> <span class="n">ystar_mean</span> <span class="o">+</span> <span class="n">band_width</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Data"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+  <span class="n">plt</span><span class="p">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">xbar</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">"--"</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="n">ystar_mean</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Predicted mean"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$x$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s">"$y$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="n">prop</span><span class="o">=</span><span class="p">{</span><span class="s">'size'</span><span class="p">:</span> <span class="mi">15</span><span class="p">})</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/inducing_points_ip_predictions.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Snelson, Edward, and Zoubin Ghahramani. “Sparse Gaussian processes using pseudo-inputs.” Advances in neural information processing systems 18 (2005): 1257-1264.</li>
+</ul>
+:ET

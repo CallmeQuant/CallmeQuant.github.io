@@ -1,0 +1,131 @@
+I"�#<p>Reduced-rank regression is a method for finding associations between two high-dimensional datasets with paired samples.</p>
+
+<h2 id="setup">Setup</h2>
+
+<p>Consider two datasets, $X \in \mathbb{R}^{n \times p}$ and $Y \in \mathbb{R}^{n \times q}$, that have measurements on the same $n$ samples, but different features (each sample in $X$ has dimensionality $p$, and each sample in $Y$ has dimensionality $q$).</p>
+
+<p>Suppose we’d like to understand the relationship between these two data matrices by running some sort of regression. The simplest way to do this would be to run several instances of multiple regression. For example, if we deem $X$ to be the “covariates”, and $Y$ to be the response, we could run $q$ separate multiple regression models $M_1, \dots, M_q$, each of which has the same $p$ covariates, but where model $M_j$ only has the $j$th covariate of $Y$ as the response.</p>
+
+<p>This approach would generate a $p \times q$ table of coefficients, where each column is the association of $X$ with the corresponding feature of $Y$, independent of all other features of $Y$.</p>
+
+<p>However, in many cases it’s useful to jointly consider all of the covariates in $Y$, rather than treating them separately. There is a fairly large family of models that try to solve this problem, such as canonical correlation analysis, partial least squares, and reduced-rank regression. Below, we’ll review reduced-rank regression and see what sets it apart from other, similar models.</p>
+
+<h2 id="simple-multiple-and-multiple-multivariate-regression">Simple, multiple, and multiple multivariate regression</h2>
+
+<p>Recall that a univariate regression attempts to approximate a response vector $Y \in \mathbb{R}^n$ with a linear map from $X \in \mathbb{R}^n$ via a scalar coefficient $\beta$ and some noise $\epsilon$:</p>
+
+\[Y = X \beta + \epsilon.\]
+
+<p>The ordinary least squares solution to this problem is $\hat{\beta} = (X^\top X)^{-1} X^\top Y$.</p>
+
+<p>In <em>multiple</em> linear regression, the design matrix $X$ has more than one feature, $X \in \mathbb{R}^{n \times p}$, and we thus seek a coefficient vector $\beta \in \mathbb{R}^{p}$ to approximate $Y \in \mathbb{R}^n$ – that is, again $Y \approx X\beta$.</p>
+
+<p>In <em>multiple multivariate</em> regression, both $X \in \mathbb{R}^{n \times p}$ and $Y \in \mathbb{R}^{n \times q}$ are multidimensional, and we seek a coefficient matrix $B \in \mathbb{R}^{p \times q}$ to approximate the linear map between $X$ and $Y$: again $Y = XB + \epsilon$.</p>
+
+<h2 id="reduced-rank-regression">Reduced-rank regression</h2>
+
+<p>Reduced-rank regression (RRR) is a variant of multiple multivariate regression, with an added constraint: rather than estimating $\beta$ as a $p \times q$ matrix of coefficients, RRR enforces that $\text{rank}(\beta) = r$, where $r &lt; \min(p, q)$. Intuitively, this constraint enforces the assumption that $X$ and $Y$ are related through a small number of latent factors, rather than the full, high-dimensional $pq$ coefficients.</p>
+
+<p>One way to think about RRR is as a combination of two linear mappings: one from an $p$-dimensional data vector in $X$ to an $r$-dimensional latent space, and a second from this latent space to a $q$-dimensional data veector of $Y$.</p>
+
+<h2 id="estimating-the-rrr-model">Estimating the RRR model</h2>
+
+<p>RRR attempts to solve the following optimization problem:</p>
+
+\[\min_{B} ||Y - X B||_F^2\]
+
+<p>where $||\cdot||_F$ is the Frobenius norm.</p>
+
+<p>As mentioned above, we assume that $B \in \mathbb{R}^{p \times q}$ has a rank of $r$, which implies that it can be decomposed into two smaller matrices:</p>
+
+\[B = AC^\top\]
+
+<p>where $A \in \mathbb{R}^{p \times r}$ and $C \in \mathbb{R}^{q \times r}$.</p>
+
+<p>Notice that this problem is not identifiable as-is. Specifically, if we consider any nonsingular matrix $M \in \mathbb{R}^{r \times r}$, and set $A^\prime = AM^{-1}$ and $C^\prime = CM^\top$, then we can see that we have the same transformation:</p>
+
+<p>\begin{align} B &amp;= A^\prime C^{\prime \top} \\ &amp;= AM^{-1} (CM^\top)^\top \\ &amp;= AM^{-1} MC^\top \\ &amp;= A C^\top \\ \end{align}</p>
+
+<p>As the user amoeba notes on <a href="https://stats.stackexchange.com/questions/152517/what-is-reduced-rank-regression-all-about">this post on stackexchange</a>, we can see the RRR problem as equivalent to the following problem:</p>
+
+\[\min_B ||Y - X\hat{B}_{\text{OLS}}||_F^2 + ||XB_{\text{OLS}} - XB||_F^2\]
+
+<p>where $\hat{B}_{\text{OLS}}$ is the ordinary least squares solution $\hat{B}_{\text{OLS}} = (X^\top X)^{-1} X^\top Y$. Since the first term doesn’t depend on $B$, we just need to minimize the second term. Notice that this is minimized by performing an SVD on $X\hat{B}_{\text{OLS}}$. Specifically,</p>
+
+\[X\hat{B}_{\text{OLS}} = UDV^\top.\]
+
+<p>If we truncate the SVD to only the first $r$ right singular vectors, then</p>
+
+\[\hat{B}_{\text{RRR}} = \hat{B}_{\text{OLS}} V_r V_r^\top\]
+
+<h2 id="alternate-derivation">Alternate derivation</h2>
+
+<p>Notice that the reduced rank objective can be alternatively written as</p>
+
+\[\min_{B} \text{tr}\left[ (Y - XB) (Y - XB)^\top \right] \; \text{s.t. rank$(B) \leq r$}.\]
+
+<p>Recall that the rank condition makes this equivalent to minimizing</p>
+
+\[\min_{A, C} \text{tr}\left[ (Y - XAC) (Y - XAC)^\top \right]\]
+
+<p>where $A$ is a $p \times r$ matrix and $C$ is an $r \times q$ matrix.</p>
+
+<p>Let $\hat{B}_\text{OLS} = (X^\top X)^{-1} X^\top Y$ be the OLS coefficient solution and  $\hat{Y}_\text{OLS} = X \hat{B}_\text{OLS}$ be the fitted values. Also, let $V^{(r)} = (v_1, v_2, \dots, v_r)$ be a matrix whose columns are the first $r$ eigenvectors of $\hat{Y}_\text{OLS}^\top \hat{Y}_\text{OLS}$. Notice that</p>
+
+<p>\begin{align} \hat{Y}_\text{OLS}^\top \hat{Y}_\text{OLS} &amp;= (X \hat{B}_\text{OLS})^\top X \hat{B}_\text{OLS} \\ &amp;= \hat{B}_\text{OLS}^\top X^\top X \hat{B}_\text{OLS} \\ &amp;= ((X^\top X)^{-1} X^\top Y)^\top X^\top X (X^\top X)^{-1} X^\top Y \\ &amp;= Y^\top X (X^\top X)^{-1}  X^\top Y \\ \end{align}</p>
+
+<p>Then the minimum of the above problem is achieved with</p>
+
+\[C = V^{(r)}\]
+
+<p>and</p>
+
+\[A = (X^\top X)^{-1} X^\top Y V^{(r)\top}\]
+
+<p>Equivalently, we can define these in terms of a singular value decomposition of the fitted values $\hat{Y}$.</p>
+
+<p>Recall that the SVD of a matrix $M$ is $M = UDV^\top$. Then,</p>
+
+<p>\begin{align} M^\top M &amp;= (UDV^\top)^\top UDV^\top \\ &amp;= VD^\top U^\top UDV^\top \\ &amp;= VD^\top DV^\top  &amp; \text{($U^\top U = I$)} \\ \end{align}</p>
+
+<p>so the columns of $V$ form the eigenvectors of $M^\top M$. Similarly,</p>
+
+<p>\begin{align} M M^\top &amp;= UDV^\top (UDV^\top)^\top \\ &amp;= UDV^\top VD^\top U^\top \\ &amp;= UD D^\top U^\top  &amp; \text{($V^\top V = I$)} \\ \end{align}</p>
+
+<p>so the columns of $U$ form the eigenvectors of $MM^\top$.</p>
+
+<p>Thus, an equivalent way of writing the RRR solution is in terms of the right singular vectors of $\hat{Y}_\text{OLS}$.</p>
+
+<p>Then, to find the weights for $X$, we can just project this estimate back into the $X$ space:</p>
+
+\[A = \underbrace{(X^\top X)^{-1}}_{p \times p} \underbrace{X^\top Y}_{p \times q} \underbrace{V^{(r)^\top}}_{q \times r}\]
+
+<p>where the transformation $X^\top Y$ projects it into the $X$ space, and the transformation $(X^\top X)^{-1}$ accounts for each variable’s variance.</p>
+
+<h2 id="relationship-to-pca">Relationship to PCA</h2>
+
+<p>RRR has a strong connection with PCA. To see this, let’s frame PCA as a regression of $X \in \mathbb{R}^{n \times p}$ onto itself, through a low-rank matrix. Then, we can use the RRR solution for the matrices $A$ and $C$, and substitute $X$ for $Y$.</p>
+
+<p>Specifically, we have that $C$ now contains the eigenvectors of</p>
+
+\[X^\top X (X^\top X)^{-1}  X^\top X = X^\top X.\]
+
+<p>Similarly, for $A$ we now have</p>
+
+\[A = (X^\top X)^{-1} X^\top X V^{(r)\top} = V^{(r)\top}.\]
+
+<p>So in the PCA-as-RRR framing, $X$ is approximated through the eigenvectors of its covariance matrix $X^\top X$. Thus, we have arrived back at one of the more classical framings of PCA.</p>
+
+<p>We can also frame PCA as a linear autoencoder, which is just another form of RRR. In particular, we project $X$ down to a lower dimension $r$, then project it back up to the original space, with the goal of recovering as much variation as possible through our low-rank approximation.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Izenman, 1975, Reduced-rank regression for the multivariate linear model</li>
+  <li>Anderson, Theodore W., and Herman Rubin. “Estimation of the parameters of a single equation in a complete system of stochastic equations.” The Annals of Mathematical Statistics 20.1 (1949): 46-63.</li>
+  <li>Reinsel &amp; Velu, 1998, Multivariate Reduced-Rank Regression: Theory and Applications</li>
+  <li><a href="http://web.math.ku.dk/~sjo/papers/ReducedRankRegression.pdf">Lecture notes</a> from Prof. Søren Johansen</li>
+  <li>Qian, Junyang, et al. “Large-Scale Sparse Regression for Multiple Responses with Applications to UK Biobank.” bioRxiv (2020).</li>
+</ul>
+
+:ET

@@ -1,0 +1,38 @@
+I"�<p>Matrix musings.</p>
+
+<p>Consider an $n\times p$ matrix $X$. Its singular value decomposition is $X = UDV^\top$.</p>
+
+<p>Let’s reconstruct this a different way. Let $U = [u_1, \dots, u_n]^\top$ with</p>
+
+\[u_1, \dots, u_n \sim \mathcal{N}\left(0, \frac{1}{n} I_p\right).\]
+
+<p>Further, let $D = \text{diag}(d_1, \dots, d_p)$. Then</p>
+
+\[u_iD \sim \mathcal{N}\left(0, \frac{1}{n} D^2 \right).\]
+
+<p>Consider an orthogonal matrix $V = [v_1, \dots, v_p]$. Then</p>
+
+\[u_iDV^\top \sim \mathcal{N}\left(0, \frac{1}{n} V D^2 V^\top \right).\]
+
+<p>We can immediately notice that this is the $i$th sample of $X$, where $x_i = u_iDV^\top$. Furthermore, we have a decomposition of its covariance matrix</p>
+
+\[\Sigma =  V D^2 V^\top.\]
+
+<p>Notice the relationship to the Cholesky decomposition:</p>
+
+\[V D^2 V^\top = V D D^\top V^\top = LL^\top\]
+
+<p>where $L = VD$. This coincides with a popular way to generate multivariate normal samples with covariance $\Sigma$, namely</p>
+
+\[x = LzL^\top=VDzD^\top V, ~~~ z\sim \mathcal{N}(0, I).\]
+
+<p>Furthermore, notice that given an observed data matrix $X \in \mathbb{R}^{n \times p}$, its covariance matrix can be completely described without the rotation matrix U,</p>
+
+\[X^\top X = VDU^\top UDV^\top = VD^2V = LL^\top.\]
+
+<p>In the context of the multivariate normal, this makes sense because the rows of $U$ have spherical covariance. Thus, we can arbitrarily rotate these samples about the origin and still yield the same covariance matrix. Concretely, define $\widetilde{U} = WU$ such that $W^\top W = I_p$ (i.e., let’s rotate the samples of $U$). Then</p>
+
+\[VD\widetilde{U}^\top \widetilde{U}DV^\top = VDU^\top W^\top WUDV^\top = VD^2V^\top,\]
+
+<p>which is the same as the covariance of $X$.</p>
+:ET

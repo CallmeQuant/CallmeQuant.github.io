@@ -1,0 +1,82 @@
+I"�$<p>A brief review three types of stochastic processes: Wiener processes, generalized Wiener processes, and Ito processes.</p>
+
+<h1 id="wiener-processes">Wiener processes</h1>
+
+<p>A random variable $z$ that follows a Wiener process (also known as Brownian motion) has two properties:</p>
+
+<ol>
+  <li>For any interval of time $\Delta t$, the following holds: \(\Delta z = \epsilon \sqrt{\Delta t}\) where $\epsilon \sim \mathcal{N}(0, 1)$.</li>
+  <li>Any two time intervals $\Delta t^{(1)}$ and $\Delta t^{(2)}$ obey the Markov property. That is, the correspoding changes in $z$ are independent.</li>
+</ol>
+
+<p>Consider a random variable $y \sim \mathcal{N}(\mu, \sigma^2)$. Then recall that for any constant $c$, it holds that $cy \sim \mathcal{N}(\mu, c^2 \sigma^2)$. Applying this fact to point (1) above, we know that \(\Delta z \sim \mathcal{N}(0, \Delta t).\)</p>
+
+<p>Consider $n$ discrete time intervals of length $\Delta t$. Recall that the variance of independent Gaussian random variables is additive. To see this, consider two RVs $X$ and $Y$ that have mean $0$ (without loss of generality. Then,</p>
+
+<p>\begin{align} \mathbb{V}[X + Y] &amp;= \mathbb{E}[(X + Y)^2] - \mathbb{E}[X + Y]^2 \\ &amp;= \mathbb{E}[(X + Y)^2] - \underbrace{\mathbb{E}[X + Y]^2}_{0} \\ &amp;= \mathbb{E}[X^2 + 2XY + Y^2] \\ &amp;= \mathbb{E}[X^2] +  \underbrace{\mathbb{E}[2XY]}_{0} +  \mathbb{E}[Y^2] \\ &amp;= \mathbb{E}[X^2] + \mathbb{E}[Y^2] \\ &amp;= \mathbb{V}[X] + \mathbb{V}[Y] \end{align}</p>
+
+<p>Thus, we know that \(\sum\limits_{i=1}^n \epsilon_i \sim \mathcal{N}(0, n \Delta t).\)</p>
+
+<p>If we let $\Delta t \to 0$, then we can consider a continuous-time process, and we can write the corresponding process as</p>
+
+\[dz = \epsilon \sqrt{dt}.\]
+
+<p>We can draw from a Wiener process with the following simple Python code. (Here, we necessarily make the process discrete so that we can sample on a computer.)</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">draw_wiener_process</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">()]</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<p>An example of 100 draws from this process is plotted below. The dashed black lines denote twice the standard deviation of the process at each time point, which contain about 95\% of the processes (based on the properties of the Gaussian).</p>
+
+<p><img src="/assets/wiener_process.png" alt="wiener_process" /></p>
+
+<h1 id="generalized-wiener-process">Generalized Wiener process</h1>
+
+<p>The generalized Wiener process is a Wiener process that is allowed to have a mean and variance different than $0$ and $1$, respectively. It has the form \(dx = a dt + b dz.\) The term $a dt$ allows for a consistent linear change in the mean over time, while the term $b dz$ is a scaled Wiener process.</p>
+
+<p>In other words, we can think about the generalized Wiener process as having the same form as the Wiener process \(\Delta x = \epsilon \sqrt{\Delta t}\) where now \(\epsilon \sim \mathcal{N}(a, b^2).\) This implies that for any time length $\Delta t$, the corresponding change in $x$, $\Delta x$ satisifies $\mathbb{E}[\Delta x] = a$ and $\mathbb{V}[\Delta x] = b^2 \Delta t$.</p>
+
+<p>We can draw from a generalized Wiener process by simply adding a mean and standard deviation to the Wiener process above:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">draw_generalized_wiener_process</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">()]</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<p>We plot 100 draws of a generalized Wiener process with $a = 0.1$ and $b = 1$ below.</p>
+
+<p><img src="/assets/generalized_wiener_process.png" alt="generalized_wiener_process" /></p>
+
+<h1 id="ito-process">Ito process</h1>
+
+<p>The Ito process generalizes the Wiener process further by allowing $a$ and $b$ to be functions of the variable $x$. It has the form \(dx = a(x, t) dt + b(x, t) dz\) where $z$ is a Wiener process.</p>
+
+<p>As a simple example, consider the case when \(a(x, t) = [\max(0, x)]^{1/2}\) and \(b(x, t) = \max(1, t).\)</p>
+
+<p>We can simulate an Ito process in Python with the following code (here, $f$ and $g$ are assumed to be lambda functions in Python):</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">draw_ito_process</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">curr_x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">ii</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ii</span><span class="p">),</span> <span class="n">scale</span><span class="o">=</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ii</span><span class="p">))</span>
+        <span class="n">x</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr_x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<p>In the draws below, we see that if the path’s trajectory remains positive, it has higher growth than if it veers into negative territory (due to the exponential mean function in $a$).</p>
+
+<p><img src="/assets/ito_process.png" alt="ito_process" /></p>
+
+<h1 id="references">References</h1>
+
+<ul>
+  <li>Hull, John. Options, futures and other derivatives/John C. Hull. Upper Saddle River, NJ: Prentice Hall,, 2009.</li>
+  <li>Prof. David Gamarnik’s <a href="https://ocw.mit.edu/courses/sloan-school-of-management/15-070j-advanced-stochastic-processes-fall-2013/lecture-notes/MIT15_070JF13_Lec17.pdf">notes on Ito Processes and Ito’s formula</a>.</li>
+</ul>
+:ET

@@ -1,0 +1,65 @@
+I"�<p>The “log-derivative trick” is really just a simple application of the chain rule. However, it allows us to rewrite expectations in a way that is amenable to Monte Carlo approximation.</p>
+
+<h2 id="log-derivative-trick">Log-derivative trick</h2>
+
+<p>Suppose we have a function $p(x; \theta)$ (in this context we’ll mostly think of $p$ as a probability density), and we’d like to take the gradient of its logarithm with respect to $\theta$,</p>
+
+\[\nabla_\theta \log p(x; \theta).\]
+
+<p>By a simple application of the chain rule, we have</p>
+
+\[\nabla_\theta \log p(x; \theta) = \frac{\nabla_\theta p(x; \theta)}{p(x; \theta)}\]
+
+<p>which, rearranging, implies that</p>
+
+\[\nabla_\theta p(x; \theta) = p(x; \theta) \nabla_\theta \log p(x; \theta).\]
+
+<h2 id="score-function-estimator">Score function estimator</h2>
+
+<p>In many statistical applications, we want to estimate the gradient of an expectation of a function $f$:</p>
+
+\[\nabla_\theta \mathbb{E}_{p(x; \theta)}[f(x)].\]
+
+<p>To learn more about a few applications where this gradient estimation problem shows up, as well as more modern methods for solving it, I’d recommend <a href="https://arxiv.org/abs/1906.10652">this review</a> by Shakir Mohamed et al.</p>
+
+<p>Unfortunately, we cannot directly approximate this expression with naive Monte Carlo methods. This is because the expression isn’t in general an expectation. Expanding the expectation we have:</p>
+
+<p>\begin{align} \nabla_\theta \mathbb{E}_{p(x; \theta)}[f(x)] &amp;= \nabla_\theta \int p(x; \theta) f(x)  dx \\ &amp;= \int \underbrace{\nabla_\theta p(x; \theta)}_{\text{density?}} f(x)  dx &amp;&amp; \text{(Leibniz rule)} \end{align}</p>
+
+<p>However, $\nabla_\theta p(x; \theta)$ will not in general be a valid probability density, so we cannot approximate this with</p>
+
+\[\nabla_\theta \mathbb{E}_{p(x; \theta)}[f(x)] \approx \frac1n \sum\limits_{i=1}^n \nabla_\theta p(x_i; \theta) f(x_i).\]
+
+<p>Thankfully, the log-derivative trick allows us to rewrite it as a true expectation:</p>
+
+<p>\begin{align} \nabla_\theta \mathbb{E}_{p(x; \theta)}[f(x)] &amp;= \nabla_\theta \int p(x; \theta) f(x)  dx \\ &amp;= \int \nabla_\theta p(x; \theta) f(x)  dx &amp;&amp; \text{(Leibniz rule)} \\ &amp;= \int p(x; \theta) \frac{\nabla_\theta  p(x; \theta)}{p(x; \theta)}  f(x) dx &amp;&amp; \left(\text{Multiply by } 1=\frac{p(x; \theta)}{p(x; \theta)}\right) \\ &amp;= \int p(x; \theta) \nabla_\theta \log  p(x; \theta)  f(x) dx  &amp;&amp; \text{(Log-derivative trick)} \\ &amp;= \mathbb{E}_{p(x; \theta)}[\nabla_\theta \log  p(x; \theta)  f(x)]. \end{align}</p>
+
+<p>We can then approximate this expectation with $n$ Monte Carlo samples from $p(x; \theta)$, $x_1, \dots, x_n$:</p>
+
+\[\mathbb{E}_{p(x; \theta)}[\nabla_\theta \log  p(x; \theta)  f(x)] \approx \frac{1}{n} \sum\limits_{i=1}^n \nabla_\theta \log  p(x_i; \theta)  f(x_i).\]
+
+<h2 id="applications">Applications</h2>
+
+<p>Although relatively straightforward, the score function estimator shows up all over the place. In reinforcement learning, it’s known as the <a href="https://link.springer.com/article/10.1007/BF00992696">REINFORCE</a> method, in which the gradient of the policy is being taken. In variational inference, it shows up when trying to optimize the evidence lower bound (ELBO). And in computational finance, this estimator is important for performing “sensitivity analysis”, or understanding how financial outcomes change with underlying model assumptions.</p>
+
+<p>Another interesting line of work has been exploring ways to reduce the variance of the score function estimator, which can have extremely high variance, especially in discrete settings. Much work has been done to design effective <a href="https://andrewcharlesjones.github.io/posts/2020/02/controlvariates/">control variates</a>. Also, in discrete latent variable models, another popular approach is to introduce a continuous relaxation of the problem, which reduces gradient variance.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The log-derivative trick is a straightforward manipulation of the derivative of a logarithm, but it provides an important route to estimating otherwise unmanageable integrals.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Shakir Mohamed’s <a href="http://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/">blog post</a> on the subject.</li>
+  <li>Mohamed, Shakir, et al. “Monte carlo gradient estimation in machine learning.” arXiv preprint arXiv:1906.10652 (2019).</li>
+  <li>Williams, Ronald J. “Simple statistical gradient-following algorithms for connectionist reinforcement learning.” Machine learning 8.3-4 (1992): 229-256.</li>
+  <li>Glasserman, Paul. Monte Carlo methods in financial engineering. Vol. 53. Springer Science &amp; Business Media, 2013.</li>
+  <li>Eric Jang, Shixiang Gu, and Ben Poole. Categorical reparameterization with gumbel-softmax. arXiv
+preprint arXiv:1611.01144, 2016.</li>
+  <li>Chris J Maddison, Andriy Mnih, and Yee Whye Teh. The concrete distribution: A continuous
+relaxation of discrete random variables. arXiv preprint arXiv:1611.00712, 2016.</li>
+  <li>Tucker, George, et al. “Rebar: Low-variance, unbiased gradient estimates for discrete latent variable models.” Advances in Neural Information Processing Systems. 2017.</li>
+</ul>
+
+:ET

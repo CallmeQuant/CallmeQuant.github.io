@@ -1,0 +1,286 @@
+I"J�<p>A brief review of Gaussian processes with simple visualizations.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>A Gaussian process is a stochastic process $\mathcal{X} = \{x_i\}$ such that any finite set of variables $\{x_{i_k}\}_{k=1}^n \subset \mathcal{X}$ jointly follows a multivariate Gaussian distribution:</p>
+
+\[(x_{i_1}, \dots, x_{i_n})^\top \sim \mathcal{N}(\boldsymbol{\mu}, \boldsymbol{\Sigma}).\]
+
+<p>According to <a href="http://www.gaussianprocess.org/gpml/chapters/">Rasmussen and Williams</a>, there are two main ways to view Gaussian process regression: the weight-space view and the function-space view. Here, we consider the function-space view.</p>
+
+<p>In the function-space view of Gaussian process regression, we can think of a Gaussian process as a prior distribution over continuous functions. Specifically, consider a regression setting in which we’re trying to find a function $f$ such that given some input $x$, we have $f(x) \approx y$.</p>
+
+<p>In a parametric regression model, we would specify the functional form of $f$ and find the best member of that family of functions according to some loss function. For example, we might assume that $f$ is linear ($y = x \beta$ where $\beta \in \mathbb{R}$), and find the value of $\beta$ that minimizes the squared error loss using the training data ${(x_i, y_i)}_{i=1}^n$:</p>
+
+\[\hat{\beta} = \text{arg} \min_\beta \sum\limits_{i=1}^n ||y_i - x_i \beta||_2^2.\]
+
+<p>Gaussian process regression offers a more flexible alternative, which doesn’t restrict us to a specific functional family. Instead, we specify relationships between points in the input space, and use these relationships to make predictions about new points.</p>
+
+<p>In particular, consider the multivariate regression setting in which the data consists of some input-output pairs ${(\mathbf{x}_i, y_i)}_{i=1}^n$ where $\mathbf{x}_i \in \mathbb{R}^p$ and $y_i \in \mathbb{R}$. Generally, our goal is to find a function $f : \mathbb{R}^p \mapsto \mathbb{R}$ such that $f(\mathbf{x}_i) \approx y_i \;\; \forall i$.</p>
+
+<p>In Gaussian process regress, we place a Gaussian process prior on $f$,</p>
+
+\[f(\mathbf{x}) \sim \mathcal{GP}(\mu(\mathbf{x}), k(\mathbf{x}, \mathbf{x}^\prime))\]
+
+<p>where $\mu(\mathbf{x})$ is the mean function, and $k(\mathbf{x}, \mathbf{x}^\prime)$ is the kernel function.</p>
+
+<p>By placing the GP-prior on $f$, we are assuming that when we observe some data, any finite subset of the the function outputs $f(\mathbf{x}_1), \dots, f(\mathbf{x}_n)$ will jointly follow a multivariate normal distribution:</p>
+
+\[\mathbf{f} \sim \mathcal{N}_n\left(\mathbf{0}, K(\mathbf{X}, \mathbf{X}) \right)\]
+
+<p>where we use Rasmussen’s notation where</p>
+
+\[\mathbf{f} = (f(\mathbf{x}_1), \dots, f(\mathbf{x}_n))^\top\]
+
+<p>and $K(\mathbf{X}, \mathbf{X})$ is a matrix of all pairwise evaluations of the kernel matrix:</p>
+
+\[K(\mathbf{X}, \mathbf{X}) = \begin{bmatrix} k(\mathbf{x}_1, \mathbf{x}_1) &amp; k(\mathbf{x}_1, \mathbf{x}_2) &amp; \dots &amp; k(\mathbf{x}_1, \mathbf{x}_n) \\ k(\mathbf{x}_2, \mathbf{x}_1) &amp; \dots &amp; \dots &amp; \vdots \\ \vdots &amp; \dots &amp; \dots &amp; \vdots  \\ k(\mathbf{x}_n, \mathbf{x}_1) &amp; \dots &amp; \dots &amp; k(\mathbf{x}_n, \mathbf{x}_n) \end{bmatrix}.\]
+
+<p>Note that WLOG we assume that the mean is zero (this can always be achieved by simply mean-subtracting).</p>
+
+<h2 id="drawing-from-the-gp-prior">Drawing from the GP prior</h2>
+
+<p>We can sample from the prior by choosing some values of $\mathbf{x}$, forming the kernel matrix $K(\mathbf{X}, \mathbf{X})$, and sampling from the multivariate normal.</p>
+
+<p>We can show a simple example where $p=1$ and using the squared exponential kernel in python with the following code.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Draw x samples
+</span><span class="n">n</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="c1"># Form covariance matrix between samples
+</span>    <span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">curr_k</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+            <span class="n">K</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+            <span class="n">K</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+
+
+    <span class="c1"># Draw Y from MVN
+</span>    <span class="n">Y</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="n">allow_singular</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">rvs</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>The resulting draws look like this:</p>
+
+<p><img src="/assets/gp_prior_draws.png" alt="gp_prior_draws" /></p>
+
+<p>The two dotted horizontal lines show the $2 \sigma$ bounds.</p>
+
+<h2 id="predictions-in-gp-regression">Predictions in GP regression</h2>
+
+<p>Given some training data, we often want to be able to make predictions about the values of $f$ for a set of unseen input points $\mathbf{x}^\star_1, \dots, \mathbf{x}^\star_m$. GPs make this easy by taking advantage of the convenient computational properties of the multivariate Gaussian distribution.</p>
+
+<p>Given the training data $\mathbf{X} \in \mathbb{R}^{n \times p}$ and the test data $\mathbf{X^\star} \in \mathbb{R}^{m \times p}$, we know that they are jointly Guassian:</p>
+
+\[\begin{bmatrix} \mathbf{f} \\ \mathbf{f}^\star \end{bmatrix} \sim \mathcal{N}_{n+m}\left( \mathbf{0},  \begin{bmatrix} K(\mathbf{X}, \mathbf{X}) &amp; K(\mathbf{X}, \mathbf{X^\star}) \\ K(\mathbf{X}^\star, \mathbf{X}) &amp; K(\mathbf{X}^\star, \mathbf{X}^\star) \end{bmatrix} \right).\]
+
+<p>We can visualize this relationship between the training and test data using a simple example with the squared exponential kernel. Consider the case when $p=1$ and we have just one training pair $(x, y)$. Suppose $x=2.3$. Without considering $y$ yet, we can visualize the joint distribution of $f(x)$ and $f(x^\star)$ for any value of $x^\star$.</p>
+
+<p><img src="/assets/joint_x_gp1.png" alt="joint_x_gp" /></p>
+
+<p>As we can see, the joint distribution becomes much more “informative” around the training point $x=1.2$. In other word, as we move away from the training point, we have less information about what the function value will be.</p>
+
+<p>Now, suppose we observe the corresponding $y$ value at our training point, so our training pair is $(x, y) = (1.2, 0.9)$, or $f(1.2) = 0.9$ (note that we assume noiseless observations for now). For any test point $x^\star$, we are interested in the distribution of the corresponding function value $f(x^\star)$. Thus, we are interested in the conditional distribution of $f(x^\star)$ given $f(x)$.</p>
+
+<p>Recall that if two random vectors $\mathbf{z}_1$ and $\mathbf{z}_2$ are jointly Gaussian with</p>
+
+\[\begin{bmatrix} \mathbf{z}_1 \\ \mathbf{z}_2 \end{bmatrix} \sim \mathcal{N}\left( \mathbf{0},  \begin{bmatrix} \Sigma_{11} &amp; \Sigma_{12} \\ \Sigma_{21} &amp; \Sigma_{22} \end{bmatrix} \right)\]
+
+<p>then the conditional distribution $p(\mathbf{z}_1 | \mathbf{z}_2)$ is also Gaussian with</p>
+
+\[\mathbf{z}_1 | \mathbf{z}_2 \sim \mathcal{N}\left(\Sigma_{12} \Sigma_{22}^{-1} \mathbf{z}_2, \Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21} \right).\]
+
+<p>Applying this to the Gaussian process regression setting, we can find the conditional distribution $f(\mathbf{x}^\star) | f(\mathbf{x})$ for any $\mathbf{x}^\star$ since we know that their joint distribution is Gaussian. In particular, if we denote $K(\mathbf{x}, \mathbf{x})$ as $K_{\mathbf{x} \mathbf{x}}$, $K(\mathbf{x}, \mathbf{x}^\star)$ as $K_{\mathbf{x} \mathbf{x}^\star}$, etc., it will be</p>
+
+\[\mathbf{f}^\star | \mathbf{f} \sim \mathcal{N}\left(K_{\mathbf{x} \mathbf{x}^\star} K_{\mathbf{x}^\star \mathbf{x}^\star}^{-1} \mathbf{f}, K_{\mathbf{x} \mathbf{x}} -  K_{\mathbf{x} \mathbf{x}^\star} K_{\mathbf{x}^\star \mathbf{x}^\star}^{-1} K_{\mathbf{x}^\star \mathbf{x}}  \right).\]
+
+<p>Using our simple visual example from above, this conditioning corresponds to “slicing” the joint distribution of $f(\mathbf{x})$ and $f(\mathbf{x}^\star)$ at the observed value of $f(\mathbf{x})$. Below is a visualization of this when $p=1$. The vertical red line corresponds to conditioning on our knowledge that $f(1.2) = 0.9$. In the bottom row, we show the distribution of $f^\star | f$. Notice that it becomes much more peaked closer to the training point, and shrinks back to being centered around $0$ as we move away from the training point.</p>
+
+<p><img src="/assets/conditional_gp_plot1.png" alt="conditional_gp_plot" /></p>
+
+<p>Now, consider an example with even more data points. Suppose we observe the data below.</p>
+
+<p><img src="/assets/gp_data1.png" alt="gp_data" /></p>
+
+<p>We can predict densely along different values of $x^\star$ to get a series of predictions that look like the following. The blue dots are the observed data points, the blue line is the predicted mean, and the dashed lines are the $2\sigma$ error bounds.</p>
+
+<p><img src="/assets/gp_predictions1.png" alt="gp_predictions" /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Gaussian process regression offers a more flexible alternative to typical parametric regression approaches. Its computational feasibility effectively relies the nice properties of the multivariate Gaussian distribution, which allows for easy prediction and estimation.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Rasmussen, Carl Edward. “Gaussian processes in machine learning.” Summer School on Machine Learning. Springer, Berlin, Heidelberg, 2003.</li>
+  <li>Prof William Welch’s <a href="https://www.stat.ubc.ca/~will/cx/private/normal_properties.pdf">notes on the multivariate Gaussian</a></li>
+</ul>
+
+<h2 id="code">Code</h2>
+
+<p>Kernels:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">### Kernels
+</span>
+<span class="k">def</span> <span class="nf">gaussian_kernel</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">linear_kernel</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">gaussian_kernel</span>
+
+</code></pre></div></div>
+
+<p>Drawing from GP prior:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Draw x samples
+</span><span class="n">n</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="c1"># Form covariance matrix between samples
+</span>    <span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">curr_k</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+            <span class="n">K</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+            <span class="n">K</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+
+
+    <span class="c1"># Draw Y from MVN
+</span>    <span class="n">Y</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="n">allow_singular</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">rvs</span><span class="p">()</span>
+    
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">axhline</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">'--'</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">'black'</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">'--'</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">'black'</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/gp_prior_draws.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Visualizing joint distributions:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Example with one observed point and varying test point
+</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">font</span> <span class="o">=</span> <span class="p">{</span><span class="s">'size'</span>   <span class="p">:</span> <span class="mi">22</span><span class="p">}</span>
+
+<span class="n">matplotlib</span><span class="p">.</span><span class="n">rc</span><span class="p">(</span><span class="s">'font'</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
+
+<span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span> <span class="o">=</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">0.9</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">xstar_list</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">iter_num</span><span class="p">,</span> <span class="n">xstar</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">xstar_list</span><span class="p">):</span>
+    
+    <span class="c1"># Get kernel matrix
+</span>    <span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span>
+        <span class="p">[</span><span class="n">kernel</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">xtrain</span><span class="p">),</span> <span class="n">kernel</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">xstar</span><span class="p">)],</span>
+        <span class="p">[</span><span class="n">kernel</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="n">xtrain</span><span class="p">),</span> <span class="n">kernel</span><span class="p">(</span><span class="n">xstar</span><span class="p">,</span> <span class="n">xstar</span><span class="p">)]</span>
+    <span class="p">])</span>
+    
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mgrid</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:.</span><span class="mi">01</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:.</span><span class="mi">01</span><span class="p">]</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+    <span class="n">pos</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span> <span class="n">pos</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+    <span class="n">rv</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">K</span><span class="p">)</span>
+    
+    
+    <span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">xstar_list</span><span class="p">),</span> <span class="n">iter_num</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">rv</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">pos</span><span class="p">))</span>
+    <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">colorbar</span><span class="p">()</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"xstar = {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">xstar</span><span class="p">))</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"f(x)"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"f(xstar)"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">ytrain</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">'red'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            
+
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/joint_prior_dist.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Predictions in GP regression:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Gaussian process regression
+</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="c1"># Draw function from the prior and take a subset of its points
+</span>
+<span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span>
+
+<span class="c1"># Draw x samples
+</span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">right_endpoint</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+
+<span class="c1"># Form covariance matrix between samples
+</span><span class="n">K11</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">curr_k</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+        <span class="n">K11</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+
+<span class="c1"># Draw Y from MVN
+</span><span class="n">Y</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">K11</span><span class="p">,</span> <span class="n">allow_singular</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">rvs</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+
+<span class="c1"># Get predictions at a dense sampling of points
+</span><span class="n">nstar</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">Xstar</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="n">nstar</span><span class="p">)</span>
+
+
+<span class="c1"># Form covariance matrix between test samples
+</span><span class="n">K22</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nstar</span><span class="p">,</span> <span class="n">nstar</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nstar</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nstar</span><span class="p">):</span>
+        <span class="n">curr_k</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">Xstar</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">Xstar</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+        <span class="n">K22</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+        
+<span class="c1"># Form covariance matrix between train and test samples
+</span><span class="n">K12</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">nstar</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K12</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K12</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">curr_k</span> <span class="o">=</span> <span class="n">gaussian_kernel</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">Xstar</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+        <span class="n">K12</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_k</span>
+        
+<span class="n">K21</span> <span class="o">=</span> <span class="n">K12</span><span class="p">.</span><span class="n">T</span>
+
+
+<span class="c1"># Get predictive distribution mean and covariance
+</span>
+<span class="k">def</span> <span class="nf">matrix_inverse</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">A</span><span class="p">))</span>
+    <span class="n">inverse</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">T</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">inverse</span>
+
+<span class="n">Ystar_mean</span> <span class="o">=</span> <span class="n">K21</span> <span class="o">@</span> <span class="n">matrix_inverse</span><span class="p">(</span><span class="n">K11</span><span class="p">)</span> <span class="o">@</span> <span class="n">Y</span>
+<span class="n">Ystar_cov</span> <span class="o">=</span> <span class="n">K22</span> <span class="o">-</span> <span class="n">K21</span> <span class="o">@</span> <span class="n">matrix_inverse</span><span class="p">(</span><span class="n">K11</span><span class="p">)</span> <span class="o">@</span> <span class="n">K12</span>
+
+<span class="c1"># Sample
+</span><span class="n">Ystar</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">Ystar_mean</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">Ystar_cov</span><span class="p">,</span> <span class="n">allow_singular</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">rvs</span><span class="p">()</span>
+
+<span class="c1"># plt.plot(Xstar, Ystar, c='r', label="True f")
+</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Xstar</span><span class="p">,</span> <span class="n">Ystar_mean</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">Ystar_cov</span><span class="p">),</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">'--'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'gray'</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Xstar</span><span class="p">,</span> <span class="n">Ystar_mean</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">Ystar_cov</span><span class="p">),</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">'--'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'gray'</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Xstar</span><span class="p">,</span> <span class="n">Ystar_mean</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Predicted f"</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"x"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"y"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/gp_predictions.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+:ET

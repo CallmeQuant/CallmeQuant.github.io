@@ -1,0 +1,34 @@
+I".<p>Describing $\chi$ random variables as the lengths of vectors.</p>
+
+<h2 id="chi2-random-variables">$\chi^2$ random variables</h2>
+
+<p>Let $X_1, X_2 \sim \mathcal{N}(0, 1)$ and define $Y = X_1^2 + X_2^2$.</p>
+
+<p>From the definition of a chi-square random variable, we know that $Y$ follows a chi-squared distribution with two degrees of freedom,</p>
+
+\[Y \sim \chi^2_2.\]
+
+<h2 id="chi-random-variables">$\chi$ random variables</h2>
+
+<p>Now, let’s plot $X_1 + X_2$ in vector form. As a slight abuse of notation, let $\vec{X_1} = \begin{bmatrix} X_1 \\ 0 \end{bmatrix}$ and $\vec{X_2} = \begin{bmatrix} 0 \\ X_2 \end{bmatrix}$.</p>
+
+<p align="center">
+  <img src="/assets/chitriangles_vecs.png" width="500" />
+</p>
+
+<p>By the Pythagorean Theorem, the length of $\vec{X_1} + \vec{X_2}$ will be $\sqrt{X_1^2 + X_2^2}$. Equivalently, the length is $\sqrt{Y}$.</p>
+
+<p>This means that the length of a random vector constructed from the sum of two standard normals follows the distribution of the square root of a $\chi^2_2$ random variable. This is also known as a chi-distributed random variable with two degrees of freedom. Let $X = \begin{bmatrix} X_1 \\ X_2 \end{bmatrix}$. Then,</p>
+
+\[||X||_2 \sim \chi_2.\]
+
+<p>More generally, we can think about the sum of $d$ squared stanadard normals. In particular, if</p>
+
+\[X \sim \mathcal{N}(0, I_d),\]
+
+<p>then</p>
+
+\[||X||_2 \sim \chi_d.\]
+
+<p>This has the same geometric interpretation but for higher-dimensional “triangles” (simplices with an orthogonal corner): the length of the hypotenuse follows a $\chi_d$ distribution.</p>
+:ET

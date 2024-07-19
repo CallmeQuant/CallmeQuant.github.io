@@ -1,0 +1,87 @@
+I"<p>Here, we’ll look at linear regression from a statistical learning theory perspective. In particular, we’ll derive the number of samples necessary in order to achieve a certain level of regression error. We’ll also see a technique called “discretization” that allows for proving things about infinite sets by relying on results in finite sets.</p>
+
+<h2 id="problem-setup">Problem setup</h2>
+
+<p>Consider a very standard linear regression setup. We’re given a set of $d$-dimensional data and 1-dimensional labels (or “response variables”), ${(x_i, y_i)}$, and we’re tasked with finding a linear map $w \in \mathbb{R}^d$ that minimizes the squared error between the predictions and the truth. In particular, we’d like to minimize $\sum\limits_{i = 1}^n (w^\top x_i - y_i)^2$.</p>
+
+<p>Without loss of generality, assume for all $i$,</p>
+
+\[||x_i|| \leq 1, |y_i| \leq 1, \text{ and } ||w|| \leq 1.\]
+
+<p>(The following results will hold true for any constant bound, and we can always rescale as needed.)</p>
+
+<h2 id="learnability-for-finite-hypothesis-classes">Learnability for finite hypothesis classes</h2>
+
+<p>Recall that a hypothesis class is essentially the set of functions over which we’re searching in any given statistical learning problem. In our current example, the hypothesis class is the set of all linear functions with bounded norm on its weights. Said another way, each hypothesis in our hypothesis class corresponds to a weight vector $w$, where</p>
+
+\[||w|| \leq 1.\]
+
+<p>In the PAC learning setting, a hypothesis class is considered “learnable” if there exists an algorithm that, for any $\epsilon$ and $\delta$, can return a hypothesis with error at most $\epsilon$ with probability $1 - \delta$ if it observes enough samples.</p>
+
+<p>An important result in PAC learning is that all finite hypothesis classes are (agnostically) PAC learnable with sample complexity</p>
+
+\[m(\epsilon, \delta) = \log |\mathcal{H}| \frac{\log \frac{1}{\delta}}{\epsilon^2}\]
+
+<p>where $|\mathcal{H}|$ is the cardinality of the hypothesis class.</p>
+
+<p>This can be shown by using a Hoeffding bound. Note that the “agnostic” part of learnability means that the algorithm will return a hypothesis that has error $\epsilon$ as compared to the best hypothesis in the class $\mathcal{H}$, rather than absolute error.</p>
+
+<p>However, notice that in the linear regression setting, the hypothesis class is infinite: even though the weight vector’s norm is bounded, it can still take an infinite number of values. Can we somehow leverage the result for finite classes here? This brings us to an important point: We can discretize the set of hypothesis classes and bound how much error we incur by doing so.</p>
+
+<p>After discretizing, we need to account for error arising from two places:</p>
+
+<ol>
+  <li>Error from not finding the best hypothesis originally.</li>
+  <li>Error from discretizing the set of hypotheses.</li>
+</ol>
+
+<h2 id="discretizing-hypothesis-classes">Discretizing hypothesis classes</h2>
+
+<p>We now set out to “approximate” our infinite hypothesis class with a finite one. We’ll do this in the most straightforward way: simply choose a resolution at which to discretize, and split up each dimension into equally spaced bins. Mathematically, if we choose any $\epsilon’$, then we can represent the discretized hypothesis class as $\mathcal{H}’ = {h_w \in \mathcal{H} : w \in \epsilon’ \mathbb{Z}}$.</p>
+
+<p>Recall that we constrained $w$ such that</p>
+
+\[||w|| \leq 1,\]
+
+<p>so each dimension of $w$ lives in the interval $[-1, 1]$. Thus, there are $\left(\frac{2}{\epsilon’}\right)^d$ hypotheses in $\mathcal{H}’$. Using the generic sample complexity for finite hypothesis classes, this means that the sample complexity to learn this class is</p>
+
+\[m(\epsilon, \delta) = d\log \left(\frac{2}{\epsilon'}\right) \frac{\log \frac{1}{\delta}}{\epsilon^2}.\]
+
+<h2 id="quantifying-error">Quantifying error</h2>
+
+<p>After discretizing the set of hypotheses, we won’t be able to find the optimal hypothesis in the original continuous set. Let’s now quantify how much error we incur by doing this. If $\tilde{w}$ is the learned weight vector after discretizing, then $\tilde{w}^\top x$ are the “predictions”. Quantifying the error here, we have for any $x$ in the training set:</p>
+
+<p>\begin{align} |\tilde{w}^\top x - w^\top x| &amp;\leq \left| \sum\limits_j x^{(j)} \epsilon’ \right| &amp;&amp; (x^{(j)} \text{ is the j’th coordinate}) \\ &amp;\leq \epsilon’ ||x||_1 \\ &amp;\leq d\epsilon’\end{align}</p>
+
+<p>Using the Cauchy-Schwarz inequality, we have</p>
+
+\[||w^\top x|| \leq ||w||||x|| \leq 1.\]
+
+<p>Similarly,</p>
+
+\[||\tilde{w}^\top x|| \leq ||\tilde{w}||||x|| \leq 1.\]
+
+<p>Recall that our original goal was to minimize the squared error. The error in the discretized setting will be $(\tilde{w}^\top x - y)^2$, and in the original continous setting, it will be $(w^\top x - y)^2$. We’d like to quantify the difference between these two errors. An important note is that the function $f(x) = x^2$ is 4-Lipshitz, i.e., for any $x, y \in \mathbb{R}$, $|x^2 - y^2| \leq 4|x - y|$. Thus, we have</p>
+
+<p>\begin{align} |(\tilde{w}^\top x - y)^2 - (w^\top x - y)^2| &amp;\leq 4|(\tilde{w}^\top x - y) - (w^\top x - y)| \\ &amp;= 4|\tilde{w}^\top x - w^\top x| \\ &amp;\leq 4 d\epsilon’.\end{align}</p>
+
+<p>If we now set $\epsilon’ = \frac{\epsilon}{4d}$ (remember, we can choose $\epsilon’$ to be any level of discretization we like), we obtain that</p>
+
+\[|(\tilde{w}^\top x - y)^2 - (w^\top x - y)^2| \leq \epsilon.\]
+
+<p>To sum up, we incur $\epsilon$ error when we discretize the hypothesis class, on top of the $\epsilon$ error already incurred in the original setting. This means the total error will be $2\epsilon$. Using our sample complexity computed above, and plugging in $\epsilon’ = \frac{\epsilon}{4d}$, we have:</p>
+
+\[m(\epsilon, \delta) = d\log \left(\frac{8d}{\epsilon}\right) \frac{\log \frac{1}{\delta}}{\epsilon^2}.\]
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Here, we used the discretization trick to compute the sample complexity of linear regression. Interestingly, the sample complexity increases proportionally to $d\log d$ (ignoring the $\epsilon$ terms). This was a surprising result to me, as this is relatively slow growth.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Prof. Elad Hazan’s <a href="https://sites.google.com/view/cos-511-tml/home?authuser=0">Theoretical Machine Learning course</a></li>
+  <li><strong>Understanding Machine Learning: From Theory to Algorithms</strong>, by Shai Shalev-Shwartz and Shai Ben-David</li>
+</ul>
+
+:ET

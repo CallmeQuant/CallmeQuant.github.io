@@ -1,0 +1,210 @@
+I"�f<p>Bayesian model averaging provides a way to combine information across statistical models and account for the uncertainty embedded in each.</p>
+
+<h2 id="bayesian-model-averaging">Bayesian model averaging</h2>
+
+<p>Consider a set of $K$ statistical models $\mathcal{M}_1, \dots, \mathcal{M}_K$, each of which makes a different set of assumptions about the data generating process.</p>
+
+<p>Typically, if we had just one model, we would often be interested in computing the posterior distribution of the parameters given the data $p(\theta | X)$. With multiple models, we can take a weighted average of the posterior under each model:</p>
+
+\[p(\theta | X) = \sum\limits_{k=1}^K p(\theta | \mathcal{M}_k, X) p(\mathcal{M}_k | X).\]
+
+<p>Here $p(\theta | \mathcal{M}_k)$ is the posterior of $\theta$ for just the one model $\mathcal{M}_k$, and $p(\mathcal{M}_k | X)$ is the “model probability”, or the probability of this model given the data.</p>
+
+<p>The model probability can be expanded using Bayes’ rule:</p>
+
+<p>\begin{align} p(\mathcal{M}_j | X) &amp;= \frac{p(X | \mathcal{M}_j) p(\mathcal{M}_j)}{p(X)} \\ &amp;= \frac{p(X | \mathcal{M}_j) p(\mathcal{M}_j)}{\sum\limits_{k=1}^K p(X | \mathcal{M}_k) p(\mathcal{M}_k) }. \\ \end{align}</p>
+
+<p>Notice that this requires computing the marginal likelihood (or “evidence”) for each model $p(X | \mathcal{M}_k)$, which requires integrating out $\theta$:</p>
+
+\[p(X | \mathcal{M}_k) = \int p(X | \theta, \mathcal{M}_k) p(\theta | \mathcal{M}_k) d\theta\]
+
+<h2 id="bayes-factors">Bayes factors</h2>
+
+<p>As a brief aside, another area where model probabilities and marginal probabilities must be computed is Bayes factors. Bayes factors are often used to compare the relative utility between two different models. Bayes factors arise as a part of the posterior odds between two models:</p>
+
+<p>\begin{align} \frac{p(X | \mathcal{M}_1)}{p(X | \mathcal{M}_2)} &amp;= \frac{\frac{p(\mathcal{M}_1 | X) p(X)}{p(\mathcal{M}_1)}}{\frac{p(\mathcal{M}_2 | X) p(X)}{p(\mathcal{M}_2)}} \\ &amp;= \frac{p(\mathcal{M}_1 | X)}{p(\mathcal{M}_2 | X)} \cdot \frac{p(\mathcal{M}_2)}{p(\mathcal{M}_1)} \end{align}</p>
+
+<p>When the models are given equal prior probabilities, $p(\mathcal{M}_1) = p(\mathcal{M}_2)$, this reduces to the ratio of model probabilities.</p>
+
+<h2 id="beta-binomial-example">Beta-binomial example</h2>
+
+<p>Consider a set of coin tosses $X_1, \dots, X_n$, where $k$ of these flips turn up heads. Let $\sum\limits_{i = 1}^n X_i = Y$.</p>
+
+<p>We can model the total number of heads $Y$ as</p>
+
+<p>\begin{align} k &amp;\sim \text{Binomial}(n, \theta) \\ \theta &amp;\sim \text{Beta}(\alpha, \beta) \\ \end{align}</p>
+
+<p>The posterior of $\theta$ is again a beta distribution:</p>
+
+\[\theta | Y \sim \text{Beta}(\alpha + k, \beta + n - k).\]
+
+<p>Consider two models. In the first model, we choose the parameters of the beta distribution so that most of the mass concentrates around $\theta = 0.5$:</p>
+
+<p>\begin{align} k &amp;\sim \text{Binomial}(n, \theta_1) \\ \theta_1 &amp;\sim \text{Beta}(2, 2) \\ \end{align}</p>
+
+<p>This prior has the shape in the plot below:</p>
+
+<p><img src="/assets/beta22.png" alt="beta22" /></p>
+
+<p>In the second model, we assume that the mass is more likely to lie in lower values of $\theta$:</p>
+
+<p>\begin{align} k &amp;\sim \text{Binomial}(n, \theta_2) \\ \theta_2 &amp;\sim \text{Beta}(1, 2) \\ \end{align}</p>
+
+<p>This prior has the shape in the plot below:</p>
+
+<p><img src="/assets/beta12.png" alt="beta22" /></p>
+
+<p>Now, how can we average these models to get a combined posterior for $\theta$?</p>
+
+\[p(\theta | X) = p(\theta | \mathcal{M}_1, X) p(\mathcal{M}_1 | X) + p(\theta | \mathcal{M}_2, X) p(\mathcal{M}_2 | X).\]
+
+<p>We already computed the posteriors $p(\theta | \mathcal{M}_1, X)$ and $p(\theta | \mathcal{M}_2, X)$ above. Now, we must compute the model probabilities.</p>
+
+<p>Starting with model 1, we have</p>
+
+<p>\begin{align} p(\mathcal{M}_1 | X) &amp;= \frac{p(X | \mathcal{M}_1) p(\mathcal{M}_1)}{\sum\limits_{k=1}^2 p(X | \mathcal{M}_k) p(\mathcal{M}_k) } \end{align}</p>
+
+<p>This requires computing the marginal likelihood:</p>
+
+\[p(X | \mathcal{M}_1) = \int p(X | \theta, \mathcal{M}_1) p(\theta | \mathcal{M}_1) d\theta.\]
+
+<p>Luckily, in our simple beta-binomial model, this has a closed-form.</p>
+
+<p>\begin{align} \int p(X | \theta, \mathcal{M}_1) p(\theta | \mathcal{M}_1) d\theta &amp;=  \int {n \choose k} \theta^k (1-\theta)^{n-k} \frac{\theta^{\alpha - 1} (1-\theta)^{\beta - 1}}{\text{Beta}(\alpha, \beta)} d\theta \\ &amp;= {n \choose k} \frac{1}{\text{Beta}(\alpha, \beta)} \int \theta^{k + \alpha - 1} (1-\theta)^{n - k + \beta - 1} d\theta \\ &amp;= {n \choose k} \frac{1}{\text{Beta}(\alpha, \beta)} \frac{\Gamma(k + \alpha) \Gamma(n - k + \beta)}{\Gamma(k + \alpha + n - k + \beta)} \\ &amp;= {n \choose k} \frac{\text{Beta}(k + \alpha, n - k + \beta)}{\text{Beta}(\alpha, \beta)}  \\ \end{align}</p>
+
+<p>Plugging in the values for $\alpha$ and $\beta$ for each model and assuming $p(\mathcal{M}_1) = p(\mathcal{M}_2) =  \frac12$,</p>
+
+<p>\begin{align} p(\mathcal{M}_1 | X) &amp;= \frac{{n \choose k} \frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)} \cdot \frac12}{{n \choose k} \frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)}  \cdot \frac12 + {n \choose k} \frac{\text{Beta}(k + 1, n - k + 2)}{\text{Beta}(1, 2)}  \cdot \frac12 } \\ &amp;= \frac{\frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)}}{ \frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)} +  \frac{\text{Beta}(k + 1, n - k + 2)}{\text{Beta}(1, 2)} } \\ \end{align}</p>
+
+<p>Finally, the model-averaged posterior is</p>
+
+<p>\begin{align} p(\theta | X) &amp;= \frac{\theta^{2 + k - 1} (1-\theta)^{2 + n - k - 1}}{\text{Beta}(2, 2)} \frac{\frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)}}{ \frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)} +  \frac{\text{Beta}(k + 1, n - k + 2)}{\text{Beta}(1, 2)} } \\ &amp;+ \frac{\theta^{1 + k - 1} (1-\theta)^{2 + n - k - 1}}{\text{Beta}(1, 2)} \frac{\frac{\text{Beta}(k + 1, n - k + 2)}{\text{Beta}(1, 2)}}{ \frac{\text{Beta}(k + 2, n - k + 2)}{\text{Beta}(2, 2)} +  \frac{\text{Beta}(k + 1, n - k + 2)}{\text{Beta}(1, 2)} } \\ \end{align}</p>
+
+<p>Now, assume we observe 10 coin flips, 5 of which come up tails ($n=10, k=5$). If we plot the model-averaged posterior for these data, along with each individual model’s posterior, we can see that the averaged model has the effect that we would intuitively expect: it lies “in between” each of the two individual models.</p>
+
+<p><img src="/assets/averaged_models_half1.png" alt="averaged_models_half" /></p>
+
+<p>We also see that model 1 is given more weight, since it captures the data better.</p>
+
+<p>However, assume we only observe 1 tails flip out of 10. Then, we can see that model 2 is given more weight, but the averaged model still sits between the two individual models.</p>
+
+<p><img src="/assets/averaged_models_biased1.png" alt="averaged_models_biased" /></p>
+
+<p>Below is the code to reproduce these plots:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">beta</span> <span class="k">as</span> <span class="n">beta_distribution</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">beta</span> <span class="k">as</span> <span class="n">beta_function</span>
+
+<span class="c1">## Draw from Beta(1, 1)
+</span>
+<span class="n">alpha_param</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">beta_param</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">beta_distribution</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">alpha_param</span><span class="p">,</span> <span class="n">beta_param</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"theta"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"density"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Beta({}, {})"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">alpha_param</span><span class="p">,</span> <span class="n">beta_param</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1">## Draw from Beta(2, 2)
+</span>
+<span class="n">alpha_param</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">beta_param</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">beta_distribution</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">alpha_param</span><span class="p">,</span> <span class="n">beta_param</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"theta"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"density"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Beta({}, {})"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">alpha_param</span><span class="p">,</span> <span class="n">beta_param</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1">## Compute model-averaged posterior
+</span>
+<span class="k">def</span> <span class="nf">posterior_pdf</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">):</span>
+    
+    <span class="c1"># Get weights for models
+</span>    <span class="n">first_model_weight</span> <span class="o">=</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">a1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span> <span class="o">+</span> <span class="n">b1</span><span class="p">)</span> <span class="o">/</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span>
+    <span class="n">second_model_weight</span> <span class="o">=</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">a2</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span> <span class="o">+</span> <span class="n">b2</span><span class="p">)</span> <span class="o">/</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span>
+    <span class="n">total_model_weights</span> <span class="o">=</span> <span class="n">first_model_weight</span> <span class="o">+</span> <span class="n">second_model_weight</span>
+    
+    <span class="n">model1_weight</span> <span class="o">=</span> <span class="n">first_model_weight</span> <span class="o">/</span> <span class="n">total_model_weights</span>
+    <span class="n">model2_weight</span> <span class="o">=</span> <span class="n">second_model_weight</span> <span class="o">/</span> <span class="n">total_model_weights</span>
+    
+    <span class="c1"># Get model pdfs
+</span>    <span class="n">model1_pdf</span> <span class="o">=</span> <span class="n">beta_distribution</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">a1</span> <span class="o">+</span> <span class="n">k</span><span class="p">,</span> <span class="n">b1</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">model2_pdf</span> <span class="o">=</span> <span class="n">beta_distribution</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">a2</span> <span class="o">+</span> <span class="n">k</span><span class="p">,</span> <span class="n">b2</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span><span class="p">)</span>
+    
+    <span class="n">total_density</span> <span class="o">=</span> <span class="n">model1_pdf</span> <span class="o">*</span> <span class="n">model1_weight</span> <span class="o">+</span> <span class="n">model2_pdf</span> <span class="o">*</span> <span class="n">model2_weight</span>
+    
+    <span class="k">return</span> <span class="n">total_density</span>
+
+<span class="k">def</span> <span class="nf">posterior_model_weights</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">):</span>
+    
+    <span class="c1"># Get weights for models
+</span>    <span class="n">first_model_weight</span> <span class="o">=</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">a1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span> <span class="o">+</span> <span class="n">b1</span><span class="p">)</span> <span class="o">/</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span>
+    <span class="n">second_model_weight</span> <span class="o">=</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">a2</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span> <span class="o">+</span> <span class="n">b2</span><span class="p">)</span> <span class="o">/</span> <span class="n">beta_function</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span>
+    <span class="n">total_model_weights</span> <span class="o">=</span> <span class="n">first_model_weight</span> <span class="o">+</span> <span class="n">second_model_weight</span>
+    
+    <span class="n">model1_weight</span> <span class="o">=</span> <span class="n">first_model_weight</span> <span class="o">/</span> <span class="n">total_model_weights</span>
+    <span class="n">model2_weight</span> <span class="o">=</span> <span class="n">second_model_weight</span> <span class="o">/</span> <span class="n">total_model_weights</span>
+    
+    <span class="k">return</span> <span class="n">model1_weight</span><span class="p">,</span> <span class="n">model2_weight</span>
+    
+<span class="c1">## Compare to posterior of just one model
+</span>
+<span class="k">def</span> <span class="nf">beta_binomial_posterior</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">beta_distribution</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">k</span><span class="p">,</span> <span class="n">b</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span><span class="p">)</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+
+<span class="c1"># Averaged posterior
+</span><span class="n">a1</span><span class="p">,</span> <span class="n">b1</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span>
+<span class="n">a2</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">posterior_pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">ys</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Averaged"</span><span class="p">)</span>
+
+<span class="c1"># Just one model's posterior
+</span><span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">beta_binomial_posterior</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">ys</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Single model 1"</span><span class="p">)</span>
+
+<span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">beta_binomial_posterior</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">ys</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Single model 2"</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"theta"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"density"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Model posteriors"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">m1_weight</span><span class="p">,</span> <span class="n">m2_weight</span> <span class="o">=</span> <span class="n">posterior_model_weights</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">m1_weight</span><span class="p">,</span> <span class="n">m2_weight</span><span class="p">]))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">ticks</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s">"Model 1"</span><span class="p">,</span> <span class="s">"Model 2"</span><span class="p">])</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"Weight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Model weights"</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Hoeting, Jennifer A., et al. “Bayesian model averaging: a tutorial.” Statistical science (1999): 382-401.</li>
+  <li>Bayesian model averaging: A systematic review and conceptual classification</li>
+  <li>Gronau, Quentin F., et al. “A tutorial on bridge sampling.” Journal of mathematical psychology 81 (2017): 80-97.</li>
+</ul>
+
+:ET

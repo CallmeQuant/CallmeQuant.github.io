@@ -1,0 +1,220 @@
+I"GX<p>Thompson sampling is a simple Bayesian approach to selecting actions in a multi-armed bandit setting.</p>
+
+<h2 id="multi-armed-bandits">Multi-armed bandits</h2>
+
+<p>A multi-armed bandit is a sequential decision making problem. The name originally refers to a row of slot machines in a casino, each one with an arm that’s ready to take your money.</p>
+
+<p>More precisely, in the multi-armed bandit setting, we have to choose an action at each timestep $t=1,2,\dots$. At each step, there are $K$ actions to choose from, $x_1, \dots, x_K$. After we choose an action $a_t \in {x_1, \dots, x_K}$, we receive a reward $r_t$. The goal is to maximize our reward over some (possibly infinite) time horizon:</p>
+
+\[\text{arg}\max_{a_1,a_2,\dots} \sum\limits_{t=1}^T r_t.\]
+
+<p>Often, a discount factor, $\gamma \in [0, 1]$, is included so that more temporally distant rewards aren’t as beneficial as ones immediately in the future. In this case, the optimization problem becomes</p>
+
+\[\text{arg}\max_{a_1,a_2,\dots} \sum\limits_{t=1}^T \gamma^t r_t.\]
+
+<p>Essentially, bandits are a special case of a Markov decision process (MDP), where the MDP only has one state. Recall that MDPs are made up of actions, rewards, and states (and a transition function describing probabilistically how an agent moves to different states). The agent in an MDP has the same goal as in a bandit setting: maximize reward. Bandits have been generalized to include state variables — often called “contextual bandits” — but we’ll focus on state-less bandits here.</p>
+
+<p>Typically, the rewards earned from each action aren’t constant. Rather, we assume each action has some associated distribution over rewards, and when we choose an action, a reward is randomly sampled from this distribution. Below, we consider the simple case of a Bernoulli distribution, but the strategies described generalize to arbitrary distributions.</p>
+
+<h2 id="bernoulli-bandits">Bernoulli bandits</h2>
+
+<p>Here, we’ll focus on the special case where the rewards are always either $0$ or $1$. Specifically, we’ll assume that arm $k$’s reward is a Bernoulli random variable with parameter $\theta_k$. This means that if we choose action $k$ at step $t$, the reward is distributed as</p>
+
+\[r_t^k \sim \text{Bern}(\theta_k),\]
+
+<p>with $r_t^k \in {0, 1}$. Recall that the Bernoulli PDF is</p>
+
+\[f(r; \theta) = \theta^r (1-\theta)^{1-r}.\]
+
+<p>Clearly, if we knew the true values for ${\theta_k}$ <strong>a priori</strong>, then trivially the best strategy would be to always choose the arm with the highest expected value,</p>
+
+\[a_t^\star = \text{arg}\max_k \theta_k, ~~~ \forall t.\]
+
+<p>However, we virtually never know the true parameters in real-world scenarios, so we have to infer them from experience.</p>
+
+<p>When $t=0$, we don’t know anything about the environment. Thus, for our first action, we can simply randomly select an arm, as they’re all exchangeable at this point.</p>
+
+<p>As we try more arms and observe more rewards, we can update our expectation for how much reward we’ll get for each arm.</p>
+
+<p>In this type of setting, there is a trade-off between exploitation and exploration. Exploitation refers to capitalizing on actions with known expected rewards. Exploration refers to trying new actions that we may know less about, but may have promise for even higher rewards.</p>
+
+<h2 id="maximum-likelihood-solution">Maximum likelihood solution</h2>
+
+<p>One strategy is to estimate $\widehat{\theta}_k$ at each timestep using its maximum likelihood estimate (MLE). Here, we initialize each parameter as $\theta_k = 0.5$ for all $k$. Then, at each time-step, we update each $\widehat{\theta}_k$ using its MLE (which is the sample average in this case):</p>
+
+\[\widehat{\theta}_k^t = \frac{1}{n_k} \sum\limits_{t : a_t = k} r_t,\]
+
+<p>where $n_k$ is the number of time-steps in which action $k$ was selected. Note that in practice, we only need to update the most recently-chosen arm’s parameter at each step.</p>
+
+<p>Using the MLEs, our strategy is then to take the arm with the highest current estimate,</p>
+
+\[a_t^\star = \text{arg}\max_k \{\widehat{\theta}_1^t, \dots, \widehat{\theta}_K^t\}.\]
+
+<p>The advantage of this strategy is that it’s simple and computationally feasible for many distributional assumptions.</p>
+
+<p>However, it’s sub-optimal and can lead to repeatedly choosing an arm whose expected reward is not the maximum among arms.</p>
+
+<p>To see this, consider a scenario in which there are just two arms $a_1, a_2$ with true expected returns $\theta_1=0.8$ and $\theta_2 = 0.9$. Suppose we randomly choose $a_1$ as our first action and we observe $r_1=1$. Then the MLEs are $\widehat{\theta}_1^2 = 1, \widehat{\theta}_2^2 = 0.5$, so clearly we’ll choose $a_1$ again in the second round. If this continues, and it remains true that $\widehat{\theta}_1 &gt; \widehat{\theta}_2$, then we’ll never choose $a_2$. However, this is sub-optimal because $a_2$ has a higher true expected reward.</p>
+
+<p>To run a quick numerical experiment to show this, we can use the code below. It simulates a trajectory of a two-armed Bernoulli bandit using the MLE approach.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+
+<span class="c1"># True parameters
+</span><span class="n">theta_true</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]</span>
+
+<span class="c1"># Runs one trajectory of the multi-armed bandit using MLE
+</span><span class="k">def</span> <span class="nf">run_one_trajectory_mle</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">save_trace</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    
+    <span class="c1"># Initialize estimates
+</span>    <span class="n">theta_hats</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="p">[[],</span> <span class="p">[]]</span>
+    <span class="k">if</span> <span class="n">save_trace</span><span class="p">:</span>
+        <span class="n">trace</span> <span class="o">=</span> <span class="p">[</span><span class="n">theta_hats</span><span class="p">.</span><span class="n">copy</span><span class="p">()]</span>
+    
+    <span class="c1"># Run trajectory
+</span>    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+        
+        <span class="c1"># Choose an arm
+</span>        <span class="k">if</span> <span class="n">theta_hats</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">theta_hats</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">theta_hats</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            
+        <span class="c1"># Pull the arm and observe reward
+</span>        <span class="n">reward</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">theta_true</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">rewards</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+        
+        <span class="c1"># Update estimate
+</span>        <span class="n">theta_hats</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta_hats</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">reward</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">save_trace</span><span class="p">:</span>
+            <span class="n">trace</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">theta_hats</span><span class="p">.</span><span class="n">copy</span><span class="p">())</span>
+    
+    <span class="k">if</span> <span class="n">save_trace</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">theta_hats</span><span class="p">,</span> <span class="n">trace</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">theta_hats</span>
+        
+<span class="c1"># Run a bunch of trajectories
+</span><span class="n">n_trajs</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">winners</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_trajs</span><span class="p">):</span>
+    <span class="n">theta_ests</span> <span class="o">=</span> <span class="n">run_one_trajectory_mle</span><span class="p">()</span>
+    <span class="n">winner</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">theta_ests</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">winners</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">winner</span><span class="p">)</span>
+
+<span class="n">sns</span><span class="p">.</span><span class="n">countplot</span><span class="p">(</span><span class="n">winners</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"Arm"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"Win count"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Now, we can look at which arm had the highest $\widehat{\theta}$ at the end of the trajectory.</p>
+
+<p align="center">
+  <img src="/assets/bandit_win_bar.png" />
+</p>
+
+<p>Even though arm $2$ is the true best choice, it only truly “wins” over arm $1$ a slight majority of the time.</p>
+
+<p>We can also plot the estimates $\widehat{\theta}_1, \widehat{\theta}_2$ across two example trajectories. We can see that — even though the true expected reward is approached for one of the arms — the eventual winning arm depends heavily on the random behavior early on in the trajectory.</p>
+
+<p align="center">
+  <img src="/assets/bandit_trajectory_example_mle.png" />
+</p>
+
+<p>As we can see, the MLE approach is greedy — always selecting the arm with the highest current estimate of reward — and doesn’t allow for exploration. Next we’ll see that this issue is remedied by Thompson sampling.</p>
+
+<h2 id="bayesian-solution-thompson-sampling">Bayesian solution (Thompson sampling)</h2>
+
+<p>To alleviate these issues, another strategy would be to take a Bayesian approach to estimating the expected reward of each action. This allows us to mix in some uncertainty about the parameter estimates, which avoids getting stuck in a local optimum with greedy behavior.</p>
+
+<p>Suppose we place a conjugate Beta prior on each Bernoulli parameter. For each arm, our model is now</p>
+
+<p>\begin{align} r_t^k &amp;\sim \text{Bern}(\theta_k) \\ \theta_k &amp;\sim \text{Beta}(\alpha, \beta). \end{align}</p>
+
+<p>Now, given some observed rewards for arm $k$, ${r_t^k}$, we can compute the posterior for $\theta_k$. Let $R^k_t = \sum\limits_{t : a_t = k} r_t$ be the total cumulative reward earned from arm $k$ up until time $t$, and let $n^k_t$ be the cumulative number of times arm $k$ was chosen. Then the posterior at time $t$ is</p>
+
+\[\theta_k | R^k_t, n^k_t \sim \text{Beta}\left(\alpha + R^k_t, \beta + n_t^k - R^k_t\right).\]
+
+<p>By updating the posterior at each step, we now have a distribution over each Bernoulli parameter. How do we then select an action using these distributions?</p>
+
+<p>One idea would be to compute the mode of each distribution and choose the arm that has the highest mode. This would be equivalent to maximum a posteriori (MAP) estimation of the expected rewards. However, this would have the same issue as the MLE: we could get stuck in a local optimum.</p>
+
+<p>A more flexible solution would be to use the posteriors as a means of exploration. Suppose we draw a random sample from each posterior at each time step, and take the arg-maximum as our selected action. This strategy is known as <em>Thompson sampling</em>, named after William R. Thompson.</p>
+
+<p>Specifically, the algorithm works as follows. Let $\Pi_t^k$ be the posterior distribution for $\theta_k$ at time $t$. (This is just the prior when $t=0$.)</p>
+
+<ol>
+  <li>Sample $\widetilde{r}_t^k \sim \Pi_t^k$ for $k \in [K]$.</li>
+  <li>Take action $a_i$ where $i = \text{arg}\max_k r_t^k$, and observe reward $r_t^k$.</li>
+  <li>Update the posterior $\Pi_t^i$ with the new data point.</li>
+</ol>
+
+<p>Below, we run another numerical experiment using Thompson sampling. This is again a two-armed Bernoulli bandit. Here is the code adapted for Thompson sampling:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">run_one_trajectory_thompson</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">save_trace</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    
+    <span class="c1"># Initialize estimates
+</span>    <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="p">[[],</span> <span class="p">[]]</span>
+    <span class="k">if</span> <span class="n">save_trace</span><span class="p">:</span>
+        <span class="n">trace_alpha</span> <span class="o">=</span> <span class="p">[</span><span class="n">alpha</span><span class="p">.</span><span class="n">copy</span><span class="p">()]</span>
+        <span class="n">trace_beta</span> <span class="o">=</span> <span class="p">[</span><span class="n">beta</span><span class="p">.</span><span class="n">copy</span><span class="p">()]</span>
+    
+    <span class="c1"># Run trajectory
+</span>    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+        
+        <span class="c1"># Choose an arm
+</span>        <span class="n">sample1</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">beta</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">alpha</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="o">=</span><span class="n">beta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">sample2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">beta</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">alpha</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">b</span><span class="o">=</span><span class="n">beta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">sample1</span><span class="p">,</span> <span class="n">sample2</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+            
+        <span class="c1"># Pull the arm and observe reward
+</span>        <span class="n">reward</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">theta_true</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">rewards</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+        
+        <span class="c1"># Update estimate
+</span>        <span class="n">alpha</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">reward</span>
+        <span class="n">beta</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">beta</span><span class="p">[</span><span class="n">action</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">reward</span>
+        
+        <span class="k">if</span> <span class="n">save_trace</span><span class="p">:</span>
+            <span class="n">trace_alpha</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">alpha</span><span class="p">.</span><span class="n">copy</span><span class="p">())</span>
+            <span class="n">trace_beta</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">beta</span><span class="p">.</span><span class="n">copy</span><span class="p">())</span>
+    
+    <span class="k">if</span> <span class="n">save_trace</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">trace_alpha</span><span class="p">,</span> <span class="n">trace_beta</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span>
+</code></pre></div></div>
+
+<p>We can again check which arm “wins” most of the time. Here, I plot the mean of the posterior distribution for each arm, which is given by the mean of a beta distribution:</p>
+
+\[\frac{\alpha}{\alpha + \beta}.\]
+
+<p align="center">
+  <img src="/assets/bandit_win_bar_thompson.png" />
+</p>
+
+<p>Clearly, using Thompson sampling, arm $2$ (the truly best arm) becomes the eventual winner the vast majority of the time.</p>
+
+<p>We can also examine the evolution of the posterior mean across an example trajectory:</p>
+
+<p align="center">
+  <img src="/assets/bandit_trajectory_example_thompson.png" />
+</p>
+
+<p>Here, both arms’ estimates approach their true parameter values.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Thompson sampling is attractive due to its simplicity and reliability. It is tractable as long as the posterior can be computed or approximated. It also provides a principled way to balance exploration and exploitation. There are deeper connections between Thompson sampling and other bandit strategies — such as upper confidence bound (UCB) methods — that I hope to explore in other posts.</p>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Russo, Daniel, et al. “A tutorial on thompson sampling.” arXiv preprint arXiv:1707.02038 (2017).</li>
+</ul>
+:ET

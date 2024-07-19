@@ -1,0 +1,171 @@
+I"�K<p>Bayesian models provide a principled way to make inferences about underlying parameters. But under what conditions do those inferences converge to the truth?</p>
+
+<h2 id="frequentist-consistency">Frequentist consistency</h2>
+
+<p>The consistency of estimators is usually discussed in the context of classical frequentist statistics. In that regime, a consistent estimator is one that converges in probablility to the true parameter as the number of data points approaches infinity. More precisely, an estimator $\widehat{\theta}_n$ is consistent if</p>
+
+\[\widehat{\theta}_n \to_p \theta_0,\]
+
+<p>where $\theta_0$ is the true parameter value.</p>
+
+<h2 id="posterior-consistency">Posterior consistency</h2>
+
+<p>The idea of consistency can also be extended to the Bayesian world. Here, we consider inferences for $\theta$ made under the posterior distribution for some model, $p(\theta | X)$. Since the estimator is no longer a point estimate, but rather a distribution, we need a new definition of “consistency” in this setting.</p>
+
+<p>Roughly, a posterior is considered consistent if it eventually concentrates as a point mass around the true value $\theta_0$. Furthermore, for consistent estimators, we’re often interested in “how fast” this happens (or the so-called “rate of convergence”).</p>
+
+<p>Consider the following generic Bayesian model for data $x_1, \dots, x_n$ with parameter (or parameter vector) $\theta \in \Theta$:</p>
+
+<p>\begin{align} x_i &amp;\sim p(x | \theta) \\ \theta &amp;\sim \pi(\theta). \end{align}</p>
+
+<p>Let’s say the true parameter that generated the data is $\theta_0 \in \Theta$.</p>
+
+<p>When we observe $n &gt; 0$ data points $X_n = {x_1, \dots, x_n}$, we can compute the posterior, denoted $\Pi_n$ here:</p>
+
+\[\Pi_n := p(\theta | X_n) = \frac{p(X_n | \theta) p(\theta)}{\int_\Theta p(X_n | \theta) p(\theta) d\theta}.\]
+
+<p>It’s now reasonable to ask how “close” $\Pi_n$ gets to the true parameter value $\theta_0$, especially as $n \to \infty$.</p>
+
+<p>Similar to the frequentist setting, we typically talk about a “sequence” of posteriors ${\Pi_n}$, each one corresponding to a particular value of $n$. As $n$ increases, we see more data, and ideally the posterior converges to the truth, which is a point mass $\delta_{\theta_0}$.</p>
+
+<p>For example, consider the following simple Gaussian model with unknown mean $\mu$ and known variance $\sigma^2=1$:</p>
+
+<p>\begin{align} x_i \sim \mathcal{N}(\mu, 1) \\ \mu \sim \mathcal{N}(0, 1). \end{align}</p>
+
+<p>The posterior for $\mu$, $p(\mu | X)$ has a closed form, and we can consider how this posterior changes for $n=1, 2, \dots$. Below, I plotted the posterior for increasing values of $n$, with darker colors representing higher values of $n$. Here, I generated the data with $\mu=1$.</p>
+
+<p align="center">
+  <img src="/assets/gaussian_contraction.png" />
+</p>
+
+<p>We can see that, as $n$ increases, the posterior starts to concentrate around the true value of $\mu$, which is $1$ in this case. Posterior consistency is a concept that formalizes this idea of concentrating around the true value. Below, we define and discuss posterior consistency two ways: in terms of distance, and in terms of neighborhoods.</p>
+
+<h3 id="consistency-in-terms-of-distance">Consistency in terms of distance</h3>
+
+<p>Roughly, the first characterization of consistency says that the posterior should get closer and closer the the true parameter value as we see more data. To more precisely defined closeness, we need to define a metric $d$ that measures the distance between distributions. A common one is the <a href="https://www.wikiwand.com/en/Wasserstein_metric">Wasserstein distance</a>. Then, we can define consistency more formally as follows.</p>
+
+<blockquote>
+  <p>${\Pi_n}$ is consistent for $\theta_0$ if $d(\Pi_n, \delta_{\theta_0}) \to 0 \text{ almost surely.}$</p>
+</blockquote>
+
+<p>Here, $\delta_{\theta_0}$ is a point mass at $\theta_0$. Intuitively, this definition says that a consistent posterior should become indistinguishable from a point mass at the true parameter as $n$ increases.</p>
+
+<h3 id="consistency-in-terms-of-neighborhoods">Consistency in terms of neighborhoods</h3>
+
+<p>Another useful and equivalent way to define posterior consistency is in terms of “neighborhoods” around $\delta_{\theta_0}$. Specifically, we define a “weak” $\epsilon$-neighborhood $U_\epsilon(\theta_0)$ around $\theta_0$ as</p>
+
+\[U_{\epsilon, w}(\theta_0) = \{\theta \in \Theta : |\smallint f(\theta) - \smallint f(\theta_0)| &lt; \epsilon\}.\]
+
+<p>Similarly, a “strong” $\epsilon$-neighborhood around $\theta_0$ is</p>
+
+\[U_{\epsilon, s}(\theta_0) = \{\theta \in \Theta : \|\theta - \theta_0\|_1 &lt; \epsilon\}.\]
+
+<p>Using neighborhoods, we have a second characterization of consistency:</p>
+
+<blockquote>
+  <p>$\Pi_n$ is consistent if and only if for every open neighborhood $U$ of $\theta_0$, $\Pi_n(U^c | X_n) \to 0 \text{ almost surely.}$</p>
+</blockquote>
+
+<p>Intuitively, this means that a consistent posterior places no mass outside of the truth. In the definition above, $\Pi_n$ can either obey <em>strong</em> or <em>weak</em> consistency depending on the type of neighborhood.</p>
+
+<h2 id="schwartzs-theorem">Schwartz’s theorem</h2>
+
+<p>In 1965, Lorraine Schwartz proved a very general theorem giving sufficient conditions under which a posterior is consistent.</p>
+
+<p>To do this, he used the idea of “test functions”, which are closely tied to decision theory. In this setting, a test function $\Phi_n(X_n)$ is a function of the data that maps to $[0, 1]$.</p>
+
+<p>Now, consider two types of worlds: one in which the data was generated by $\theta_0$, and many others in which the data wasn’t generated by $\theta_0$. Intuitively, if a posterior is consistent, we should be able to construct test functions that can discriminate between these two scenarios as $n \to \infty$. In particular, if $\theta_0$ is the true parameter, we should be able to <em>classify</em> or <em>decide</em> whether some data $X_n$ was generated from $\theta_0$ or not.</p>
+
+<p>We can view this in terms of a hypothesis testing framework as well. Consider the following null and alternative hypotheses:</p>
+
+\[H_0: \theta = \theta_0, ~~~~~ H_1: \theta \neq \theta_0.\]
+
+<p>Then we want to be able to construct a decision rule such that the two types of error are low: $\mathbb{P}[\text{reject }H_0 | H_0 \text{ is true}]$ and $\mathbb{P}[\text{accept }H_0 | H_1 \text{ is true}]$.</p>
+
+<p>Since the output of our test functions $\Phi_n$ is in $[0, 1]$, let’s think about its output as the probability that we reject $H_0$ (i.e., $\Phi_n$ gives us a randomized decision rule). Then clearly we want $\Phi_n(X_n)$ to be low when $\theta = \theta_0$ and high when $\theta \neq \theta_0$. We write this in terms of expectations:</p>
+
+<ul>
+  <li>Want to be close to $0$: $\mathbb{E}_{\theta_0}[\Phi_n(X_n)]$</li>
+  <li>Want to be close to $1$: $\mathbb{E}_{\theta_0^c}[\Phi_n(X_n)]$ (equivalently, want $\mathbb{E}_{\theta_0^c}[1 - \Phi_n(X_n)]$ to be close to $0$)</li>
+</ul>
+
+<p>At this point, we almost have all the ingredients for Schwartz’s theorem. The last concept to define is KL support. We say that $\theta_0$ belongs to the KL support of a prior $\pi$ if for every $\epsilon &gt; 0, \pi({ \theta : d_{KL}(\theta_0, \theta) &lt; \epsilon }) &gt; 0$. Roughly, $\theta_0$ is in the KL support of $\pi$ if there’s any prior mass at $\theta_0$ (a fairly loose condition, which is nice).</p>
+
+<p>At this point, we’re ready to state Schwartz’s theorem:</p>
+
+<blockquote>
+  <p><strong>Theorem.</strong> If $\theta_0$ belongs to the KL support of $\pi$, and $U_n \subset \mathcal{F}$ are neighborhoods of $\theta_0$ such that there are test functions $\Phi_n, n=1,2,\dots$ satisfying</p>
+
+\[\mathbb{E}_{\theta_0}[\Phi_n(X_n)] \leq Be^{-bn} \text{ and } \sup_{\theta \in U_n^c} \mathbb{E}_\theta[1 - \Phi_n(X_n)] \leq B e^{-bn}\]
+
+  <p>for some constants $b, B &gt; 0$, then $\Pi_n$ is consistent.</p>
+</blockquote>
+
+<p>Intuitively, this result says that if $\theta_0$ is in the support of the prior, and we can classify $\theta_0$ vs. $\theta_0^c$ as we get more data, then the posterior is consistent. The particular bound of $Be^{-bn}$ is typically known as “exponential consistency” for the test $\Phi_n$.</p>
+
+<p>In the theorem, we can think of the first condition as the probability of incorrectly rejecting the null hypothesis (deciding $\theta = \theta_0$ when $\theta \neq \theta_0$), and the second condition as the probability of incorrectly accepting the null hypothesis (deciding $\theta \neq \theta_0$ when $\theta = \theta_0$).</p>
+
+<h2 id="code">Code</h2>
+
+<p>Below is the code for generating the plot of posterior distributions for the Gaussian model in the first section above.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="k">def</span> <span class="nf">get_gaussian_mean_posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">mu_0</span><span class="p">,</span> <span class="n">sigma2_0</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Compute MLE
+</span>    <span class="n">mu_mle</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    
+    <span class="c1"># Get posterior mean as weighted combination of prior and MLE
+</span>    <span class="n">prior_weight</span> <span class="o">=</span> <span class="n">sigma2</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">sigma2_0</span> <span class="o">+</span> <span class="n">sigma2</span><span class="p">)</span>
+    <span class="n">mle_weight</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">sigma2_0</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">sigma2_0</span> <span class="o">+</span> <span class="n">sigma2</span><span class="p">)</span>
+    <span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">prior_weight</span> <span class="o">*</span> <span class="n">mu_0</span> <span class="o">+</span> <span class="n">mle_weight</span> <span class="o">*</span> <span class="n">mu_mle</span>
+    
+    <span class="c1"># Get posterior variance
+</span>    <span class="n">posterior_precision</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sigma2_0</span> <span class="o">+</span> <span class="n">n</span> <span class="o">/</span> <span class="n">sigma2</span>
+    <span class="n">posterior_var</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">posterior_precision</span>
+    
+    <span class="k">return</span> <span class="n">posterior_mean</span><span class="p">,</span> <span class="n">posterior_var</span>
+
+<span class="k">def</span> <span class="nf">plot_gaussian_pdf</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">""</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">"black"</span><span class="p">):</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">xlims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlims</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">pdf_vals</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+    <span class="n">ax</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">pdf_vals</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+    
+<span class="c1"># Set up true parameters
+</span><span class="n">n_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">mu_true</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">mu_0</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sigma2_0</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1"># Generate data one-by-one and plot posterior with each incoming sample
+</span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu_true</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">colormap</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s">"YlOrRd"</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">jj</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">n_list</span><span class="p">):</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_list</span><span class="p">),</span> <span class="n">jj</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">posterior_mean</span><span class="p">,</span> <span class="n">posterior_var</span> <span class="o">=</span> <span class="n">get_gaussian_mean_posterior</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">mu_0</span><span class="p">,</span> <span class="n">sigma2_0</span><span class="p">)</span>
+        <span class="n">plot_gaussian_pdf</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">posterior_mean</span><span class="p">,</span> <span class="n">posterior_var</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"n={}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">colormap</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mf">255.</span><span class="o">/</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))))</span>
+
+        <span class="n">plt</span><span class="p">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">mu_true</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">"black"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">"--"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"mu"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"density"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"n = {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Prof. Surya Tapas Tokdar’s <a href="http://www2.stat.duke.edu/~st118/sta941/Asymp.pdf">notes</a> on Bayesian consistency</li>
+  <li>Prof. Debdeep Pati and Prof. Anirban Bhattacharya’s <a href="https://www.stat.tamu.edu/~debdeep/Intro-cons-Bayes.pdf">notes</a> on posterior consistency and posterior convergence rates</li>
+  <li>Schwartz, Lorraine. “On bayes procedures.” Zeitschrift für Wahrscheinlichkeitstheorie und verwandte Gebiete 4.1 (1965): 10-26.</li>
+</ul>
+:ET

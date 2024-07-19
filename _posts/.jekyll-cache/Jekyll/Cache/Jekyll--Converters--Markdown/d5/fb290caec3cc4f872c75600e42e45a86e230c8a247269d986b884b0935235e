@@ -1,0 +1,97 @@
+I"g<p>In this post, we’ll look at a simple example of performing transformations on random variables. Specifically, we’ll explore what happens when two independent Gaussian-distributed random variables are transformed to polar coordinates.</p>
+
+<h2 id="setup">Setup</h2>
+
+<p>Consider two random variables $X$ and $Y$ that are independent and identically distributed from a zero-mean Gaussian with variance of $1$.</p>
+
+\[X, Y \stackrel{iid}{\sim} \mathcal{N}(0, 1)\]
+
+<p>We can easily visualize their joint distribution:</p>
+
+<p><img src="/assets/2d_gaussian.png" alt="2D isotropic Gaussian" /></p>
+
+<p>Now, consider the transformation to two new random variables $R$, $\Theta$ such that</p>
+
+\[R = \sqrt{X^2 + Y^2}\]
+
+\[\Theta = \tan^{-1}\big(\frac{Y}{X}\big)\]
+
+<p>Also recall that we can transform from $R$ and $\Theta$ to $X$ and $Y$ by the following relationship:</p>
+
+\[X = r \cos \theta \quad \textrm{and} \quad Y = r \sin \theta.\]
+
+<h2 id="computing-the-transformation">Computing the transformation</h2>
+
+<p>Now, in order to compute the joint and marginal distributions of $R$ and $\Theta$, we can use the Jacobian transformation technique. Recall that the Jacobian transformation method defines the relationship between sets of random variables that have a one-to-one mapping between them. In our case, since we know the densities of $X$ and $Y$, we can write the joint density of $R$ and $\Theta$ as</p>
+
+\[f_{R, \Theta}(r, \theta) = f_{X, Y}(g_1^{-1}(r), g_2^{-1}(\theta))|J|\]
+
+<p>where $g_1^{-1}(r) = r \cos \theta$, $g_2^{-1}(\theta) = r \sin \theta$, and $\lvert J\rvert$ is the Jacobian of the transformation. That is:</p>
+
+<p>\begin{align}\lvert J\rvert &amp;= \begin{vmatrix} \frac{\delta x}{\delta r} &amp; \frac{\delta y}{\delta r} \\ \frac{\delta x}{\delta \theta} &amp; \frac{\delta y}{\delta \theta} \end{vmatrix}\end{align}</p>
+
+<p>First, let’s compute the Jacobian of the transformation:</p>
+
+<p>\begin{align}\det J &amp;= \begin{vmatrix} \frac{\delta x}{\delta r} &amp; \frac{\delta y}{\delta r} \\ \frac{\delta x}{\delta \theta} &amp; \frac{\delta y}{\delta \theta} \end{vmatrix} \\ &amp;= \begin{vmatrix} \cos \theta &amp; \sin \theta \\ -r\sin\theta &amp; r\cos\theta \end{vmatrix} \\ &amp;= r\cos^2\theta + r\sin^2\theta \\ &amp;= r \end{align}</p>
+
+<p>Also, because $X$ and $Y$ are independent, we can simply multiply their individual densities to get their joint density:</p>
+
+\[f_{X, Y}(x, y) = \frac{1}{2\pi} e^{-\frac{x^2 + y^2}{2}}.\]
+
+<p>Writing out the full density of $R$ and $\Theta$, we have</p>
+
+<p>\begin{align}f_{R, \Theta}(r, \theta) &amp;=  f_{X, Y}(g_1^{-1}(r), g_2^{-1}(\theta))\lvert J\rvert \\ &amp;= \frac{1}{2\pi} e^{-\frac{r^2\cos^2\theta * r^2\sin^2\theta}{2}}r \\ &amp;= \frac{1}{2\pi} e^{\frac{r^2}{2}}r\end{align}</p>
+
+<p>where the $r$ at the end comes from the Jacobian computed above. Notice that $\theta$ doesn’t appear in this joint distribution, meaning that it’s constant in $\theta$, and $\theta$ is uniformly distributed.</p>
+
+<p>To compute the marginal distributions for $R$ and $\Theta$, we can integrate out $\Theta$ and $R$, respectively.</p>
+
+\[f_R(r) = \int_0^{2\pi} f_{R, \Theta}(r, \theta) d\theta = re^{-\frac{r^2}{2}}\]
+
+\[f_\Theta(\theta) = \int_0^{\infty} f_{R, \Theta}(r, \theta) dr = \frac{1}{2\pi}\]
+
+<p>Notice that $f_{R, \Theta}(r, \theta) = f_R(r)f_\Theta(\theta)$, indicating that $R$ and $\Theta$ are independent.</p>
+
+<p>The distribution $f_R(r)$ above is known as a <strong>Rayleigh distribution</strong>, a common density whose practical usefulness is discussed later. It’s a special case of the chi distribution, and also has close ties to the chi-squared and gamma distributions.</p>
+
+<h2 id="simulations">Simulations</h2>
+
+<p>Taking a step back, let’s see what this means. We started with two Gaussian-distributed random variables $X$ and $Y$. One way to think about a sample from $X$ and $Y$ is as a vector in $\mathbb{R}^2$ (i.e. draw an x-value, draw a y-value, and the $(x, y)$ pair will be the vector). Then, by computing the distributions of two transformations $R$ and $\Theta$, we were essentially computing the distribution of the lengths and angles of the vectors drawn from the 2D Gaussian, respectively.</p>
+
+<p>Let’s take a look at the distribution of $R$:</p>
+
+<p><img src="/assets/rayleigh_dist.png" alt="Rayleigh" /></p>
+
+<p>Loosely speaking, its shape implies that most of the vectors drawn from $X, Y$ will have length around $1$.</p>
+
+<p>Let’s run a simple simulation to verify this. We start by drawing samples using the following procedure:</p>
+
+<ol>
+  <li>Draw $x$ and $y$ from $\mathcal{N}(0, 1)$ independently.</li>
+  <li>Compute $r = \sqrt{x^2 + y^2}$.</li>
+</ol>
+
+<p>We can visualize these samples in vector form (left) and as a collection of concentric circles whose radii are equal to to length of the vector (right):</p>
+
+<p><img src="/assets/radius_samples.png" alt="vector_samples" /></p>
+
+<p>Now, let’s look at the distribution of these samples more directly. Below, we show a histogram of the $r$ samples for a varying number of samples. We also show the theoretical distribution as derived above. As expected, as more samples are drawn, the empirical distribution approaches the theoretical one.</p>
+
+<p><img src="/assets/rayleigh_samples.png" alt="Rayleigh" /></p>
+
+<h2 id="applications-of-the-rayleigh-distribution">Applications of the Rayleigh distribution</h2>
+
+<p>The Rayleigh distribution is useful for modeling lots of interesting processes. For example, imagine a wireless signal propagating through midtown Manhattan. On its path, the signal will hit lots of different solid objects (buildings, cars, etc.) that will change its direction and magnitude. Then the final path of the signal is just a sum of all of these direction changes. If there are enough of these barriers (as in Manhattan), the central limit theorem will kick in, and it becomes reasonable to model each direction ($x$ and $y$) as an independent Gaussian. Thus, the results we computed above would hold, and the final amplitude of the signal will be Rayleigh-distributed.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We worked through a simple example of transforming random variables, which resulted in the Rayleigh distribution.</p>
+
+<h3 id="references">References</h3>
+
+<ol>
+  <li>Although this example can be found in many places, I learned of it from Professor Krishna Jagannathan’s online lectures for his course <a href="https://www.youtube.com/playlist?list=PLVhKOwOM3oudtpQG7jf6WrS1GqxTskXsP">Probability Foundation for Electrical Engineers</a>. I closely follow his example.</li>
+  <li>I also used the Wikipedia entry for the <a href="https://en.wikipedia.org/wiki/Rayleigh_distribution">Rayleigh disribution</a>.</li>
+</ol>
+
+:ET

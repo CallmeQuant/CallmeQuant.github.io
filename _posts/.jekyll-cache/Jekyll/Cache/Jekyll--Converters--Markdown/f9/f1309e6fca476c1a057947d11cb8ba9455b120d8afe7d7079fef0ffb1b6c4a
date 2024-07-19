@@ -1,0 +1,186 @@
+I"�b<p>In this post, we’ll review a family of fundamental classification algorithms: linear and quadratic discriminant analysis.</p>
+
+<h2 id="disciminative-classifiers">Disciminative classifiers</h2>
+
+<p>Consider a classification setting in which we’re given data $\mathbf{X}$ and labels $\mathbf{Y}$ that come from $K$ disjoint categories, and we’re tasked with finding the best way to separate the data into their respective classes based on the data $\mathbf{X}$. One way to approach this problem is to estimate a conditional probability for each class. Then, when we want to predict the class of a new point, we can choose the class that has the maximum probability given the data point. The conditional probability for data point $i$ belonging to class $k$ is denoted</p>
+
+\[\mathbb{P}[Y_i = k | X_i].\]
+
+<p>By a simple application of Bayes rule, we have</p>
+
+<p>\begin{align} \mathbb{P}[Y_i = k | X_i] &amp;= \frac{\mathbb{P}[X_i | Y_i = k] \mathbb{P}[Y_i = k]}{\mathbb{P}[X_i]} \\ &amp;= \frac{\mathbb{P}[X_i | Y_i = k] \mathbb{P}[Y_i = k]}{\sum\limits_{k=1}^K \mathbb{P}[X_i | Y_i = k] \mathbb{P}[Y_i = k]} \\ &amp;\propto \mathbb{P}[X_i | Y_i = k] \mathbb{P}[Y_i = k] \end{align}</p>
+
+<p>Here, $\mathbb{P}[X_i | Y_i = k]$ is the likelihood, $\mathbb{P}[Y_i = k]$ is the prior probability of a point belonging to class $k$, and $\mathbb{P}[X_i]$ is the evidence.</p>
+
+<p>If we know the likelihood and the prior upfront (or we can estimate them), then we can classify points with the decision rule $D$:</p>
+
+\[D(X_i) = \text{arg}\max_k \mathbb{P}[X_i | Y_i = k].\]
+
+<h2 id="quadratic-discriminant-analysis">Quadratic discriminant analysis</h2>
+
+<p>Consider the case where we assume the likelihood to be Gaussian:</p>
+
+\[X_i | Y_i = k \sim \mathcal{N}(\mu_k, \Sigma_k).\]
+
+<p>Recall that the Gaussian PDF is</p>
+
+\[f_k(x) = \frac{1}{\sqrt{2 \pi |\Sigma_k|}} \exp\left\{ -\frac12 (x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k) \right\}.\]
+
+<p>Denote the prior for class $k$ as $\pi_k = \mathbb{P}[Y_i = k]$. Then the conditional probability becomes</p>
+
+\[\mathbb{P}[Y_i = k | X_i] \propto \frac{1}{\sqrt{2 \pi |\Sigma_k|}} \exp\left\{ -\frac12 (x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k) \right\} \pi_k.\]
+
+<p>Taking the $\log$, we have</p>
+
+\[\log \mathbb{P}[Y_i = k | X_i] \propto -\frac12 \log \left( 2 \pi |\Sigma_k|\right) - \frac12 (x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k) + \log \pi_k.\]
+
+<p>We can then apply the decision rule $\text{arg}\max_k \mathbb{P}[X_i | Y_i = k]$. Notice that the only term that depends on $x$ is $\frac12 (x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k)$. Thus, we can see that maximizing this decision criterion is is essentially finding the minimum distance between $X_i$ and each of the mean vectors $\mu_1, \dots, \mu_n$. However, this squared distance is scaled by the inverse covariance $\Sigma_k^{-1}$; this is called the Mahalanobis distance.</p>
+
+<p>Also, notice that the objective $\frac12 (x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k)$ is quadratic in $x$, hence the name Quadratic Discriminant Analysis.</p>
+
+<h2 id="linear-discriminant-analysis">Linear discriminant analysis</h2>
+
+<p>If we assume that all classes have a common covariance matrix $\Sigma_k = \Sigma$, then the “distance” term becomes</p>
+
+<p>\begin{align} \frac12 (x - \mu_k)^\top \Sigma_k^{-1}(x - \mu_k) &amp;= \frac12 (x - \mu_k)^\top \Sigma^{-1}(x - \mu_k) \\ &amp;= x^\top \Sigma^{-1} x - 2x^\top \Sigma^{-1} \mu_k + \mu_k^\top \Sigma^{-1} \mu_k. \end{align}</p>
+
+<p>Notice that the term $x^\top \Sigma^{-1} x$ will be the same for all classes, and the term $\mu_k^\top \Sigma^{-1} \mu_k$ will be the same for all data points. Thus, the only term that affects the decision criterion in this case is $2x^\top \Sigma^{-1} \mu_k$. This is linear in $x$, thus the name “linear Discriminant analysis”.</p>
+
+<p>To more explicitly define the linear function that separates the classes, consider the situation where $K = 2$. Observe that we will decide to classify a point into class $1$ if the following inequality holds:</p>
+
+<p>\begin{align} \log \pi_1 - &amp;\frac12 \log |\Sigma| - \frac12 (x - \mu_1)^\top \Sigma^{-1} (x - \mu_1) \\ &amp;&gt; \log \pi_2 - \frac12 \log |\Sigma| - \frac12 (x - \mu_2)^\top \Sigma^{-1} (x - \mu_2). \\ \end{align}</p>
+
+<p>Otherwise, we categorize it as belonging to class 2.</p>
+
+<p>Cancelling terms and doing some simple algebra (shown in detail here), we have</p>
+
+<p>\begin{align} \log \pi_1 - \frac12 (x - \mu_1)^\top \Sigma^{-1} (x - \mu_1) &amp;&gt; \log \pi_2 - \frac12 (x - \mu_2)^\top \Sigma^{-1} (x - \mu_2) \\ - \frac12 (x - \mu_1)^\top \Sigma^{-1} (x - \mu_1) + \frac12 (x - \mu_2)^\top \Sigma^{-1} (x - \mu_2) &amp;&gt; \log \pi_2 - \log \pi_1  \\ \frac12 x^\top \Sigma^{-1} x + x^\top \Sigma^{-1} \mu_1 - \frac12 \mu_1^\top \Sigma^{-1} \mu_1 + \frac12 x^\top \Sigma^{-1} x - x^\top \Sigma^{-1} \mu_2 + \frac12 \mu_2^\top \Sigma^{-1} \mu_2 &amp;&gt; \log \pi_2 - \log \pi_1  \\ x^\top \Sigma^{-1} \mu_1 - x^\top \Sigma^{-1} \mu_2 &amp;&gt; \log \pi_2 - \log \pi_1 + \frac12 \mu_1^\top \Sigma^{-1} \mu_1 - \frac12 \mu_2^\top \Sigma^{-1} \mu_2  \\ x^\top \Sigma^{-1} (\mu_1 - \mu_2) &amp;&gt; \log \pi_2 - \log \pi_1 + \frac12 \mu_1^\top \Sigma^{-1} \mu_1 - \frac12 \mu_2^\top \Sigma^{-1} \mu_2  \\ \end{align}</p>
+
+<p>In other words, the two classes are optimally divided by a hyperplane defined by the equation</p>
+
+\[x^\top \Sigma^{-1} (\mu_1 - \mu_2) + \log \frac{\pi_1}{\pi_2} - \frac12 \mu_1^\top \Sigma^{-1} \mu_1 + \frac12 \mu_2^\top \Sigma^{-1} \mu_2.\]
+
+<p>Notice that, in terms of $x$, this is a linear function, where $x$ is weighted by the term $ \Sigma^{-1} (\mu_1 - \mu_2)$.</p>
+
+<p>To estimate these parameters from data, we can take the most straightforward estimates:</p>
+
+\[\hat{\pi}_1 = \frac{n_k}{N}\]
+
+\[\hat{\mu}_k = \frac{1}{n_k} \sum\limits_{\{i : y_i = k\}} X_i\]
+
+\[\hat{\Sigma}_k = \frac{1}{n_k - 1} \sum\limits_{\{i : y_i = k\}} (X_i - \hat{\mu}_k) (X_i - \hat{\mu}_k)^\top\]
+
+<h2 id="lda-in-python">LDA in Python</h2>
+
+<p>Putting this all together, LDA has a fairly straightforward implementation. Here’s mine, written in Python.</p>
+
+<p>First, let’s generate some synthetic data:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="c1"># Generate data
+</span><span class="n">mu1</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">mu2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">cov</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+<span class="n">n1</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">n2</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">n1</span> <span class="o">+</span> <span class="n">n2</span>
+<span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mu1</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n1</span><span class="p">)</span>
+<span class="n">x2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mu2</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n2</span><span class="p">)])</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/lda_data.png" alt="lda_data" /></p>
+
+<p>Now, we can estimate the priors, means, and covariances.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">pi_hat_1</span> <span class="o">=</span> <span class="n">n1</span> <span class="o">/</span> <span class="n">n</span>
+<span class="n">pi_hat_2</span> <span class="o">=</span> <span class="n">n2</span> <span class="o">/</span> <span class="n">n</span>
+
+<span class="n">mu_hat_1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">mu_hat_2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">n2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">cov_hat_1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">n1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">((</span><span class="n">x1</span> <span class="o">-</span> <span class="n">mu_hat_1</span><span class="p">).</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">mu_hat_1</span><span class="p">))</span>
+<span class="n">cov_hat_2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">n2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">((</span><span class="n">x2</span> <span class="o">-</span> <span class="n">mu_hat_2</span><span class="p">).</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">mu_hat_2</span><span class="p">))</span>
+<span class="n">cov_hat</span> <span class="o">=</span> <span class="p">(</span><span class="n">cov_hat_1</span> <span class="o">+</span> <span class="n">cov_hat_2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>Let’s also define the log-likelihood function (to be evaluated at a single point).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">LL</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">prior</span><span class="p">):</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mu</span>
+    <span class="n">cov_inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="n">cov_det</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">det</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">cov_det</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">dist</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">),</span> <span class="n">dist</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Now, let’s plot this log-likelihood for class 1 for a grid of points.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">point_grid</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mgrid</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:</span><span class="mf">10.1</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">:</span><span class="mf">10.1</span><span class="p">:</span><span class="mf">0.5</span><span class="p">].</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">).</span><span class="n">T</span>
+<span class="n">ll_vals_1</span> <span class="o">=</span> <span class="p">[</span><span class="n">LL</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mu_hat_1</span><span class="p">,</span> <span class="n">cov_hat</span><span class="p">,</span> <span class="n">pi_hat_1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">point_grid</span><span class="p">]</span>
+<span class="n">ll_vals_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">LL</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mu_hat_2</span><span class="p">,</span> <span class="n">cov_hat</span><span class="p">,</span> <span class="n">pi_hat_2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">point_grid</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">point_grid</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">point_grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">ll_vals_1</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mu_hat_1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mu_hat_1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">'rp'</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/lda_one_class_density.png" alt="lda_density" /></p>
+
+<p>Let’s take a look at the inferred separating line.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">abline</span><span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span><span class="p">):</span>
+    <span class="s">"""Plot a line from slope and intercept"""</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">x_vals</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">axes</span><span class="p">.</span><span class="n">get_xlim</span><span class="p">())</span>
+    <span class="n">y_vals</span> <span class="o">=</span> <span class="n">intercept</span> <span class="o">+</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">x_vals</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">,</span> <span class="s">'--'</span><span class="p">)</span>
+    
+<span class="n">cov_inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cov_hat</span><span class="p">)</span>
+
+<span class="c1"># slope
+</span><span class="n">slope_vec</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">cov_inv</span><span class="p">,</span> <span class="p">(</span><span class="n">mu_hat_1</span> <span class="o">-</span> <span class="n">mu_hat_2</span><span class="p">))</span>
+<span class="n">slope</span> <span class="o">=</span> <span class="o">-</span><span class="n">slope_vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">slope_vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># intercept
+</span><span class="n">intercept_partial</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">pi_hat_2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">pi_hat_1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mu_hat_1</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">),</span> <span class="n">mu_hat_1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mu_hat_2</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cov_inv</span><span class="p">),</span> <span class="n">mu_hat_2</span><span class="p">)</span>
+<span class="n">intercept</span> <span class="o">=</span> <span class="n">intercept_partial</span> <span class="o">/</span> <span class="n">slope_vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># plotting
+</span><span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+<span class="n">abline</span><span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mu_hat_1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mu_hat_1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">'rp'</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mu_hat_2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mu_hat_2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">'rp'</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/separating_hyperplane.png" alt="hyperplane" /></p>
+
+<p>We can also investigate how this solution changes as we tweak certain aspects of the data and model.</p>
+
+<p>For example, if we make one class much more prevalent than the other (say $n_1 = 500, n_2 = 20$), the prior favors this class, and the line subsequently moves closer to this class’s mean. See an example of this in the plot below.</p>
+
+<p><img src="/assets/separating_hyperplane_imbalanced.png" alt="hyperplane_imbalanced" /></p>
+
+<p>We can also investigate quadratic discriminant analysis, which can yield nonlinear decision boudnaries. For example, for imbalanced class sizes, the boundary will curve away from the larger class, favoring this class. Here’s a plot where we show the predicted class for a grid of points (blue is class 1, and yellow is class 2).</p>
+
+<p><img src="/assets/qda_decision_boundary.png" alt="qda_boundary" /></p>
+
+<p>If we allow each class to have a unique covariance function, we can get even more highly nonlinear decision boundaries:</p>
+
+<p><img src="/assets/qda_decision_boundary_funky.png" alt="qda_boundary" /></p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Fan, J., Li, R., Zhang, C.-H., and Zou, H. (2020). Statistical Foundations of Data Science. CRC Press, forthcoming.</li>
+  <li><a href="https://www.wikiwand.com/en/Quadratic_classifier">Wikipedia article on LDA</a>.</li>
+  <li>Bishop, Christopher M. Pattern recognition and machine learning. springer, 2006.</li>
+</ul>
+:ET

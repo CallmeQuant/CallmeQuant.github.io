@@ -1,0 +1,171 @@
+I"T<p>Mixed models are effectively a special case of hierarchical models. In this post, I try to draw some connections between these jargon-filled modeling approaches.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Consider $n$ samples $y_1, \dots, y_n$, each of which belongs to one of $J$ groups. We use the notation $y_{ij}$ to refer to sample $i$ which belongs to group $j$.</p>
+
+<p>We’re often interested in describing the data at multiple levels: both as one homogeneous group and in terms of group-specific characteristics. Several modeling approaches allow for this. However, there is quite a bit of nomenclature that ultimately refers to the same or very similar models. Here, I review two of these types of models that have different names but are ultimately the same in many cases: mixed models and hierarchical models.</p>
+
+<h2 id="linear-mixed-models">Linear mixed models</h2>
+
+<p>Linear mixed models consist of both “fixed” and “random” effects (hence the name “mixed effects”). Generically, these models can be written in the form</p>
+
+\[Y = X \alpha + D \beta + \epsilon\]
+
+<p>where $X$ is an $n\times p$ matrix of covariates, $\alpha \in \mathbb{R}^p$ is a vector of fixed effects, $D \in \{0, 1\}^{n\times J}$ design matrix indicating each samples group membership, and $\beta \in \mathbb{R}^J$ is a vector of random effects. For a single sample, we can write</p>
+
+\[y_{ij} = x_i \alpha + d_i \beta_j + \epsilon\]
+
+<p>where $x_i$ and $d_i$ are the $i$th rows of $X$ and $D$, and $\beta_j$ is the $j$th element of $\beta$.</p>
+
+<p>The coefficient vector $\beta$ is random, and thus we must make an assumption about its distribution. We typically assume</p>
+
+\[\beta \sim \mathcal{N}(0, \Sigma)\]
+
+<p>where $\Sigma$ is the covariance of the random effects coefficients. Intuitively, we can think of $\Sigma$ as encoding the relationships between groups $j=1, \dots, J$. For example, if the “groups” are different genetic strains of mice, $\Sigma$ will encode any known relatedness between the strains.</p>
+
+<h2 id="hierarchical-models">Hierarchical models</h2>
+
+<p>The combination of fixed and random effects will feel unnatural to a Bayesian — in a fully Bayesian framework, we would think of all of these quantities as random. So-called hierarchical models have more of a Bayesian flavor.</p>
+
+<p>A hierarchical model analogous to the LMM above can be written as</p>
+
+<p>\begin{align} y_{ij} &amp;\sim \mathcal{N}(\beta_j, \tau^2 I) ~~~ \text{for } j=1,\dots,J \\ (\beta_1, \dots, \beta_J)^\top &amp;\sim \mathcal{N}(x_i \alpha, \Sigma) \\ \alpha &amp;\sim \pi \end{align}</p>
+
+<p>where $\pi$ is the prior for $\alpha$ (assume $\tau^2$ is known for now). Here, we have parameterized the mean of the coefficients $\{\beta_j\}$ with a linear function of the covariates $X$.</p>
+
+<p>Notice that we can translate the mixed effects language into this framework. In the hierarchical model formulation, the “fixed effects” (which are shared across all groups) are given by the shared parameterization of the mean through $\alpha$. The random effects (which are group-specific) are implied by the group-specific means $\{\beta_j\}$. Notice that we no longer need the design matrix $D$ in this notation.</p>
+
+<p>Using different notation, we can write this model as</p>
+
+<p>\begin{align} y_i &amp;= X\alpha + D\beta + \epsilon \\ (\beta_1, \dots, \beta_J)^\top &amp;\sim \mathcal{N}(0, \Sigma) \\ \alpha &amp;\sim \pi \\ \epsilon &amp;\sim \mathcal{N}(0, \tau^2I) \end{align}</p>
+
+<p>In this case $D$ is again the $n\times J$ design matrix indicating the group membership of each sample.</p>
+
+<p>This is getting closer to looking like a linear mixed model, but we’re not quite there. The one remaining difference is the prior for $\alpha$. Recall that in mixed models, there was no randomness in $\alpha$, so it doesn’t make sense to place an informative prior on it.</p>
+
+<p>To fully recover the mixed model setting, we can place a uniform, non-informative, improper prior on alpha:</p>
+
+\[p(\alpha) \propto 1.\]
+
+<p>Then, we can effectively think of $\alpha$ as being non-random (although this isn’t entirely true), and we recover the mixed model setup.</p>
+
+<h2 id="common-assumption">Common assumption</h2>
+
+<p>A common assumption is that $\beta_1, \dots, \beta_J$ are independent:</p>
+
+\[(\beta_1, \dots, \beta_J)^\top \sim \mathcal{N}(0, \sigma^2 I).\]
+
+<p>In this case, we assume each $\beta_j$ has mean $0$ and shared variance $\sigma^2$. This is similar to including a ridge ($L_2$) penalty to a classical regression setting.</p>
+
+<h2 id="simple-example">Simple example</h2>
+
+<p>Consider the case where we have $J=4$ groups, and we’d like to model the group-specific mean while accounting for a one-dimensional covariate $X$. In other words, our model is</p>
+
+<p>\begin{align} y_{ij} &amp;\sim \mathcal{N}(x_i \alpha + \beta_j, \tau^2) \\ \beta_j &amp;\sim \mathcal{N}(0, \sigma^2). \end{align}</p>
+
+<p>Suppose we observe some data with group means</p>
+
+\[\begin{bmatrix} \beta_1 \\ \beta_2 \\ \beta_3 \\ \beta_4 \end{bmatrix} = \begin{bmatrix} 2 \\ 4 \\ 8 \\ 12 \end{bmatrix}.\]
+
+<p>The outcome variable $Y$ then has a group-specific density that looks like this:</p>
+
+<p align="center">
+  <img src="/assets/group_densities_lmm.png" />
+</p>
+
+<p>However, suppose the covariate $X$ is highly inversely correlated with the group mean ($x_{ij} \approx -\beta_j$). In this case, we might observe data that looks like this:</p>
+
+<p align="center">
+  <img src="/assets/XY_lmm.png" />
+</p>
+
+<p>In the left plot, it appears that there’s no relationship between $X$ and $Y$. However, the right plot makes it clear that there’s group-specific structure. If we correct for the covariate $X$ and instead look at the density of $Y-X\alpha$, we have the following:</p>
+
+<p align="center">
+  <img src="/assets/group_densities_corrected_lmm.png" />
+</p>
+
+<p>Conversely, if we correct for the group-specific means, and look at the covariate $X$ versus the residuals $y_{ij} - \beta_j$, we have</p>
+
+<p align="center">
+  <img src="/assets/XY_lmm_corrected.png" />
+</p>
+
+<h2 id="code">Code</h2>
+
+<p>The code for the simple demonstration above is below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="n">group_means</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">])</span>
+<span class="n">group_var</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1">## Plot group-specific densities
+</span><span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nb">min</span><span class="p">(</span><span class="n">group_means</span><span class="p">)</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">group_means</span><span class="p">)</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">density_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">gm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group_means</span><span class="p">):</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gm</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Group {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"Group mean"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"Density"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1">## Generate data
+</span><span class="n">nj</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nj</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">group_means</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">group_means</span><span class="p">)))</span>
+<span class="n">D_num</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nj</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">group_means</span><span class="p">))</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nj</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">group_means</span><span class="p">))</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nj</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">group_means</span><span class="p">))</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">gm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group_means</span><span class="p">):</span>
+    <span class="n">D</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">D_num</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">]</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">group_means</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">nj</span><span class="p">)</span>
+    <span class="n">Y</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">]</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">+</span> <span class="n">group_means</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">nj</span><span class="p">)</span>
+    
+<span class="c1">## Scatter plot of data
+</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s">'X'</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span> <span class="s">'Y'</span><span class="p">:</span> <span class="n">Y</span><span class="p">,</span> <span class="s">'group'</span><span class="p">:</span> <span class="n">D_num</span><span class="p">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)})</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">sns</span><span class="p">.</span><span class="n">scatterplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s">"X"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s">"Y"</span><span class="p">)</span> <span class="c1">#, hue="group")
+</span><span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">sns</span><span class="p">.</span><span class="n">scatterplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s">"X"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s">"Y"</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="s">"group"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/XY_lmm.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1">## Density of covariate-corrected data
+</span><span class="n">Y_corrected</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">Y</span> <span class="o">-</span> <span class="n">data</span><span class="p">.</span><span class="n">X</span> <span class="o">*</span> <span class="n">alpha</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">gm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group_means</span><span class="p">):</span>
+    <span class="n">sns</span><span class="p">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">Y_corrected</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">],</span> <span class="n">hist</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c1"># plt.legend()
+</span><span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"Y-X*alpha"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"Density"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/group_densities_corrected_lmm.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1">## Scatter of group-corrected data
+</span><span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">gm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group_means</span><span class="p">):</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">],</span> <span class="n">data</span><span class="p">.</span><span class="n">Y</span><span class="p">[</span><span class="n">ii</span><span class="o">*</span><span class="n">nj</span><span class="p">:(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nj</span><span class="p">]</span> <span class="o">-</span> <span class="n">gm</span><span class="p">)</span>
+<span class="c1"># plt.legend()
+</span><span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"y_ij-beta_j"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"Y"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/XY_lmm_corrected.png"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Gelman, Andrew, et al. Bayesian data analysis. CRC press, 2013.</li>
+  <li>Zhou, Xiang, and Matthew Stephens. “Genome-wide efficient mixed-model analysis for association studies.” Nature genetics 44.7 (2012): 821.</li>
+  <li><a href="https://stats.idre.ucla.edu/other/mult-pkg/introduction-to-linear-mixed-models/">Post</a> from UCLA on linear mixed models.</li>
+</ul>
+:ET

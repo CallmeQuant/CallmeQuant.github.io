@@ -1,0 +1,126 @@
+I"�7<p>The representer theorem is a powerful result that implies a certain type of duality between solutions to function estimation problems.</p>
+
+<h2 id="the-representer-theorem">The Representer Theorem</h2>
+
+<p>To start, let’s define an informal version of the Representer Theorem that avoids some of the dirty (yet important) details. Generally, the Representer Theorem states that any function estimation problem that is formulated in terms of a loss function over the observed data, plus a regularizing term, has a solution that is a simple finite weighted sum over the data points that have been passed through a “kernel function”. In other words, we’re considering problems in which we’d like to find a function $f$ via the following optimization problem:</p>
+
+\[\text{arg}\min_f L(f(\textbf{X}), \textbf{Y}) + R(f)\]
+
+<p>where $L$ is some loss function measuring how close the predictions $f(\textbf{X})$ are to the true response variables $\textbf{Y}$, and $R(f)$ is a regularization term that penalizes the complexity of the function $f$. Then, the Representer Theorem says that the minimizer $f^*$ of this problem is</p>
+
+\[f(\cdot) = \sum\limits_{i=1}^n \alpha_i K(\cdot, X_i)\]
+
+<p>where $K$ is a kernel that measures the similarity between two data points. In words, this means that the optimal prediction for a new test data point can be expressed as a simple sum over observed training data points.</p>
+
+<p>Of course, the intuition above has glossed over some important details, such as which types of loss functions and regularization functions are valid, where $K$ comes from, how to compute $\alpha_i$.</p>
+
+<p>To state the theorem a bit more formally, consider the version from Fan et al., 2020:</p>
+
+<p>Consider a general loss function $L(y, f(\textbf{x}))$, and let</p>
+
+\[\hat{f} = \text{arg}\min_{f \in \mathcal{H}\_K} \sum\limits_{i=1}^n L(y_i, f(\textbf{x}\_i) + R_\lambda(||f||_{\mathcal{H}_K})\]
+
+<p>where $\mathcal{H}_K$ is a reproducing Kernel Hilbert space with kernel $K$, $\lambda &gt; 0$, and $R_\lambda(t)$ is a srictly increasing function on $[0, \infty)$. Then we must have</p>
+
+\[\hat{f}(\mathbf{x}) = \sum\limits_{i=1}^n \hat{\alpha}_i K(\mathbf{x}, X_i)\]
+
+<p>where $\hat{\boldsymbol{\alpha}} = (\hat{\alpha}_1, \dots, \hat{\alpha}_n$ is the solution to the following problem:</p>
+
+\[\min_{\hat{\boldsymbol{\alpha}}} \sum\limits_{i=1}^n L\left( y_i, \sum\limits_{j=1}^n \alpha_j K(\mathbf{x}, \mathbf{x}_j) \right) + R_\lambda(\sqrt{\boldsymbol{\alpha} \mathbf{K} \boldsymbol{\alpha}}).\]
+
+<h2 id="kernel-ridge-regression">Kernel ridge regression</h2>
+
+<p>To make things a bit more concrete, let’s consider the simplest example/application of the Representer Theorem. Suppose we choose the following for a specific problem:</p>
+
+<ul>
+  <li>Loss function is $L(y_i, f(\textbf{x}_i)) = (y_i - f(\textbf{x}_i))^2$</li>
+  <li>Regularization function is $R_\lambda(||f||_{\mathcal{H}_K}) = \lambda ||f||_{\mathcal{H}_K}^2$</li>
+  <li>Kernel function is the linear kernel $K(\textbf{x}_i, \textbf{x}_j) = \textbf{x}_i^\top \textbf{x}_j$. Then the optimization problem becomes:</li>
+</ul>
+
+\[\text{arg}\min_{f \in \mathcal{H}_K} \sum\limits_{i=1}^n (y_i - f(\textbf{x}_i))^2 + ||f||_{\mathcal{H}_K}^2\]
+
+<p>and the solution for $\boldsymbol{\alpha}$ becomes</p>
+
+\[\min_{\hat{\boldsymbol{\alpha}}} ||\textbf{Y} - \textbf{K}\boldsymbol{\alpha}||^2 + \lambda \boldsymbol{\alpha}^\top \textbf{K} \boldsymbol{\alpha}.\]
+
+<p>Taking the gradient with respect to $\boldsymbol{\alpha}$ and setting it to zero, we have</p>
+
+\[-\textbf{K}\textbf{Y} + \textbf{K}\textbf{K} \alpha + \lambda \textbf{K} \alpha = 0.\]
+
+<p>Rearranging, we have</p>
+
+<p>\begin{align} \textbf{K}\textbf{K} \boldsymbol{\alpha} + \lambda \textbf{K} \boldsymbol{\alpha} &amp;= \textbf{K} y \\ \boldsymbol{\alpha} (\textbf{K} \textbf{K} + \lambda \textbf{K}) &amp;= \textbf{K} \textbf{Y} \\ \boldsymbol{\alpha} &amp;= (\textbf{K} \textbf{K} + \lambda \textbf{K})^{-1} \textbf{K} \textbf{Y} \\ \boldsymbol{\alpha} &amp;= (\textbf{K} + \lambda \textbf{I}_n)^{-1} \textbf{K}^{-1} \textbf{K} \textbf{Y} \\ \boldsymbol{\alpha} &amp;= (\textbf{K} + \lambda \textbf{I}_n)^{-1} \textbf{Y} \\ \end{align}</p>
+
+<p>Notice that this expression only requires us to evaluate the inner product (or more generally, the kernel function) between all pairs of data points. So regardless of how many covariates there are (and there could be many), we never have to sum over that dimension.</p>
+
+<p>In contrast, recall the usual estimator for ridge regression:</p>
+
+\[\hat{\beta} = (\textbf{X}^\top \textbf{X} + \lambda \mathbf{I}_p) \textbf{X}^\top \textbf{Y}.\]
+
+<p>It turns out that, not only is ridge regression solving the same problem, but there’s also a one-to-one correspondence between the solution for $\alpha$ is kernel ridge regresion and the solution for $\beta$ in ridge regression. However, there’s a key difference in how they’re computed. Notice that to find $\beta$, we must sum over the dimension of the covariates, which is $p$, while in kernel ridge regression we only had to sum over the number of data points, $n$. As we’ll see below, each of these has computational tradeoffs depending on the model and dataset.</p>
+
+<h2 id="timing-kernel-ridge-regression">Timing kernel ridge regression</h2>
+
+<p>To demonstrate the computational benefits of kernel ridge regression, we can compare the time required to estimate $\boldsymbol{\alpha}$ and $\boldsymbol{\beta}$ for kernel ridge and ridge regression, respectively, as the number of covariates $p$ increases. Remember, because ridge regression requires a sum over $n$ and kernel regression requires a sum over $p$, we expect kernel ridge regression to be faster as $p$ becomes very large.</p>
+
+<p>The following code runs this experiment for varying values of $p$:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">lam</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">p_seq</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2001</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="n">ridge_times</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">kernel_ridge_times</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p_seq</span><span class="p">):</span>
+    
+    <span class="c1"># Generate data and true model
+</span>    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">epsilon</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span> <span class="o">+</span> <span class="n">epsilon</span>
+    
+    <span class="c1"># Ridge regression
+</span>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">XTX_inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">lam</span><span class="o">*</span><span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+    <span class="n">XTY</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+    <span class="n">beta_hat_ridge</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">XTX_inv</span><span class="p">,</span> <span class="n">XTY</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">ridge_times</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+    
+    <span class="c1"># Kernel ridge regression
+</span>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">XXT_inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">lam</span><span class="o">*</span><span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="n">XTK_inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">XXT_inv</span><span class="p">)</span>
+    <span class="n">beta_hat_kernel_ridge</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">XTK_inv</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">kernel_ridge_times</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>And here are the results:</p>
+
+<p><img src="/assets/increasing_p.png" alt="Increasing p" /></p>
+
+<p>As we expected, with an increasing value of $p$, ridge regression requires more and more time to compute the estimated coefficients. On the other hand, kernel ridge regression remains fairly constant. Also, notice that we used a value of $n = 500$, and the two methods cross paths very close to $p = 500$, since for a square matrix $\mathbf{X} \in \mathbb{R}^{n\times p}$ where $n=p$, the two methods require the same number of operations.</p>
+
+<p>We can also do the reverse experiment, with increasing $n$, and we obtain the opposite results — kernel ridge regression scales poorly, while ridge regression requires about constant time:</p>
+
+<p><img src="/assets/increasing_n.png" alt="Increasing n" /></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Here, we reviewed the Representer Theorem and some of its implications for estimating nonparametric functions. We also saw that it has practical implications for reducing compute time by avoiding computation over large feature spaces.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Fan, J., Li, R., Zhang, C.-H., and Zou, H. (2020). Statistical Foundations of Data Science.
+CRC Press, forthcoming.</li>
+  <li>Prof. Martin Wainwright’s <a href="https://people.eecs.berkeley.edu/~wainwrig/stat241b/lec6.pdf">lecture notes</a></li>
+  <li>Emtiyaz Khan’s <a href="https://emtiyaz.github.io/pcml15/kernel-ridge-regression.pdf">notes</a></li>
+</ul>
+
+:ET

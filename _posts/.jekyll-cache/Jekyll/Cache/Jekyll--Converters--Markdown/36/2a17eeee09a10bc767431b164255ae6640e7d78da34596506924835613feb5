@@ -1,0 +1,262 @@
+I"��<p>Slice sampling is a method for obtaining random samples from an arbitrary distribution. Here, we walk through the basic steps of slice sampling and present two visual examples.</p>
+
+<h1 id="slice-sampling">Slice sampling</h1>
+
+<p>Consider an arbitrary probability density function $f(x)$. Given the current position of the sampler $x_t$ (or possibly the initial position when $t=0$), slice sampling consists of two main steps:</p>
+
+<ol>
+  <li>Draw a point $\hat{y}$ uniformly at random from the interval $[0, f(x_t)]$.</li>
+  <li>Draw the next sample $x_{t+1}$ uniformly at random from the set $\{x \; : \; f(x) &gt; \hat{y}\}$.</li>
+</ol>
+
+<p>Repeating this process many times will generate a set of samples $x_1, x_2, \dots$ such that their distribution will approach the true density of $f(x)$.</p>
+
+<h1 id="examples">Examples</h1>
+
+<h2 id="standard-normal">Standard normal</h2>
+
+<p>To start, consider a very simple target distribution: the standard normal distribution $\mathcal{N}(0, 1)$.</p>
+
+<p><img src="/assets/std_normal.png" alt="standard_normal_slice" /></p>
+
+<p>The four images below demonstrate the steps of slice sampling visually.</p>
+
+<p>In the leftmost plot, we start with an initial value $x$, with corresponding density value $f(x)$. In the second plot, we randomly sample a new point along the vertical red line (this red line is the interval $[0, f(x)]$). The new point is the blue dot. In the third plot, we restrict the $x^\star$-values such that $f(x^\star) &gt; f(x)$ — these values are presented as a horizontal green line. Finally, in the last plot on the right we randomly sample a point from this green interval (shown as a purple dot), treating this as our next sample. We can then repeat the process with this point.</p>
+
+<p><img src="/assets/slice_sampling_demo.png" alt="slice_sampling_demo.png" /></p>
+
+<p>After running this process many times, we can see that the histogram of the samples $x_1, x_2, \dots, x_n$ approaches a standard normal.</p>
+
+<p><img src="/assets/slice_sampling_hist.png" alt="slice_sampling_hist.png" /></p>
+
+<h2 id="mixture-of-normals">Mixture of normals</h2>
+
+<p>Now let’s examine a slightly more complex example: a mixture of two normal distributions. Specifically, let the target distribution be</p>
+
+\[f(x) = \pi_1 f_1(x) + \pi_2 f_2(x)\]
+
+<p>where</p>
+
+<p>\begin{align} f_1(x) &amp;= \mathcal{N}(-2, 1) \\ f_2(x) &amp;= \mathcal{N}(2, 1) \\ \pi_1 &amp;= 0.7 \\ \pi_2 &amp;= 0.3. \\ \end{align}</p>
+
+<p>The density looks like this:</p>
+
+<p><img src="/assets/mixture_of_normals.png" alt="standard_normal_slice" /></p>
+
+<p>Plotting the same sequence of figures as above, we can see that the slice sampler hops between the two densities. For example, in the rightmost plot, the new sample (purple dot) is in the opposite mode of the previous sample.</p>
+
+<p><img src="/assets/slice_sampling_demo_mixture.png" alt="slice_sampling_demo.png" /></p>
+
+<h1 id="conlusion">Conlusion</h1>
+
+<p>Slice sampling is a nice, intuitively-appealing way to generate random samples from a distribution. Note that the version of slice sampling presented here is a simplification of <a href="https://projecteuclid.org/euclid.aos/1056562461">that proposed by Neal</a>. For example, to find the values of $x$ such that $f(x) &gt; \hat{y}$ (step 2 above), Neal proposes a “stepping out” approach, while I used a naive sampling approach.</p>
+
+<p>One major drawback of slice sampling is that the samples are serially dependent, which suggests that the Markov chain may take longer to converge than methods that produce independent samples.</p>
+
+<p>Several extensions of slice sampling have been proposed, including <a href="http://proceedings.mlr.press/v9/murray10a/murray10a.pdf">elliptical slice sampling</a>, which is specifically useful for statistical models with multivariate Gaussian priors.</p>
+
+<h1 id="code">Code</h1>
+
+<p>Code for generating these figures is below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="c1">#### Run one iteration of slice sampling for a standard normal ####
+</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="c1"># Pick an x randomly
+</span><span class="n">x</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">rvs</span><span class="p">()</span>
+
+<span class="c1"># Evaluate density at this x
+</span><span class="n">p_x</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">141</span><span class="p">)</span>
+<span class="n">xs_plot</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">ys_plot</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Sampled x: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">4</span><span class="p">)))</span>
+
+<span class="c1"># Pick a y uniformly at random from [0, f(x)]
+</span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">p_x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">142</span><span class="p">)</span>
+<span class="n">xs_plot</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">ys_plot</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Draw horizontal line"</span><span class="p">)</span>
+
+<span class="c1"># Find all x values such that f(x) &gt; y
+</span><span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">newxs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">[</span><span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">y</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">143</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="c1"># plt.axhline(y, c="blue")
+</span><span class="n">plt</span><span class="p">.</span><span class="n">hlines</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nb">min</span><span class="p">(</span><span class="n">newxs</span><span class="p">),</span> <span class="n">xmax</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">newxs</span><span class="p">),</span> <span class="n">colors</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Restrict to x* s.t. p(x*) &gt; p(x)"</span><span class="p">)</span>
+
+<span class="c1"># Choose new x uniformly at random from this set
+</span><span class="n">newx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="n">newxs</span><span class="p">)</span>
+<span class="n">p_newx</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">newx</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">144</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">hlines</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">xmin</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nb">min</span><span class="p">(</span><span class="n">newxs</span><span class="p">),</span> <span class="n">xmax</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">newxs</span><span class="p">),</span> <span class="n">colors</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">newx</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"purple"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"black"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Sample new x from these values"</span><span class="p">)</span>
+
+<span class="c1"># Add this x to the set of sampled values
+</span><span class="n">x</span> <span class="o">=</span> <span class="n">newx</span>
+<span class="n">samples</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="c1">#### Run multiple iterations of slice sampling for standard normal #####
+</span>
+<span class="n">NUM_SAMPLES</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_SAMPLES</span><span class="p">):</span>
+
+    <span class="c1"># Pick an x randomly
+</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">rvs</span><span class="p">()</span>
+
+    <span class="c1"># Evaluate density at this x
+</span>    <span class="n">p_x</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Pick a y uniformly at random from [0, f(x)]
+</span>    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">p_x</span><span class="p">)</span>
+
+    <span class="c1"># Find all x values such that f(x) &gt; y
+</span>    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">newxs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">[</span><span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">y</span><span class="p">]</span>
+
+    <span class="c1"># Choose new x uniformly at random from this set
+</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="n">newxs</span><span class="p">)</span>
+
+    <span class="c1"># Add this x to the set of sampled values
+</span>    <span class="n">samples</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">ax1</span><span class="p">.</span><span class="n">twinx</span><span class="p">()</span>
+<span class="n">ax1</span><span class="p">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="n">ax2</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+
+<span class="n">ax1</span><span class="p">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">'x'</span><span class="p">)</span>
+<span class="n">ax1</span><span class="p">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">'Samples'</span><span class="p">)</span>
+<span class="n">ax2</span><span class="p">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">'True PDF'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">'r'</span><span class="p">)</span>
+<span class="n">ax2</span><span class="p">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="c1">#### Plot mixture of normals ####
+</span>
+<span class="k">def</span> <span class="nf">mixture_pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pi1</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">pi2</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pi1</span> <span class="o">*</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">loc</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">pi2</span> <span class="o">*</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span>
+
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">mixture_pdf</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"x"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"p(x)"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Standard normal"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="c1">####  Run one iteration of slice sampling for mixture of normals #####
+</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="c1"># Pick an x randomly
+</span><span class="n">x</span> <span class="o">=</span> <span class="mf">1.2</span> <span class="c1">#norm.rvs(loc=2, scale=0.2)
+</span>
+
+
+<span class="c1"># Evaluate density at this x
+</span><span class="n">p_x</span> <span class="o">=</span> <span class="n">mixture_pdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">141</span><span class="p">)</span>
+<span class="n">xs_plot</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">ys_plot</span> <span class="o">=</span> <span class="n">mixture_pdf</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Sampled x: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">4</span><span class="p">)))</span>
+
+<span class="c1"># Pick a y uniformly at random from [0, f(x)]
+</span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">p_x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">142</span><span class="p">)</span>
+<span class="n">xs_plot</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">ys_plot</span> <span class="o">=</span> <span class="n">mixture_pdf</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Draw horizontal line"</span><span class="p">)</span>
+
+<span class="c1"># Find all x values such that f(x) &gt; y
+</span><span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left_endpoint</span><span class="p">,</span> <span class="n">right_endpoint</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">newxs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">[</span><span class="n">mixture_pdf</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">y</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">143</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">newxs</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">newxs</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">c</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Restrict to x* s.t. p(x*) &gt; p(x)"</span><span class="p">)</span>
+
+<span class="c1"># Choose new x uniformly at random from this set
+</span><span class="n">newx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="n">newxs</span><span class="p">)</span>
+<span class="n">p_newx</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">newx</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">144</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs_plot</span><span class="p">,</span> <span class="n">ys_plot</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">p_x</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">newxs</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">newxs</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">c</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">newx</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"purple"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"black"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Sample new x from these values"</span><span class="p">)</span>
+
+<span class="c1"># Add this x to the set of sampled values
+</span><span class="n">x</span> <span class="o">=</span> <span class="n">newx</span>
+<span class="n">samples</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="c1"># Repeat
+</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>    
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Neal, Radford M. “Slice sampling.” Annals of statistics (2003): 705-741.</li>
+  <li>Wikipedia entry on slice sampling.</li>
+</ul>
+
+:ET

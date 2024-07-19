@@ -1,0 +1,171 @@
+I"�L<p>Hamiltonian Monte Carlo (HMC) is an MCMC method that borrows ideas from physics. Here, we’ll give a brief overview and a simple example implementation.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Consider the setting of Bayesian inference, in which we’re interested in describing the posterior distribution of some parameters $\boldsymbol{\theta}$ given some data $X$: $p(\boldsymbol{\theta} | X)$. At a very general level, MCMC algorithms attempt to explore the parameter space such that the distribution over states is representative of the posterior distribution. This requires a systematic way to decide how to move from point to point in the parameter space. In particular, given a (typically random) starting point $\boldsymbol{\theta}_0$, we’d like to visit a sequence of states $\boldsymbol{\theta}_1, \boldsymbol{\theta}_2, \dots$ so that eventually their distribution approximates the posterior. Various MCMC algorithms have unique ways of “proposing” the next step $\boldsymbol{\theta}_{t+1}$, given the current state $\boldsymbol{\theta}_{t}$ – see <a href="https://andrewcharlesjones.github.io/posts/2020/08/mcmc-overview/">this previous post</a> for a brief review.</p>
+
+<h2 id="hamiltonian-monte-carlo">Hamiltonian Monte Carlo</h2>
+
+<p>Hamiltonian Monte Carlo (HMC) is a Markov Chain Monte Carlo (MCMC) algorithm that can make mixing much more efficient compared to other MCMC algorithms, like Gibbs Sampling and Metropolis-Hastings procedures. HMC is built on the idea of modeling movement in the chain’s state space as a physical system.</p>
+
+<p>Specifically, HMC decides on the sequence of steps by treating the parameters as the location of a “particle” on a curved landscape. Given the current position and momentum of the particle and the gradient of the landscape, HMC pushes the particle through the landscape by simulating its motion using well-established physics principles.</p>
+
+<p>The “landscape” is defined by the log joint probability of the parameters</p>
+
+\[\mathcal{L}(\boldsymbol{\theta}) = p(\boldsymbol{\theta}).\]
+
+<p>In order to initially get the particle moving, we must supply the momentum of the particle, $\boldsymbol{r}$ (which is a $p$-vector), at the start of each iteration. Suppose we draw the momentum from a spherical Gaussian:</p>
+
+\[\boldsymbol{r} \sim \mathcal{N}_p(\mathbf{0}, \mathbf{I}).\]
+
+<p>Then, the joint density of the parameters and the momentum is given by</p>
+
+<p>\begin{align} p(\boldsymbol{\theta}, \boldsymbol{r}) &amp;= \exp(\mathcal{L}(\boldsymbol{\theta})) 2\pi^{-p/2} \exp\left( -\frac12 \boldsymbol{r}^\top \boldsymbol{r} \right) \\ &amp;\propto \exp(\mathcal{L}(\boldsymbol{\theta})) \exp\left( -\frac12 \boldsymbol{r}^\top \boldsymbol{r} \right) \\ &amp;\propto \exp\left(\mathcal{L}(\boldsymbol{\theta}) -\frac12 \boldsymbol{r}^\top \boldsymbol{r} \right). \\ \end{align}</p>
+
+<p>Conveniently, we can interpret this joint density in terms of physical principles. We’ve already mentioned that $\boldsymbol{\theta}$ is the particle’s position and $\boldsymbol{r}$ is its momentum. Now, we can add a couple other interpretations.</p>
+
+<p>First, we can interpret $\mathcal{L}(\boldsymbol{\theta})$ as a negative potential energy function. In other words, $\mathcal{L}(\boldsymbol{\theta})$ will be more negative for parameter values that are less probable, and thus $-\mathcal{L}(\boldsymbol{\theta})$ will take larger values for parameter valeus that are less probable. In a crude sense, one can think of $-\mathcal{L}(\boldsymbol{\theta})$ as a measure of how high up on a “hill” the particle is, and thus how much potential energy it has.</p>
+
+<p>Second, we can interpret $\frac12 \boldsymbol{r}^\top \boldsymbol{r}$ as the kinetic energy. Recall that the kinetic energy is classically defined in terms of the momentum as</p>
+
+\[T = \frac1m \boldsymbol{r}^\top \boldsymbol{r}\]
+
+<p>where $m$ is the mass of the particle.</p>
+
+<p>Finally, we can interpret $\log p(\boldsymbol{\theta}, \boldsymbol{r})$ as the total negative energy of the system. This nicely follows the interpretation of Hamiltonian mechanics, which represents the total energy of a system as a sum of its kinetic energy $T$ and its potential energy $V$:</p>
+
+\[\mathcal{H} = T + V.\]
+
+<p>In our case, we have</p>
+
+\[\underbrace{-\log p(\boldsymbol{\theta}, \boldsymbol{r})}_{\mathcal{H}} \propto \underbrace{\frac12 \boldsymbol{r}^\top \boldsymbol{r}}_{T} \underbrace{- \mathcal{L}(\boldsymbol{\theta})}_{V}.\]
+
+<p>So, now we have a solid analogy with a physical system. How do we use it to draw samples? Essentially, we initially place our particle randomly in the system, and then repeatedly simulate the system forward, while caching the sample produced from each simulation. High-level pseudocode, adapted from Hoffman et al., is below:</p>
+
+<ol>
+  <li>For $t = 1, \dots T$:
+    <ol>
+      <li>Sample $\boldsymbol{r}_t \sim \mathcal{N}_p(\mathbf{0}, \mathbf{I})$.</li>
+      <li>Simulate system for $L$ discrete steps using momentum $\boldsymbol{r}_t$ and position $\boldsymbol{\theta}_t$, which yields a new proposed momentum and position, $\hat{\boldsymbol{r}}$ and $\hat{\boldsymbol{\theta}}$.</li>
+      <li>Accept the proposal with probability $\alpha = \min\left(1, \frac{p(\hat{\boldsymbol{\theta}}, \hat{\boldsymbol{r}})}{p(\boldsymbol{\theta}_t, \boldsymbol{r}_t)}\right)$.</li>
+    </ol>
+  </li>
+</ol>
+
+<p>Clearly, if the proposed values take the system to a state of lower energy ($\frac{p(\hat{\boldsymbol{\theta}}, \hat{\boldsymbol{r}})}{p(\boldsymbol{\theta}_t, \boldsymbol{r}_t)} &gt; 1$), they will always be accepted. If the proposed values raise the total energy of the system ($\frac{p(\hat{\boldsymbol{\theta}}, \hat{\boldsymbol{r}})}{p(\boldsymbol{\theta}_t, \boldsymbol{r}_t)} &lt; 1$), they will be accepted a proportional fraction of the time.</p>
+
+<p>In step 1.2 of the pseudocode, a method is needed to run the system forward. Typically, the leapfrog integrator is used. One iteration of the leapfrog integrator looks like this, given that the current momentum is $\boldsymbol{r}$:</p>
+
+<ol>
+  <li>Set $\widetilde{\boldsymbol{r}} \leftarrow \boldsymbol{r} + (\epsilon / 2) \nabla_\theta \mathcal{L}(\boldsymbol{\theta})$</li>
+  <li>Set $\widetilde{\boldsymbol{\theta}} \leftarrow \boldsymbol{\theta} + \epsilon \widetilde{\boldsymbol{r}}$</li>
+  <li>Set $\widetilde{\boldsymbol{r}} \leftarrow \widetilde{\boldsymbol{r}} + (\epsilon / 2) \nabla_\theta \mathcal{L}(\widetilde{\boldsymbol{\theta}})$</li>
+</ol>
+
+<p>This will require the gradient of the joint density.</p>
+
+<h2 id="python-implementation-and-experiments">Python implementation and experiments</h2>
+
+<p>The Hamiltonian Monte Carlo sampler is surprisingly simple to code up. Let’s run through a very simple example. Suppose we have $n$ data points $X_1, \dots, X_n$ that are generated as follows:</p>
+
+<p>\begin{align} X_i &amp;\sim \mathcal{N}_2(\boldsymbol{\mu}_i, \mathbf{I}) \\ \boldsymbol{\mu}_i &amp;\sim \mathcal{N}_2(\mathbf{0}, \boldsymbol{\Sigma}) &amp; i = 1, \dots, n \\ \end{align}</p>
+
+<p>where</p>
+
+\[\boldsymbol{\Sigma} = \bigl( \begin{smallmatrix}1 &amp; 0.5\\ 0.5 &amp; 1\end{smallmatrix}\bigr).\]
+
+<p>In words, this means that each data point is generated from a bivariate normal distribution, each of whose mean is drawn from another bivariate normal. Here, we have chosen $\boldsymbol{\Sigma}$ somewhat arbitrarily (just to add slightly more complexity beyond using the identity matrix as the covariance).</p>
+
+<p>The joint log density is then</p>
+
+<p>\begin{align} \log p(X, \boldsymbol{\mu}) &amp;= \log p(X | \boldsymbol{\mu}) + \log p(\boldsymbol{\mu}) \\ &amp;\propto -\frac12 \sum\limits_{i = 1}^n (X_i - \boldsymbol{\mu})^\top \Sigma^{-1} (X_i - \boldsymbol{\mu}) -\frac12 \boldsymbol{\mu}^\top \boldsymbol{\mu}. \\ \end{align}</p>
+
+<p>Directly using the pseudocode for HMC above, we can code up a Python implementation as follows. Here, we use <a href="https://github.com/HIPS/autograd">Autograd</a> for convenience, but it would be easy enough to hand-code the gradients in this case.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">autograd</span> <span class="kn">import</span> <span class="n">grad</span><span class="p">,</span> <span class="n">elementwise_grad</span>
+<span class="kn">import</span> <span class="nn">autograd.numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="n">rv</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">Sigma</span><span class="p">)</span>
+
+<span class="n">Sigma_inv</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+
+<span class="c1"># Joint density
+</span><span class="k">def</span> <span class="nf">LL</span><span class="p">(</span><span class="n">mu</span><span class="p">):</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">([</span><span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">,</span> <span class="n">Sigma_inv</span><span class="p">),</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">])</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+
+<span class="c1"># Gradient of joint density w.r.t. mu (using autograd)
+</span><span class="n">grad_LL</span> <span class="o">=</span> <span class="n">elementwise_grad</span><span class="p">(</span><span class="n">LL</span><span class="p">)</span>
+
+<span class="c1"># Generate data
+</span><span class="n">n</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">mu_true</span> <span class="o">=</span> <span class="n">rv</span><span class="p">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">X</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">multivariate_normal</span><span class="p">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">mu_true</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:],</span> <span class="n">np</span><span class="p">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1">## HMC
+</span>
+<span class="n">M</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">L</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">eps</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">mu_curr</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">mu_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">r_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">mu_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">mu_curr</span><span class="p">)</span>
+
+<span class="c1"># HMC loop
+</span><span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="p">):</span>
+    <span class="n">r_0</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">.</span><span class="n">rvs</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    
+    <span class="c1"># Leapfrog integration
+</span>    <span class="k">for</span> <span class="n">ll</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">L</span><span class="p">):</span>
+        <span class="n">r_tilde</span> <span class="o">=</span> <span class="n">r_0</span> <span class="o">+</span> <span class="p">(</span><span class="n">eps</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad_LL</span><span class="p">(</span><span class="n">mu_curr</span><span class="p">)</span>
+        <span class="n">mu_tilde</span> <span class="o">=</span> <span class="n">mu_curr</span> <span class="o">+</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">r_tilde</span>
+        <span class="n">r_tilde</span> <span class="o">=</span> <span class="n">r_tilde</span> <span class="o">+</span> <span class="p">(</span><span class="n">eps</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad_LL</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">)</span>
+        
+    <span class="c1"># Probabilistically accept proposal
+</span>    <span class="n">numerator</span> <span class="o">=</span> <span class="n">LL</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r_tilde</span><span class="p">,</span> <span class="n">r_tilde</span><span class="p">)</span>
+    <span class="n">denominator</span> <span class="o">=</span> <span class="n">LL</span><span class="p">(</span><span class="n">mu_curr</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r_0</span><span class="p">,</span> <span class="n">r_0</span><span class="p">)</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">:</span>
+        <span class="n">mu_curr</span> <span class="o">=</span> <span class="n">mu_tilde</span>
+        <span class="n">r_curr</span> <span class="o">=</span> <span class="o">-</span><span class="n">r_tilde</span>
+        
+    <span class="n">mu_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">mu_curr</span><span class="p">)</span>
+    <span class="n">r_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">r_curr</span><span class="p">)</span>
+    
+<span class="n">mu_list</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">mu_list</span><span class="p">)</span>
+<span class="n">r_list</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">r_list</span><span class="p">)</span>
+    
+</code></pre></div></div>
+
+<p>We can then view the trajectory that our “particle” took across the landscape. Plotted below is the true contour of the density of $\mu$, along with the samples from the HMC loop, plotted with arrows between successive points.</p>
+
+<p><img src="/assets/hmc_contour_plot.png" alt="HMC contour" /></p>
+
+<p>Recall that there are two main hyperparameters we have to choose in HMC: $L$, the number of leapfrog iterations, and $\epsilon$, the step size. Let’s play with these hyperparameters and see how the sample trajectories change depending on their settings.</p>
+
+<p>Here’s the trajectories for the same model for three values of $\epsilon$: 0.01, 0.1, and 0.5:</p>
+
+<p><img src="/assets/hmc_contour_eps.png" alt="HMC contour eps" /></p>
+
+<p>Clearly, with a lower step size, we’re allowed more precision in each of the steps, but at the cost of a slow-moving particle. With a higher step size, we can explore the landscape more, but at the cost of jumping too far in some cases.</p>
+
+<p>We can do a similar experiment with the $L$ hyperparameter, here trying it with three values: $1$, $5$, and $10$:</p>
+
+<p><img src="/assets/hmc_contour_L.png" alt="HMC contour eps" /></p>
+
+<p>In this case, it’s less clear (at least visually) of the trade-offs implied by changing $L$. This is perhaps due to the extreme simplicity of this example. However, in general, a lower value of $L$ puts us at risk for random walk behavior, while a larger value of $L$ could result in a loop back to the starting point.</p>
+
+<p>In general, setting these hyperparameters can be a tedious task. Some methods have been proposed to automatically tune them, such as the <a href="http://www.stat.columbia.edu/~gelman/research/published/nuts.pdf">No U-Turn Sampler</a>, which sets $L$ adaptively during the HMC sampling process.</p>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Wikipedia <a href="https://www.wikiwand.com/en/Hamiltonian_Monte_Carlo">entry on HMC</a></li>
+  <li>Betancourt, Michael. “A conceptual introduction to Hamiltonian Monte Carlo.” arXiv preprint arXiv:1701.02434 (2017).</li>
+  <li>Hoffman, Matthew D., and Andrew Gelman. “The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.” J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</li>
+</ul>
+:ET

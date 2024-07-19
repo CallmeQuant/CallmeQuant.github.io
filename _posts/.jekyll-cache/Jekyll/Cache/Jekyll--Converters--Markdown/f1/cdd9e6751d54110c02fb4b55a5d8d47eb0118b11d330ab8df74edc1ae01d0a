@@ -1,0 +1,58 @@
+I"�<p>Mallows’ $C_p$ statistic is one way to measure and correct for model complexity when searching for statistical model with the best performance.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Consider the setting of linear regression, where we’d like to find a function that relates some training data $\textbf{X}_{\text{train}} \in \mathbb{R}^{n \times p}$ to a response $\textbf{Y}_{\text{train}} \in \mathbb{R}^n$.</p>
+
+<p>Specifically, we’d like to find a function $\hat{\boldsymbol{\mu}}$ that estimates the conditional mean of $\mathbb{E}[\mathbf{Y}_{\text{train}} | \mathbf{X}_{\text{train}}]$ such that the expected residual sum of squares (RSS) is minimized:</p>
+
+\[\mathbb{E}[\text{RSS}] = \mathbb{E}[||\mathbf{Y}_{\text{train}} - \hat{\boldsymbol{\mu}}||^2].\]
+
+<p>However, if we only evaluated $\hat{\boldsymbol{\mu}}$ on the training data, our estimate of the model’s error will be biased downward because the model was specifically fit to the training data. Thus, we would really like to be able to evaluate $\hat{\boldsymbol{\mu}}$ on some data that we haven’t seen before ($\mathbf{X}_{\text{new}}, \mathbf{Y}_{\text{new}}$),<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>.</p>
+
+<p>Mallows’ $C_p$ allows us to correct for the bias introduced by computing RSS on the training data. Colin Lingwood Mallows originally came up with the idea for the $C_p$ statistic in the context of “best subset regression”, which aims to find the best subset of $p$ covariates to use in a given regression. Thus, $C_p$ has strong connections to ideas like penalized least squares, model selection, and regularization.</p>
+
+<p>To start making sense of the $C_p$ statistic, notice that we can decompose the model error as follows:</p>
+
+<p>\begin{align} ||\boldsymbol{\mu} - \hat{\boldsymbol{\mu}}||^2 &amp;= ||(\textbf{Y} - \hat{\boldsymbol{\mu}}) - (\textbf{Y} - \boldsymbol{\mu})||^2 \\ &amp;= ||\textbf{Y} - \hat{\boldsymbol{\mu}}||^2 - ||\textbf{Y} - \boldsymbol{\mu}||^2 - 2 (\textbf{Y} - \hat{\boldsymbol{\mu}})^\top (\textbf{Y} - \boldsymbol{\mu}) \\ \end{align}</p>
+
+<p>Now, to get the expected error (over new samples), we have</p>
+
+<p>\begin{align} \mathbb{E}[||\boldsymbol{\mu} - \hat{\boldsymbol{\mu}}||^2] &amp;= \mathbb{E}[||\textbf{Y} - \hat{\boldsymbol{\mu}}||^2] - \mathbb{E}[||\textbf{Y} - \boldsymbol{\mu}||^2] - 2 \mathbb{E}[(\textbf{Y} - \hat{\boldsymbol{\mu}})^\top (\textbf{Y} - \boldsymbol{\mu})] \\ &amp;= \mathbb{E}[||\textbf{Y} - \hat{\boldsymbol{\mu}}||^2] - n\sigma^2 + 2 \mathbb{E}[(\hat{\boldsymbol{\mu}} - \textbf{Y})^\top (\textbf{Y} - \boldsymbol{\mu})] \\ &amp;= \mathbb{E}[||\textbf{Y} - \hat{\boldsymbol{\mu}}||^2] - n\boldsymbol{\sigma}^2 + 2 \mathbb{C}\text{ov}(\hat{\boldsymbol{\mu}}, \mathbf{Y}) \\ \end{align}</p>
+
+<p>where</p>
+
+\[\mathbb{C}\text{ov}(\hat{\boldsymbol{\mu}}, \mathbf{Y}) = \sum\limits_{i=1}^n \text{cov}(\hat{\mu}_i, Y_i).\]
+
+<p>Recall that we’d like to compute the expected prediction error:</p>
+
+\[\mathbf{E}[||\mathbf{Y}_{\text{new}} - \hat{\boldsymbol{\mu}}||^2].\]
+
+<p>We can decompose the prediction error into a bias term and a variance term:</p>
+
+\[\mathbf{E}[||\mathbf{Y}_{\text{new}} - \hat{\boldsymbol{\mu}}||^2] = \underbrace{\mathbf{E}[||\boldsymbol{\mu} - \hat{\boldsymbol{\mu}}||^2]}_{\text{bias}^2} + \underbrace{n \boldsymbol{\sigma}^2}_{\text{variance}}.\]
+
+<p>Since we already have an expression for the bias above, we can plug it in:</p>
+
+<p>\begin{align} \mathbf{E}[||\mathbf{Y}_{\text{new}} - \hat{\boldsymbol{\mu}}||^2] &amp;= \mathbb{E}[||\textbf{Y} - \hat{\boldsymbol{\mu}}||^2] - n\boldsymbol{\sigma}^2 + 2 \mathbb{C}\text{ov}(\hat{\boldsymbol{\mu}}, \mathbf{Y}) + n \boldsymbol{\sigma}^2 \\ &amp;= \mathbb{E}[||\textbf{Y} - \hat{\boldsymbol{\mu}}||^2] + 2 \mathbb{C}\text{ov}(\hat{\boldsymbol{\mu}}, \mathbf{Y}) \\ &amp;=: C_p \end{align}</p>
+
+<p>Thus, the bias in our original estimate of the model’s error was equal to the covariance between $\hat{\boldsymbol{\mu}}$ and $\mathbf{Y}$. Intuitively, one can think of this covariance as a measure of how strongly overfit $\hat{\boldsymbol{\mu}}$ was to $\mathbf{Y}$. This covariance between predicted values and the true response variable is often treated as the “degrees of freedom” of the model.</p>
+
+<p>In practice, one can use this new unbiased estimate of the prediction error to choose among a set of models.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Fan, J., Li, R., Zhang, C.-H., and Zou, H. (2020). Statistical Foundations of Data Science.
+CRC Press.</li>
+  <li>Friedman, Jerome, Trevor Hastie, and Robert Tibshirani. The elements of statistical learning. Vol. 1. No. 10. New York: Springer series in statistics, 2001.</li>
+  <li>Mallows, Colin L. “Some comments on Cp.” Technometrics 42.1 (2000): 87-94.</li>
+</ul>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>We’re intentionally calling these samples “new” samples rather than “test” samples because, unlike a true test dataset, we’ll never actually see these samples. The goal is to obtain an estimate of the prediction error on some new, unseen data. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+:ET

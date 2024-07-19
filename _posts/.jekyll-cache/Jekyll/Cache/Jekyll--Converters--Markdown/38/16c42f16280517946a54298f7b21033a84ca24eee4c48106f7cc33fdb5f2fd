@@ -1,0 +1,100 @@
+I"<p>Maximum entropy distributions are those that are the “least informative” (i.e., have the greatest entropy) among a class of distributions with certain constraints. The principle of maximum entropy has roots across information theory, statistical mechanics, Bayesian probability, and philosophy. For this post, we’ll focus on the simple definition of maximum entropy distributions.</p>
+
+<h2 id="definition">Definition</h2>
+
+<p>Recall the definition of entropy for $n$ bits, where bit $i$ has probability $p_i$ of being $1$:</p>
+
+\[H(X) = -\sum\limits_{i = 1}^n p_i \log p_i.\]
+
+<p>This can be generalized to the continuous case:</p>
+
+\[H(X) = -\int p(x) \log p(x).\]
+
+<p>It’s useful to also recall that the entropy is simply the expectation of the information, which is defined as $I(X) = -\log p_i$.</p>
+
+<p>\begin{align}\mathbb{E}[I(X)] &amp;= \sum\limits_{i = 1}^n p_i I(X) \\ &amp;= \sum\limits_{i = 1}^n p_i \left(-\log p_i\right) \\ &amp;= -\sum\limits_{i = 1}^n p_i \log p_i\end{align}</p>
+
+<p>As mentioned before, a maximum entropy distribution is the member of a family of distributions that maximizes the above expression for entropy. To find a particular maximum entropy distribution, one can think of it as a constrained optimization problem. Suppose you’re searching within a family of distributions that has constraints $c_1, c_2, \dots, c_n$ (for example, these could be moment conditions, the support, etc.). Then the optimization problem to solve is:</p>
+
+<p>\begin{align}&amp;\max H(X) \\ &amp;\text{s.t. } c_1, \dots, c_n \text{ are true}.\end{align}</p>
+
+<h1 id="uniform-distribution">Uniform distribution</h1>
+
+<p>Let’s first consider the simplest example that places the fewest constraints on the family of distributions: the family of discrete distributions that has support on the the integers in the interval $[a, b]$. Notice that our only constraint here is that the distribution sums to $1$, so that it’s a valid distribution. So the corresponding optimization problem is</p>
+
+<p>\begin{align}&amp;\max H(X) = -\sum\limits_{i = a}^b p_i \log p_i \\ &amp;\text{s.t. } \sum\limits_{i = a}^b p_i = 1\end{align}</p>
+
+<p>where $p_i$ is the size of the mass placed at position $i$. We’ll use our old friend Lagrange multipliers to solve this. The Lagrangian is:</p>
+
+\[L = -\sum\limits_{i = a}^b p_i \log p_i - \lambda(\sum\limits_{i = a}^b p_i - 1)\]
+
+<p>The first derivatives are:</p>
+
+<p>\begin{align}\frac{d}{dp_i} L &amp;= -\log p_i + \frac{-p_i}{p_i} - \lambda = -\log p_i - 1 - \lambda \\ \frac{d}{d\lambda} L &amp;= -\sum\limits_{i = a}^b p_i + 1\end{align}</p>
+
+<p>Setting the first equation to zero and solving, we have:</p>
+
+\[p_i = \exp(-\lambda - 1)\]
+
+<p>which, using the second equation (and setting it to zero), implies</p>
+
+<p>\begin{align}-\sum\limits_{i = a}^b \exp(-\lambda - 1) + 1 &amp;= 0 \\ \lambda &amp;= \log(b - a + 1) + 1\end{align}</p>
+
+<p>Plugging this back into the expression for $p_i$, we get</p>
+
+\[p_i = \frac{1}{b - a + 1}.\]
+
+<p>This means we’re placing equal mass on each of the points in $[a, b]$, so this is the uniform distribution! This should make intuitive sense because the uniform is maximally spread out over the interval, so it will have maximum entropy.</p>
+
+<p>Finding the maximum entropy distribution for other families with more constraints amounts to adding in more constraints to the constrained optimization problem above.</p>
+
+<h1 id="gaussian">Gaussian</h1>
+
+<p>As another important special case, we can show that the Gaussian is the maximum entropy distribution in the family with known mean and variance. Instead of showing this from first principles (i.e., solving the constrained optimization problem), we’ll show a different proof here that uses KL divergence to bound the entropy of any other distribution in the family.</p>
+
+<p>Recall that the Gaussian pdf is:</p>
+
+\[p(x) = \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right).\]
+
+<p>Using our formula for entropy above, we can show that it has entropy</p>
+
+<p>\begin{align}H(p) &amp;= -\int_{-\infty}^\infty p(x) \log p(x) dx \\ &amp;= -\int_{-\infty}^\infty \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right) \log\left[\frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right)\right] \\ &amp;= \frac{1}{2} \log (2\pi \sigma^2) \int_{-\infty}^\infty \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2} \right)  \\ &amp;+ \frac{1}{2\sigma^2} \int_{-\infty}^\infty \frac{1}{\sqrt{2\pi \sigma^2}} (x - \mu)^2 \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right) \\ &amp;= \frac{1}{2}\log (2\pi \sigma^2)(1) + \frac{1}{2\sigma^2} \sigma^2 \\ &amp;= \frac{1}{2}\log (2\pi \sigma^2) + \frac{1}{2} \\ &amp;= \frac{1}{2}\log (2\pi \sigma^2) + \frac{1}{2}\log(e) \\ &amp;= \frac{1}{2} \log(2\pi e \sigma^2)\end{align}</p>
+
+<p>where we have used the definition of the variance</p>
+
+\[\sigma^2 = \int_{-\infty}^\infty \frac{1}{\sqrt{2\pi \sigma^2}} (x - \mu)^2 \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right)\]
+
+<p>and the fact that the Normal distribution sums to 1:</p>
+
+\[\int_{-\infty}^\infty \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right) = 1.\]
+
+<p>Now, we’d like to show that for any other distribution $q(x)$ in the family, it will have lower entropy, that is, $H(p) \geq H(q)$.</p>
+
+<p>Consider the KL divergence between $p$ and $q$:</p>
+
+<p>\begin{align}D_\text{KL}(q, p) &amp;= \int_{-\infty}^\infty q(x) \log \left( \frac{q(x)}{p(x)} \right) dx \\ &amp;= -H(q, p) - H(q)
+\end{align}</p>
+
+<p>where $H(q, p) = \int q(x) \log p(x)$ is the cross-entropy. An important property of the KL-divergence is that it’s always non-negative, so we know that $-H(q, p) - H(q) \geq 0 \implies -H(q, p) \geq H(q)$. So if we can show that the LHS of this inequality is equal to $H(P)$, then we’ve shown that $q$ has lower entropy than $p$. Writing out the cross-entropy, we have</p>
+
+<p>\begin{align}H(q, p) &amp;= \int_{-\infty}^\infty q(x) \log \left[\frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right)\right] \\ &amp;= \mathbb{E}_{q}\left[ \log \left[\frac{1}{\sqrt{2\pi \sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right)\right] \right] \\ &amp;= -\frac{1}{2} \log(2\pi \sigma^2) - \frac{1}{2\sigma^2} \mathbb{E}_q[(x - \mu)^2].\end{align}</p>
+
+<p>Now, by the definition of the variance of $q$, we know that $\mathbb{E}_q[(x - \mu)^2] = \sigma^2$, so</p>
+
+<p>\begin{align}-\frac{1}{2} \log(2\pi \sigma^2) - \frac{1}{2\sigma^2} \mathbb{E}_q[(x - \mu)^2] &amp;= -\frac{1}{2} \log(2\pi \sigma^2) - \frac{1}{2\sigma^2} \sigma^2 \\ &amp;= -\frac{1}{2} \log(2\pi \sigma^2) - \frac{1}{2} \\ &amp;= -\frac{1}{2}\left(\log(2\pi \sigma^2) + 1\right) \\ &amp;= -\frac{1}{2}\log(2\pi e \sigma^2) \\ &amp;= H(p)\end{align}</p>
+
+<p>So the cross entropy is equal to the entropy of $p$, and we’re done! In conclusion, we’ve shown that if $p(x)$ is Gaussian with mean $\mu$ and variance $\sigma^2$, then $H(p) \geq H(q)$ for any distribution $q$ with mean $\mu$ and variance $\sigma^2$. Thus, the Gaussian has maximum entropy within the family of distributions with given first and second moments.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this post, we’ve covered the definition of maximum entropy distributions, and we reviewed two examples: the discrete uniform distribution and the Gaussian.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>McElreath, Richard. Statistical rethinking: A Bayesian course with examples in R and Stan. Chapman and Hall/CRC, 2018.</li>
+  <li>Brian Keng’s blog post on the topic: <a href="http://bjlkeng.github.io/posts/maximum-entropy-distributions/">http://bjlkeng.github.io/posts/maximum-entropy-distributions/</a></li>
+  <li>Entropy of the Gaussian: <a href="http://www.biopsychology.org/norwich/isp/chap8.pdf">http://www.biopsychology.org/norwich/isp/chap8.pdf</a></li>
+</ul>
+
+:ET

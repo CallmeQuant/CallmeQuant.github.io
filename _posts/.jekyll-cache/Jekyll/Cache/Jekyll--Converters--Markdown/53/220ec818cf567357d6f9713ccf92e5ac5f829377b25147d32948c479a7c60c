@@ -1,0 +1,82 @@
+I"�<p>This post briefly covers a broad class of statistical estimators: M-estimators. We’ll review the basic definition, some well-known special cases, and some of its asymptotic properties.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>“M”-estimators are named as such because they are defined as the <strong>m</strong>inimization (or <strong>m</strong>aximization) of some function. Specifically, $\hat{\theta}$ is an M-estimator if</p>
+
+\[\hat{\theta} = \text{arg}\min_\theta \sum\limits_{i = 1}^n \rho(X_i, \theta)\]
+
+<p>where $\rho$ is a function that can be chosen, and whose choice leads to different types of estimators.</p>
+
+<h2 id="special-cases">Special cases</h2>
+
+<h3 id="maximum-likelihood-estimation">Maximum likelihood estimation</h3>
+
+<p>Perhaps the most well-known type of M-estimation is maximum likelihood estimation (MLE). Recall that MLE seeks the parameter $\theta$ that maximizes the likelihood of the data:</p>
+
+\[\hat{\theta} = \text{arg}\max_\theta \prod\limits_{i = 1}^n f(X_i, \theta)\]
+
+<p>where $f$ is the pdf of the data $X_1, \dots, X_n$. This can be written as an equivalent minimization problem:</p>
+
+\[\hat{\theta} = \text{arg}\min_\theta \prod\limits_{i = 1}^n - f(X_i, \theta).\]
+
+<p>Taking the log doesn’t change the maximizer since $\log$ is a monotonic function:</p>
+
+\[\hat{\theta} = \text{arg}\min_\theta \sum\limits_{i = 1}^n - \log f(X_i, \theta).\]
+
+<p>And now we notice that this is the form of the generic M-estimator, where $\rho(X_i, \theta) = -\log f(X_i, \theta)$.</p>
+
+<h3 id="method-of-moments-estimation">Method of moments estimation</h3>
+
+<p>Method of moments is another popular generic estimation technique. Its technique is very simple: set the first $k$ sample moments equal to the respective $k$ population moments, and solve for the unknowns.</p>
+
+<p>This setup can be couched in the language of M-estimation as follows. Suppose $g(X_i)$ is some function where $\mathbb{E}_\theta[g(X_i)] = \mu(\theta)$.</p>
+
+<p>The following choice of $\rho$ is equivalent to method of moments estimation:</p>
+
+\[\rho(X_i, \theta) = (g(X_i) - \mu(\theta))^2.\]
+
+<h2 id="asymptotic-properties">Asymptotic properties</h2>
+
+<p>Below are a couple of properties of M-estimators that hold true as $n \to \infty$ (stated without proof here).</p>
+
+<h3 id="consistency">Consistency</h3>
+
+<p>Under the proper regularity conditions, M-estimators are consistent. That is, they converge in probability, or stated mathematically,</p>
+
+\[\lim_{n \to \infty} \mathbb{P}[|\hat{\theta}_n - \theta| &gt; \epsilon] = 0.\]
+
+<p>Intuitively, the main regularity condition required is that the expression $\sum\limits_{i = 1}^n \rho(X_i, \theta)$ behaves nicely as $n \to \infty$. By “nicely” here, we mean that it converges uniformly to its expectation, $\mathbb{E}\left[ \sum\limits_{i = 1}^n \rho(X_i, \theta) \right]$. This is analogous to the Law of Large Numbers.</p>
+
+<h3 id="asymptotic-normality">Asymptotic normality</h3>
+
+<p>Under certain regularity conditions, M-estimators are also asymptotically normal. If $\theta_0$ is the true parameter of the data generating process, and $\hat{\theta}$ is the M-estimator, we have that</p>
+
+\[\sqrt{n}(\hat{\theta}_n - \theta) \to_d \mathcal{N}(0, H_0^{-1}\Sigma_0 H_0^{-1})\]
+
+<p>where $\Sigma_0 = \mathbb{V}\left[ \frac{\partial}{\partial \theta} \rho(X_i, \theta) \right]$ and $H_0 = \mathbb{E}\left[ \frac{\partial}{\partial \theta \partial \theta^\top} \rho(X_i, \theta) \right]$. This is often called the “sandwich estimator” for the variance, where $H_0^{-1}$ is the “bread” and $\Sigma_0$ is the “meat”.</p>
+
+<p>An interesting note here is that, in the maximum likelihood estimation case, both $\Sigma_0$ and $H_0$ are equal to the Fisher information $\mathcal{I}_0$ by definition. Thus, the asymptotic variance collapses to</p>
+
+\[H_0^{-1}\Sigma_0 H_0^{-1} = \mathcal{I}_0^{-1} \mathcal{I}_0 \mathcal{I}_0^{-1} = \mathcal{I}_0^{-1}.\]
+
+<h2 id="robustness">Robustness</h2>
+
+<p>M-estimation was developed in the context of robust estimation. In general, an estimator is robust if it retains its nice properties (consistency, efficiency) even when some of the modeling assumptions are not true.</p>
+
+<p>M-estimation in particular doesn’t require the statistician to fully specify the distribution of the data generating process. Rather, only the objective function $\rho$ must be specified.</p>
+
+<p>Furthermore, if the distribution is specified incorrectly, then $H_0 \neq \Sigma_0$, but the variance estimator is still consistent.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>M-estimation is a broad umbrella of techniques that share a common underlying maximization or minimization. The advantage of grouping estimators into broad classes and analyzing them more generically is that all of the results and proofs directly allow us to gain more insight into many different types of estimators “for free”. As we saw here, M-estimators are consistent and asymptotically normal, and allow for robust estimation.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>In-person lectures and lecture slides Prof. Matias Cattaneo’s ORF524 class at Princeton.</li>
+  <li>Stefanski, Leonard A., and Dennis D. Boos. “The calculus of M-estimation.” The American Statistician 56.1 (2002): 29-38.</li>
+</ul>
+
+:ET

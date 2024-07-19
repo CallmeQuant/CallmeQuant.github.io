@@ -1,0 +1,79 @@
+I"� <p>Here, we’ll discuss a high-level concept relating to efficient learning. In many learning problems, an agent seeks to minimize the cost they incur by selecting a hypothesis about the world from a set of many possible hypotheses. We’ll dive into a framework for prioritizing among the candidate hypotheses (structural risk minimization) – and one interesting way to specifically assign priority levels to hypotheses (minimum description length).</p>
+
+<h2 id="pac-learning">PAC learning</h2>
+
+<p>The probably approximately correct (PAC) learning framework defines a specific notion of what it means for a certain problem setting to be “learnable” by an algorithm.</p>
+
+<p>Roughly, a function is PAC learnable by an algorithm $\mathcal{A}$ using a particular hypothesis class $\mathcal{H}$ if for any $\epsilon$ and $\delta$, the algorithm $\mathcal{A}$ returns a hypothesis that has error of at most $\epsilon$ with probability at least $1 - \delta$ after observing a sufficient number of samples. In other words, a PAC learnble setting is one in which we can be sure that an algorithm will be able to achieve very small error provided it has seen enough enough data.</p>
+
+<p>Although this definition requires the algorithm to achieve low error in an absolute sense, this definition can be extended to include cases where absolutely low error may be impossible, but the algorithm is able to achieve error very close to the best possible hypothesis in the class (this is sometimes called “agnostic PAC learnability”).</p>
+
+<p>It can be shown that choosing a hypothesis that minimizes the “expected risk” of an algorithm – its error on the training data – allows one to bound the number of samples required for PAC learnability. Specifically, for a finite hypothesis class $H$ and an algorithm that minimizes the empirical risk, the problem is PAC learnable after observing $m$ training samples, such that</p>
+
+\[m \geq \frac{1}{\epsilon}\log(\frac{\lvert \mathcal{H} \rvert$}{\delta})\]
+
+<p>where $\lvert \mathcal{H} \rvert$ is the size of the hypothesis class.</p>
+
+<p>Now, how did we initially select the hypothesis class $H$ to consider above? Since $H$ must be finite for the sample complexity bound to hold, it’s clear that we’ll need to restrict the hypotheses over which we’re searching.</p>
+
+<p>One way to think about it is in terms of “prior beliefs”. In the PAC learning setup, by initially committing to a particular hypothesis class, we’re implicitly imposing our prior beliefs. For example, if we need to fit a function from $\mathbb{R}$ to $\mathbb{R}$, we may decide a priori (before seeing any data) that our hypothesis class will be all linear functions ($y = mx + b$). This is quite a strong prior belief, as we would be severely restricting the types of functions we could represent.</p>
+
+<p>In many learning situations, we may want to loosen this commitment a bit and instead consider a number of hypothesis classes. Continuing the example above, when fitting a function $\mathbb{R}$ to $\mathbb{R}$ to data, we may want to consider not only degree-1 polynomials (lines), but every degree-$n$ polynomial, $n \in \mathbb{N}$. Clearly, this is a very large class of hypotheses, and we would need some way of prioritizing certain values of $n$. Enter structural risk minimization.</p>
+
+<h2 id="structural-risk-minimization">Structural risk minimization</h2>
+
+<p>Structural risk minimization is a paradigm wherein we can assign priority values to various hypothesis classes under consideration, and use these assignments to guide the learning process.</p>
+
+<p>Specifically, again let $\mathcal{H}$ be the overall hypothesis class, but now it’s made up of a number of smaller hypothesis classes. We can write $\mathcal{H} = \bigcup\limits_{n \in \mathbb{N}} \mathcal{H}_n$ (it will become important later that we can write $\mathcal{H}$ as a countable union of sub-hypotheses). In addition, we can define $w : \mathbb{N} \rightarrow [0, 1]$ to be a function that assigns a weight to each hypothesis.</p>
+
+<p>Then, the SRM framework dictates that an algorithm should output the hypothesis that optimally trades off the empirical error and the penalty from $w$. In particular, the algorithm will output a hypothesis $h$ such that:</p>
+
+\[h = \text{argmin}_{h \in \mathcal{H}} \big[L_S(h) + \epsilon_{n(h)} (m, w(n(h)) \cdot \delta)\big]\]
+
+<p>where $L_S(h)$ is the empirical error of $h$ on the data as before, and $\epsilon_{n(h)} (m, w(n(h)) \cdot \delta)$ is the penalization based on the the weighting assigned by $w$.</p>
+
+<p>A question that naturally arises is how to choose $w$. One strategy is to have $w$ assign a value to each hypothesis that is proportional to its “complexity” in some sense. Although there are many ways to think about modeling how complex a hypothesis is, a common and general one is using “minimum description length”.</p>
+
+<h2 id="minimum-description-length">Minimum description length</h2>
+
+<p>As the name suggests, the idea behind minimum description length is to represent each hypothesis as the shortest possible string of characters in some language. The length of each string can then be interpreted as a measure of the complexity of each hypothesis – more complex hypotheses will require more characters to describe them.</p>
+
+<p>At first glance, it seems like the behavior of SRM will change dramatically depending on which language we choose. Indeed, a hypothesis could be represented by strings of very different lengths in different languages. Should we write each hypothesis in English, and count the number of letters? Should we encode hypotheses in some programming language?</p>
+
+<p>Interestingly, aside from ensuring that the language is prefix-free, the choice doesn’t matter for the SRM bounds to be true. What really matters is the sequence of events in the design of the algorithm. Specifically, SRM does the following steps:</p>
+
+<ol>
+  <li>Choose a language in which to represent hypotheses.</li>
+  <li>Compute the description length of each hypothesis.</li>
+  <li>Observe data and return a hypothesis.</li>
+</ol>
+
+<p>When we commit to a language in step 1, we’re already imposing our prior beliefs on the problem. That is, we have some opinion about the proper language in which to represent the hypotheses. For example, when we describe a set of functions by coding them in Python, we already must think that Python is a reasonable choice.</p>
+
+<p>This also means that SRM’s guarantees will hold up regardless of which language we choose. To me, this is surprising and interesting. However, this type of “temporal” dependence in the order of decision making shows up frequently in statistical decision theory and game theory.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We have seen that structural risk minimization is a general framework for searching among a large set of hypotheses by incorporating knowledge about which types of hypotheses we prefer. Minimum description length is one possible strategy for formally assigning preferences, which as we saw is suprisingly agnostic to the langauge in which we represent the hypotheses. These ideas are deeply connected to several other well-known concepts in statistics and machine learning, some of which are noted below.</p>
+
+<h2 id="relationship-to-other-ideas">Relationship to other ideas</h2>
+
+<ul>
+  <li><strong>Regularization</strong> SRM is essentially a more general framework for thinking about generalization.</li>
+  <li><strong>Bayesian model selection</strong> has a very similar flavor to SRM. The basic idea here is that Bayes rule is used to compare different hypotheses through a combination of hypothesis-specific priors and likelihoods.</li>
+  <li><strong>Kolmogorov complexity</strong> and <strong>minimum message length</strong> are alternative ways to measure the complexity of hypotheses.</li>
+</ul>
+
+<h3 id="appendix">Appendix</h3>
+
+<ul>
+  <li>Quick technical note: SRM is also important because it can nonuniformly learn any hypothesis class that is a countable union of uniformly converging hypothesis classes.</li>
+</ul>
+
+<h3 id="references">References</h3>
+
+<ul>
+  <li>This post largely follows Shai Ben-David’s description of nonuniform learning and structural risk minimization in his book <a href="https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/">Understanding Machine Learning</a>.</li>
+</ul>
+
+:ET

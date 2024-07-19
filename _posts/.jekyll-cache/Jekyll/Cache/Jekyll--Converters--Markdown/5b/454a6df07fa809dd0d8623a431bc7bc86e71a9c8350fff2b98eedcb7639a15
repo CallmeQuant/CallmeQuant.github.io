@@ -1,0 +1,99 @@
+I"� <p>In this post, we try to visualize a couple simple differential equations and their solutions with a few lines of Python code.</p>
+
+<h2 id="setup">Setup</h2>
+
+<p>Consider the following simple differential equation</p>
+
+<p>\begin{equation} \frac{dy}{dx} = x. \label{diffeq1} \end{equation}</p>
+
+<p>Clearly, the solution to this equation will have the form</p>
+
+\[y = \frac12 x^2 + C\]
+
+<p>where $C \in \mathbb{R}$ is any constant.</p>
+
+<p>There are two ways we can think about the differential equation in \eqref{diffeq1}.</p>
+
+<h2 id="integral-curves">Integral curves</h2>
+
+<p>First, we can say that for a given point $(x_0, y_0)$, the equation computes the slope $m$ of the tangent line at that point as $m = x$.</p>
+
+<p>For example, consider the point $(1, 1)$. Clearly, at this point $\frac{dy}{dx} = 1$. We can visualize this by plotting a small line with slope $1$ at the point $(1, 1)$.</p>
+
+<p><img src="/assets/diffeq_fig1.png" alt="diffeq_fig1" /></p>
+
+<p>We can plot another line at $(2, 1)$.</p>
+
+<p><img src="/assets/diffeq_fig2.png" alt="diffeq_fig2" /></p>
+
+<p>We can continue doing this at points throughout the graph to get a sense of what the vector field looks like.</p>
+
+<p><img src="/assets/diffeq_fig3.png" alt="diffeq_fig3" /></p>
+
+<p>As expected, the graph has a parabolic shape to it, as we saw from the solution to Equation \eqref{diffeq1}. Also notice that we can trace any single one of these curves to yield a single solution.</p>
+
+<p><img src="/assets/diffeq_fig6.png" alt="diffeq_fig6" /></p>
+
+<p>Consider a slightly different example:</p>
+
+\[\frac{dy}{dx} = x + y.\]
+
+<p>We can plot similar lines for this equation and notice a different pattern, this time having the shape of curves $x^3 + C$:</p>
+
+<p><img src="/assets/diffeq_fig4.png" alt="diffeq_fig4" /></p>
+
+<h2 id="isoclines">Isoclines</h2>
+
+<p>Here’s a  second approach for visualizing differential equations and their solutions. For a given slope $m_0$, we can find all points ${(x, y)}$ that satisfy $\frac{dy}{dx} = m_0$.  These points form a curve called an “isocline” (think iso = same, cline = change).</p>
+
+<p>Consider again the example $\frac{dy}{dx} = x$. In this case, these points will lie along a verical line:</p>
+
+\[x = m_0.\]
+
+<p>Notationally, we can write this as the set ${(x, y) : y = m_0 - x}$.</p>
+
+<p>To start plotting this, consider $m_0 = 1$. That is, let’s find all the points where the slope is $1$. In this example, these points will lie along the line $x = 1$. Plotting this, we have the following graph.</p>
+
+<p><img src="/assets/diffeq_fig5.png" alt="diffeq_fig5" /></p>
+
+<p>We can continue this for various values of $m_0$ to fill out the same plot:</p>
+
+<p><img src="/assets/diffeq_fig3.png" alt="diffeq_fig3" /></p>
+
+<h2 id="code">Code</h2>
+
+<p>Here’s the simple code used to visualize these equations. Simply fill in the body of the function <code class="language-plaintext highlighter-rouge">dydx(x, y)</code>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mesh_width</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">dir_field_x_template</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">mesh_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">mesh_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">xlims</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+<span class="n">ylims</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">dydx</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">xlims</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylim</span><span class="p">(</span><span class="n">ylims</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"black"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">"black"</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">xlims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlims</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mesh_width</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ylims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylims</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mesh_width</span><span class="p">):</span>
+        <span class="n">curr_slope</span> <span class="o">=</span> <span class="n">dydx</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">curr_intercept</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">curr_slope</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="n">dir_field_xs</span> <span class="o">=</span> <span class="n">dir_field_x_template</span> <span class="o">+</span> <span class="n">x</span>
+        <span class="n">dir_field_ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">curr_slope</span> <span class="o">*</span> <span class="n">dfx</span> <span class="o">+</span> <span class="n">curr_intercept</span> <span class="k">for</span> <span class="n">dfx</span> <span class="ow">in</span> <span class="n">dir_field_xs</span><span class="p">]</span>
+        <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dir_field_xs</span><span class="p">,</span> <span class="n">dir_field_ys</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">"x"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">"y"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"dy/dx"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Prof. Arthur Mattuck’s <a href="https://www.youtube.com/watch?v=XDhJ8lVGbl8">Differential Equations lecture videos</a></li>
+</ul>
+:ET

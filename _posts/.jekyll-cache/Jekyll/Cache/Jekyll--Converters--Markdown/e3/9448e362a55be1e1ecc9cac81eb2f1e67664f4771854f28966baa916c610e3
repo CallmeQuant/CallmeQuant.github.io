@@ -1,0 +1,116 @@
+I"x<p>Condition numbers measure the sensitivity of a function to changes in its inputs. We review this concept here, along with some specific examples to build intuition.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Consider a system of linear equations represented in matrix form, $Ax = b$, where $x$ is unknown. We can easily solve this with basic tools from linear algebra.</p>
+
+<p>However, how “stable” is our solution for $x$? In particular, if we were to slightly change $b$, how much would our solution for $x$ change? We can consider a slightly different problem:</p>
+
+\[A(x + \Delta x) = (b + \Delta b).\]
+
+<p>We’d like to get a sense of how much this type of perturbation will affect our solution.</p>
+
+<p>To begin to understand condition numbers, we should first take a detour to understand matrix norms.</p>
+
+<h2 id="matrix-norms">Matrix norms</h2>
+
+<p>Similar to vector norms, norms for matrices also exist. A variety of types of matrix norms are commonly used – generically denoted as $||A||$ for a matrix $A$. We can think each of them as essentially measuring something about the “size” of the matrix.</p>
+
+<p>A common way to define matrix norms is via an induced norm:</p>
+
+\[||A|| = \max_{||x|| = 1} ||Ax||.\]
+
+<p>The induced norm essentially seeks a vector $x$ that is maximally “stretched” by the matrix $A$.</p>
+
+<p>One example of an induced norm is the “operator norm”, which is the induced norm when we use the $L_2$ norm, $||\cdot||_2$:</p>
+
+\[||A||_2 = \max_{||x||_2 = 1} ||Ax||_2.\]
+
+<p>It’s also equivalent to the maximum eigenvalue of $(A^\top A)^{1/2}$.</p>
+
+<p>For a given matrix $A$, we can think of the operator norm as finding a vector $x$ that is maximally stretched when multiplied by $A$: $Ax$. Here, we measure the stretch by the $L_2$, or Euclidean, distance.</p>
+
+<p>For example, if we let $A$ be the identity matrix, then $||Ax||_2 = 1$ because $A$ won’t do any stretching at all, and since we constrained $||x||_2 = 1$, we can easily see $||Ax||_2 = ||x||_2 = 1$.</p>
+
+<p>We depict this graphically below. In the left panel, we plot a subset of vectors $x$ with $||x|| = 1$. These are the vectors that we search over when we try to find the vector $x$ that has maximal induced norm $||Ax||$. In the right panel, we plot the transformed vectors $Ax$. Since $A = I$ in this case, the vectors are unchanged. Highlighted in red is the vector with maximum induced length (an arbitrary choice in this case because all vectors have the same length).</p>
+
+<p><img src="/assets/identity_operator_norm.png" alt="identity_operator_norm" /></p>
+
+<p>Consider a slightly more interesting case, where $A = \bigl( \begin{smallmatrix}1 &amp; 0\ 1.5 &amp; 1\end{smallmatrix}\bigr)$. In this case, we expect that $A$ will stretch any vector $x$. Indeed, we can see this below when we plot the original vectors $x$ and their transformed versions $Ax$:</p>
+
+<p><img src="/assets/operator_norm_case2.png" alt="operator_norm_case2" /></p>
+
+<p>In the left pane, the red vector is the vector $x$ such that $||Ax||_2$ is maximized ($||Ax||_2 = 2$ in this case).</p>
+
+<p>We can build similar intuition for the $L_1$ norm. In this case, the original length-1 vectors occupy a square (diamond?) about the origin. The transformed vectors $Ax$ occupy a parallelogram. The figure below shows these vectors for the matrix $A = \bigl( \begin{smallmatrix}1 &amp; 0\ 1.5 &amp; 1\end{smallmatrix}\bigr)$.</p>
+
+<p><img src="/assets/l1_norm_case2.png" alt="l1_norm_case2" /></p>
+
+<p>Now that we have some intuition about matrix norms, we can easily move on to understanding the condition number.</p>
+
+<h2 id="condition-number">Condition number</h2>
+
+<p>In general, the condition number measures how much the output of a function changes with small perturbations to the input.</p>
+
+<p>It’s easiest to first study the condition number in the context of linear transformations.</p>
+
+<p>Recall from our discussion of matrix norms that matrices “stretch” vectors, and the operator norm measures the maximum possible stretch that a matrix can induce. In addition to this we can also measure the minimum stretching produced by a matrix:</p>
+
+\[\min_{||x|| = 1} ||Ax||.\]
+
+<p>By measuring the maximum and minimum possible stretching, we can get a sense of the “range” of vectors produced from a matrix. This is the idea of the condition number. Specifically, the condition number of a matrix (usually denoted by $\kappa$) is the ratio of its maximum stretch to its minimum stretch:</p>
+
+\[\kappa(A) = \frac{\max_{||x|| = 1} ||Ax||}{\min_{||x|| = 1} ||Ax||}.\]
+
+<p>Furthermore, if we let $Ax = y$, notice that</p>
+
+<p>\begin{align} \min_{||x|| = 1} ||Ax|| &amp;= \min \frac{||Ax||}{||x||} \\ &amp;= \min \frac{||y||}{||A^{-1}y||} \\ &amp;= 1 / \max \frac{||A^{-1}y||}{||y||} \\ &amp;= 1 / ||A^{-1}||. \\ \end{align}</p>
+
+<p>Thus, the condition number can be rewritten as</p>
+
+\[\kappa(A) = ||A|| ||A^{-1}||\]
+
+<p>which is simply the product of two operator norms – one on $A$ and another on its inverse.</p>
+
+<p>If $A$ is singular then $A$ can map any vector to another vector of length $0$, and so $\min \frac{||Ax||}{||x||}$ and $\kappa(A) = \infty$. For matrices, an interpretation of the condition number is a measure of close the matrix is to being singular (higher condition number means closer to being singular).</p>
+
+<h2 id="condition-number-in-linear-systems">Condition number in linear systems</h2>
+
+<p>Consider the linear system $Ax = b$. Returning to the question, we started with, we can use the condition number to understand how a small change in $b$ affects $x$. In particular,</p>
+
+\[A(x + \Delta x) = b + \Delta b.\]
+
+<p>Since it’s a linear system, we know that $A(\Delta x) = \Delta b$, and $||Ax|| = ||b||$. Furthermore,</p>
+
+<p>\begin{align} ||b|| &amp;= ||Ax|| \\ &amp;\leq \max_x ||Ax|| \\ &amp;= ||A|| ||x||. \\ \end{align}</p>
+
+<p>Also, if we let $m = \min_{x} ||A (x)||$, we have</p>
+
+<p>\begin{align} ||\Delta b|| &amp;= ||A (\Delta x)|| \\ &amp;\geq \min_{\Delta x} ||A (\Delta x)|| \\ &amp;= m ||\Delta x||. \\ \end{align}</p>
+
+<p>Putting these together, we can get a bound on the condition number of $A$. Since $||A|| \geq \frac{||x||}{||b||}$ and $m \leq \frac{||\Delta b||}{||\Delta x||}$, we have</p>
+
+\[\kappa(A) = \frac{||A||}{m} \geq \frac{\frac{||x||}{||b||}}{\frac{||\Delta b||}{||\Delta x||}}\]
+
+<p>which implies</p>
+
+\[\frac{||\Delta x||}{||x||} \leq \kappa(A) \frac{||\Delta b||}{||b||}.\]
+
+<p>The left-hand side, $\frac{||\Delta x||}{||x||}$ is the (normalized, dimensionless) change in the solution of the system, and the right-hand side is the condition number multiplied by $\frac{||\Delta b||}{||b||}$, which is the (normalized, dimensionless) change in the output. This gives us an upper bound on the change of the solution when the output is perturbed. Importantly, this bound is completely determined by the condition number.</p>
+
+<h2 id="arbitray-functions">Arbitray functions</h2>
+
+<p>The condition number applies much more broadly than just in linear systems. For an arbitrary function $f(x)$, the condition number is</p>
+
+\[\kappa(f) = \lim_{\epsilon \to 0} \sup_{||\Delta x|| \leq \epsilon ||x||} \frac{||f(x + \Delta x) - f(x)||}{\epsilon ||f(x)||}.\]
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Wikipedia page on <a href="https://www.wikiwand.com/en/Condition_number">condition numbers</a></li>
+  <li>Cleve Moler’s <a href="https://blogs.mathworks.com/cleve/2017/07/17/what-is-the-condition-number-of-a-matrix/">blog post on condition numbers.</a></li>
+  <li>Fan, J., Li, R., Zhang, C.-H., and Zou, H. (2020). Statistical Foundations of Data Science. CRC Press, forthcoming.</li>
+  <li>Prof. Nick Higham’s <a href="https://nhigham.com/2020/03/19/what-is-a-condition-number/">blog post</a>.</li>
+</ul>
+
+:ET

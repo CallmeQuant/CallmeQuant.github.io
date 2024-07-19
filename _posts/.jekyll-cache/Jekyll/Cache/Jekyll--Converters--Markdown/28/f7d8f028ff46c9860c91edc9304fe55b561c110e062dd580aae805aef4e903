@@ -1,0 +1,130 @@
+I"�-<p>On 4/2/20, The Dana-Farber Cancer Institute and the Brown Institute at Columbia hosted a “zoomposium” (symposium via Zoom) about epidemiological modeling of the COVID-19 pandemic. These are my notes from the speakers’ presentations.</p>
+
+<p>Flyer for the zoomposium:</p>
+
+<p><img src="/assets/zoomposium_flyer.png" alt="zoomposium_flyer" /></p>
+
+<p>I was only able to attend Profs. Buckee and Mina’s talks, but I hope to finish out the notes for the other talks once the recorded version is posted online.</p>
+
+<h2 id="caroline-buckee"><a href="https://www.hsph.harvard.edu/caroline-buckee/">Caroline Buckee</a></h2>
+
+<p>Professor Buckee focused her talk on explaining some of the mathematical and statistical models that are commonly used to model infectious diseases. She stressed that the goals of these models – as well as the actual models used – must change over the course of an outbreak. Specifically, if we divide an outbreak into an “early” stage and a “later” stage, common goals in these stages are:</p>
+
+<ul>
+  <li><strong>Early stage</strong>: Estimate basic parameters of the disease and the outbreak dynamics. These include the basic reproduction number, incubation period, latent period, duration of infection, etc.</li>
+  <li><strong>Later stage</strong>: Use models to evaluate the effectiveness of various interventions, and how to safely manage the end of the outbreak, as well as possible resurgences of the disease.</li>
+</ul>
+
+<h3 id="early-stage">Early stage</h3>
+
+<p>One of the most fundamental measures of the infectiousness of a disease is called the <strong>basic reproduction number</strong>, denoted $R_0$. Indeed, the $R_0$ quickly became a well-known quantity early on in the coronavirus outbreak, as its estimates were widely reported on the news.</p>
+
+<p>So what is the $R_0$? In words, it’s essentially the average number of people who will be infected by one person with the disease. Initial estimates of the $R_0$ for the coronavirus are around 2-3, which ranks it as solidly higher than H1N1 and Ebola.</p>
+
+<p>Early on in an outbreak, the $R_0$ can be estimated statistically by fitting a growth rate curve to the cumulative number of cases. However, this is difficult because you have to make assumptions about the time to infection after exposure, and there are wide variations in testing practices (who gets tested, where they get tested, etc.).</p>
+
+<p>As the outbreak progresses, it becomes more useful to estimate disease parameters mechanistically, rather than statistically. Mechanistic models can describe more precisely how transmission occurs, and it helps us to understand the disease dynamics more clearly.</p>
+
+<p>In order to understand the basis of $R_0$ more thoroughly, we need to investigate a common mechanistic epidemiological model called the SIR model and its extension, the SEIR model.</p>
+
+<h3 id="sir-model">SIR model</h3>
+
+<p>The SIR model – known as a “compartmental model” in epidemiology – bins each person in a population into one of three discrete states: susceptible (S), infectious (I), or recovered (R). Disease dynamics are described by the rate at which people transition between these states (usually modeled by a series of differential equations).  This diagram from Prof. Buckee’s talk gives a graphical depiction of the model:</p>
+
+<p><img src="/assets/sir_model.png" alt="sir_model" /></p>
+
+<p>Note that we have the following probabilities:</p>
+
+\[b = \mathbb{P}[\text{transmission} \; | \; \text{contact}]\]
+
+\[k = \text{contact rate}\]
+
+\[r = \text{recovery rate}\]
+
+<p>This implies that the rate at which people transition from $S$ to $I$ is $b k$.</p>
+
+<p>If we also account for the rate at which people recover from the disease, we have that the overall rate of increase in infectious people is</p>
+
+\[R_0 = \frac{b k}{r}.\]
+
+<p>This is the true underlying definition of $R_0$. Notice that there are three ways for the $R_0$ to increase:</p>
+
+<ul>
+  <li>Higher $b$: higher probability of being infected if in contact with infectious person.</li>
+  <li>Higher $k$: more contact with people.</li>
+  <li>Lower $r$: slower recovery rate from the disease.</li>
+</ul>
+
+<p>Importantly, initially people can really only control one of these: $k$, the rate of contact with other people. <strong>Intervention measures like social distancing are intended to reduce $k$, the rate of contact with other people, thereby reducing $R_0$.</strong></p>
+
+<p>The $R_0$ value is also highly context-specific: it varies depending on how different populations move around and interact with each other.</p>
+
+<h3 id="seir-model">SEIR model</h3>
+
+<p>In many diseases, the transition from susceptible to infectious is not immediate. Rather, there’s an “incubation period” during which people have been exposed and infected, but aren’t infectious, so they can’t spread it to other people.</p>
+
+<p>To account for this, an extra compartment can be added to the SIR model to form the SEIR model, where E stands for <strong>exposed</strong>. This extra compartment also changes $R_0$ estimates, as we now have to account for the transition rates into and out of the exposed state (see the <a href="https://www.wikiwand.com/en/Compartmental_models_in_epidemiology#/The_SEIR_model">Wikipedia entry</a> for more details.</p>
+
+<p>Here’s a graphical depiction of the SEIR model from Prof. Buckee’s talk (with slightly modified names for the transition rate parameters):</p>
+
+<p><img src="/assets/seir_model.png" alt="seir_model" /></p>
+
+<p>Another potential tweak to the SIR model is to separate the infectious state into two compartments: one for symptomatic people, and another for asymptomatic people. This could be especially important in the case of the coronavirus, since several results indicate that a nonnegligible fraction of infectious people might be asymptomatic (Liu et al, 2020). (We’ll be able to get a better estimate of this fraction as we move to antibody testing – more on that later.)</p>
+
+<h3 id="evaluating-interventions">Evaluating interventions</h3>
+
+<p>As these initial models are being tweaked in the early stages of an outbreak, they can be used to start to assess the effectiveness of possible interventions. Mechanistic models allow us to ask questions of the form, ‘What happens with implementing X policy?’ (for example, mandatory school closures). We can then plan for various scenarios by running the models with a range of parameter settings, which will yield a range of possible outcomes.</p>
+
+<h3 id="later-stages">Later stages</h3>
+
+<p>As an outbreak progresses and hopefully trends downward, it’s then important to think about the endgame. At this point, scientists should consider things like how long it will take for the disease to completely disappear, and whether a seasonal recurrence of the disease is possible.</p>
+
+<h3 id="other-useful-points">Other useful points</h3>
+
+<ul>
+  <li>Notice that none of the above mentions forecasting. While there have been lots of forecasts floating around on the media and elsewhere, forecasting is difficult for pandemics because of the heterogenity in testing, and because the coronavirus is fairly unstudied.</li>
+  <li>Often when projected scenarios are reported, a range of possible outcomes are reported. It’s common to mistakenly think that this range is deduced from multiple models that disagree with one another. In reality, these ranges often come from a single model in which particular parameter values are varied.</li>
+</ul>
+
+<h2 id="michael-mina"><a href="https://ccdd.hsph.harvard.edu/people/michael-mina/">Michael Mina</a></h2>
+
+<p>Professor Mina focused his talk on the logistics of testing for the coronavirus.</p>
+
+<h3 id="early-missteps-by-the-cdc">Early missteps by the CDC</h3>
+
+<p>The initial fumbling of coronavirus testing in the United States is primarily attributable to early policies of the CDC that don’t make much sense in retrospect.</p>
+
+<p>The first major policy was that all testing must be done by the CDC. On one hand, this policy makes sense to maintain the quality and authority of testing. On the other hand, this creates a clear bottleneck in the number and types of tests that can be created and administered. This disincentivized, or even prohibited, independent labs and large companies from creating new tests.</p>
+
+<p>The second major policy was that the CDC would plan to create its own test, rather than use the one that had already been developed by the WHO. It took time for the CDC to create its own test, and it didn’t happen without a couple initial failures. At the same time, it was fairly clear that the WHO test was reliable, so there was no clear reason to opt for creating a new one.</p>
+
+<p>On top of all of this, there was poor communication by the CDC about the status of testing, as well as whether other labs were allowed to use their resources for testing. This handling of the situation would have been okay for a disease like Ebola, which has low transmission rates. However, the coronavirus situation escalated rapidly, and the CDC’s action ultimately stifled the introduction of new tests.</p>
+
+<h3 id="current-testing-policy">Current testing policy</h3>
+
+<p>The FDA and CDC have now started to significantly deregulate the testing process. Typically, if a lab wants to develop a new test for a disease, the lab has to go through a lengthy application process, and only after acceptance can they start to testing patients. Now, labs still must submit an application, but while the application is still being reviewed, they’re allowed to start testing patients. This is a significant deregulation compared to the normal funcitoning of the FDA.</p>
+
+<h3 id="testing-moving-forward">Testing moving forward</h3>
+
+<p>As testing develops, Prof. Mina predicted that testing would turn to a “point of care” model, where a patient can be testing and receive the results in the same day or even within the hour (he compared this to a pregnancy test). Quick testing will be most likely possible for tests that look for the virus, rather than the antibody. Virus tests could be done within minutes.</p>
+
+<p>However, antibody tests will be important in the near future (i.e., next few weeks). These tests give us a window into the history of a patient’s infectious state. Among other things, this will allow for better contact tracing, as well as determining the fraction of infected/infectious people who are asymptomatic.</p>
+
+<h3 id="other-useful-points-1">Other useful points</h3>
+<ul>
+  <li>Prof. Mina was surprised by how fragile supply chains have been during the coronavirus outbreak. Items that are normally very easy to obtain (e.g., the nasal swab for coronavirus testing) have been in short supply.</li>
+</ul>
+
+<h2 id="resources">Resources</h2>
+
+<p>You can find links to the presenters’ slides <a href="https://rafalab.github.io/pages/covid.html">here</a>, along with Professor Rafael Irizarry’s summary of the talks.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Liu Y, Funk S, Flasche S. The contribution of pre-symptomatic transmission to the COVID-19 outbreak. Centre for Mathematical Modelling of Infectious Disease Repository. https://cmmid.github.io/topics/covid19/control-measures/pre-symptomatic-transmission.</li>
+  <li>Prem, Kiesha, et al. “The effect of control strategies to reduce social mixing on outcomes of the COVID-19 epidemic in Wuhan, China: a modelling study.” The Lancet Public Health (2020).</li>
+  <li>Ferretti, Luca, et al. “Quantifying SARS-CoV-2 transmission suggests epidemic control with digital contact tracing.” Science (2020).</li>
+</ul>
+
+:ET

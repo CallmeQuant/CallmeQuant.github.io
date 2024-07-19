@@ -1,0 +1,54 @@
+I"<p>In this post, we draw a simple connection between the optimization problems for NMF and PMF.</p>
+
+<h2 id="nmf">NMF</h2>
+
+<p>Consider a data matrix $X \in \mathbb{R}^{n \times p}$ where every value is zero or a positive integer, $x_{ij} \in \mathbb{N}_0$. NMF tries to find a low-rank approximation of $X$ such that</p>
+
+\[X \approx WH^\top,\]
+
+<p>where $W$ is $n \times k$, $H$ is $p \times k$, and $k &lt; \min(n, p)$. The entries of $W$ and $H$ are constrained to be nonnegative as well.</p>
+
+<p>NMF can use a variety of objective functions to optimize $W$ and $H$. A commonly used loss function is a form of the the KL-divergence between $X$ and $WH^\top$. Recall that the KL-divergence between to distributions $p$ and $q$ is defined as</p>
+
+\[\text{KL}(p || q) = \sum\limits_x p(x) \log \frac{p(x)}{q(x)}.\]
+
+<p>In the case of NMF, if $X$ and $WH^\top$ are valid probability distributions — such that $\sum\limits_{i, j} x_{ij} = 1$ and $\sum\limits_{ij} (WH^\top)_{ij} = 1$ — then we can write the KL-divergence between $X$ and $WH^\top$ as</p>
+
+\[\text{KL}(X || WH^\top) = \sum\limits_{i, j} x_{ij} \log \frac{x_{ij}}{(WH^\top)_{ij}}.\]
+
+<p>NMF often uses a form of the KL-divergence that accounts for cases when $X$ and $WH^\top$ don’t properly sum to $1$. It achieves this by optimizing the following objective function, often generically called the “divergence” beteween $X$ and $WH^\top$:</p>
+
+\[\mathcal{L}_{\text{NMF}} = \sum\limits_{i=1}^n \sum\limits_{j=1}^p \left( x_{ij} \log \frac{x_{ij}}{(WH^\top)_{ij}} - x_{ij} + (WH^\top)_{ij}\right).\]
+
+<p>This divergence adds a linear penalty so that the overall sums of $X$ and $WH^\top$ are similar.</p>
+
+<h2 id="poisson-matrix-factorization">Poisson matrix factorization</h2>
+
+<p>Consider again a matrix of counts $X$, where $x_{ij} \in \mathbb{N}_0$, and the $x_{ij}$’s are independent. If $x_{ij}$ is modeled to have a Poisson distribution with mean $\mu_{ij}$, then the likelihood is</p>
+
+\[\mathcal{L}_{\text{Po}} = \prod\limits_{i=1}^n \frac{\mu_{ij}^{x_{ij}} e^{-\mu_{ij}}}{x_{ij}!}.\]
+
+<p>Taking the logarithm and ignoring the $x_{ij}!$ terms since they’re constant w.r.t. the parameters, we have</p>
+
+\[\log \mathcal{L}_{\text{Po}} = \sum\limits_{i=1}^n x_{ij} \log \mu_{ij} - \mu_{ij}.\]
+
+<p>If we take a maximum likelihood approach, maximizing the log-likelihood will yield the equivalent solution to minimizing the negative log-likelihood, $\sum\limits_{i=1}^n -x_{ij} \log \mu_{ij} + \mu_{ij}$. We can then add a constant term that only depends on the data, $x_{ij} \log x_{ij} - x_{ij}$:</p>
+
+<p>\begin{align} \text{arg} \min_{\mu_{ij}} (-\log \mathcal{L}_{\text{Po}}) &amp;= \text{arg} \min_{\mu_{ij}} \sum\limits_{i=1}^n \left(-x_{ij} \log \mu_{ij} + \mu_{ij} + x_{ij} \log x_{ij} - x_{ij}\right) \\ &amp;= \text{arg} \min_{\mu_{ij}} \sum\limits_{i=1}^n \left( x_{ij} \log \frac{x_{ij}}{\mu_{ij}} + \mu_{ij} - x_{ij} \right). \\ \end{align}</p>
+
+<p>This last expression has the same form as the divergence in NMF.</p>
+
+<p>Consider the matrix of Poisson parameters $\boldsymbol{\mu} \in \mathbb{R}^{n \times p}$. If we were to factorize this matrix into two smaller matrices such that $\boldsymbol{\mu} \approx WH^\top$, then we would exactly recover the NMF objective function.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>By showing the connection between the Poisson likelihood and the KL-divergence, we’ve drawn a connection between NMF and the maximum likelihood estimator for Poisson matrix factorization.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Lee, Daniel D., and H. Sebastian Seung. “Algorithms for non-negative matrix factorization.” Advances in neural information processing systems. 2001.</li>
+  <li>Gopalan, Prem, Jake M. Hofman, and David M. Blei. “Scalable recommendation with poisson factorization.” arXiv preprint arXiv:1311.1704 (2013).</li>
+  <li>Devarajan, Karthik, Guoli Wang, and Nader Ebrahimi. “A unified statistical approach to non-negative matrix factorization and probabilistic latent semantic indexing.” Machine learning 99.1 (2015): 137-163.</li>
+</ul>
+:ET

@@ -1,0 +1,322 @@
+I"7�<p>Minimizing the $\chi^2$ divergence between a true posterior and an approximate posterior is equivalent to minimizing an upper bound on the log marginal likelihood.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Variational inference is typically performed by minimizing the reverse KL divergence between the true posterior and an approximate posterior. However, arbitrary divergences can also be used. In practice, choosing an appropriate divergence requires a balance of computational considerations and an assessment of the goal in mind. The reverse KL divergence is attractive because the resulting evidence lower bound (ELBO) is often easy to optimize.</p>
+
+<p>An alternative to the reverse KL divergence for variational inference is the $\chi^2$ divergence. Originally proposed by <a href="https://arxiv.org/abs/1611.00328">Dieng et al.</a>, minimizing the $\chi^2$ divergence results in an upper bound on the log marginal likelihood. This provides a nice counterpart to the KL divergence’s resulting lower bound.</p>
+
+<h2 id="chi-divergence-and-the-cubo">$\chi$ divergence and the CUBO</h2>
+
+<p>The $\chi^2$ divergence between $p$ and $q$ is given by</p>
+
+\[D_{\chi^2}(p(z | x) \| q(z)) = \mathbb{E}_{q(z)}\left[ \left(\frac{p(z | x)}{q(z)}\right)^2 - 1 \right].\]
+
+<p>Expanding the posterior, we can pull out the evidence $p(x)$,</p>
+
+<p>\begin{align} D_{\chi^2}(p(z | x) | q(z)) + 1 &amp;= \mathbb{E}_{q(z)}\left[ \left(\frac{p(x, z)}{p(x) q(z)}\right)^2 \right] \\ &amp;= \frac{1}{p(x)^2} \mathbb{E}_{q(z)}\left[ \left(\frac{p(x, z)}{q(z)}\right)^2 - 1 \right]. \\ \end{align}</p>
+
+<p>Taking a log on both sides, we have</p>
+
+\[\log \left( D_{\chi^2}(p(z | x) \| q(z)) + 1\right) = -2 \log p(x) + \log \mathbb{E}_{q(z)}\left[ \left(\frac{p(x, z)}{q(z)}\right)^2 \right].\]
+
+<p>Notice that the left hand side is nonnegative. To see this, note that $D_{\chi^2}\geq 0$ (because it’s a divergence), so $\log (D_{\chi^2} + 1) \geq \log(0+1) = 0$. Thus, rearranging terms again, we can obtain an upper bound on the log evidence,</p>
+
+\[\log p(x) \leq \mathcal{U} := \frac12 \log \mathbb{E}_{q(z)}\left[ \left(\frac{p(x, z)}{q(z)}\right)^2 \right].\]
+
+<p>Here, $\mathcal{U}$ is known as the chi-divergence upper bound (CUBO), which was proposed by <a href="https://arxiv.org/abs/1611.00328">Dieng et al.</a>.</p>
+
+<h2 id="minimizing-the-cubo">Minimizing the CUBO</h2>
+
+<p>Similar to the way that the ELBO is used in variational inference, we can optimize a variational approximation $q$ by minimizing the CUBO with respect to the variational parameters.</p>
+
+<p>However, because the $\log$ appears outside the expectation in the CUBO, we cannot directly use a Monte Carlo approximation. Instead, consider the exponentiated CUBO,</p>
+
+\[\exp (2 \mathcal{U}) = \mathbb{E}_{q(z)}\left[ \left(\frac{p(x, z)}{q(z)}\right)^2 \right].\]
+
+<p>We can approximate this quantity with Monte Carlo sampling. Specifically, we can estimate it with $T$ samples from $q$,</p>
+
+\[\exp (\mathcal{U}) \approx \frac1T \sum\limits_{t=1}^T \left(\frac{p(x, \widetilde{z}_t)}{q(\widetilde{z}_t)}\right)^2, ~~~ \widetilde{z}_t \sim q(z).\]
+
+<p>Minimizing this quantity is equivalent to minimizing the CUBO due to the monotonicity of $\exp$ and $\log$. In practice, to evaluate this quantity we use take a log of the quantity inside the summation, and re-exponentiate it. In particular,</p>
+
+\[\frac1T \sum\limits_{t=1}^T \exp\left\{2\left(\log p(x, \widetilde{z}_t) - \log q(\widetilde{z}_t)\right)\right\}, ~~~ \widetilde{z}_t \sim q(z).\]
+
+<p>Several methods have been proposed to reduce the variance of this estimator. One method is the reparameterization trick, as proposed by Dieng et al. Here, we write $z$ as the output of a deterministic function of the variational parameters $\lambda$ and an independent random variable $\epsilon$,</p>
+
+\[z = g(\lambda, \epsilon), ~~~ \epsilon \sim f.\]
+
+<p>Using this trick, we can rewrite the Monte Carlo CUBO estimator as</p>
+
+\[L = \frac1T \sum\limits_{t=1}^T \left(\frac{p(x, g(\lambda, \epsilon_t))}{q(g(\lambda, \epsilon_t))}\right)^2, ~~~ \epsilon_t \sim f.\]
+
+<p>To minimize the CUBO, we’ll use gradient-based methods. Let’s compute the gradient of $L$ with respect to $\lambda$. Using the chain rule, we have</p>
+
+\[\nabla_\lambda L = \frac2T \sum\limits_{t=1}^T \left(\frac{ p(x, g(\lambda, \epsilon_t))}{ q(g(\lambda, \epsilon_t))}\right) \nabla_\lambda \left[\frac{ p(x, g(\lambda, \epsilon_t))}{ q(g(\lambda, \epsilon_t))}\right]\]
+
+<p>Expanding the gradient on the RHS,</p>
+
+\[\nabla_\lambda L = \frac2T \sum\limits_{t=1}^T \left(\frac{ p(x, g(\lambda, \epsilon_t))}{ q(g(\lambda, \epsilon_t))}\right) \nabla_\lambda \left[\exp\left\{ \log p(x, g(\lambda, \epsilon_t)) - \log q(g(\lambda, \epsilon_t))\right\}\right].\]
+
+<p>Expanding the gradient once more and then collapsing terms, we have</p>
+
+\[\nabla_\lambda L = \frac2T \sum\limits_{t=1}^T \left(\frac{ p(x, g(\lambda, \epsilon_t))}{ q(g(\lambda, \epsilon_t))}\right)^2 \nabla_\lambda \left( \log \frac{p(x, g(\lambda, \epsilon_t))}{q(g(\lambda, \epsilon_t))} \right).\]
+
+<p>We can use this gradient to minimize the CUBO and obtain a variational approximation $q$.</p>
+
+<h2 id="mode-covering-behavior-of-the-chi2-divergence">Mode-covering behavior of the $\chi^2$ divergence</h2>
+
+<p><a href="https://andrewcharlesjones.github.io/posts/2021/03/klqp/">Recall</a> that the KL divergence has mode seeking behavior. In other words, the KL divergence will be infinite whenever $p=0$ but $q&gt;0$, so minima of the KL divergence tend to find “conservative” orientations of $q$ that just cover one mode of the true distribution $p$.</p>
+
+<p>In contrast the $\chi^2$ divergence is “mode-covering”. In other words, it’s infinite whenever $p&gt;0$ but $q=0$. This encourages solutions that tend to spread out the mass of $q$ as wide as possible to cover most of the mass of $p$. We will demonstrate this behavior in the experiments below.</p>
+
+<h2 id="experiments">Experiments</h2>
+
+<h3 id="unimodal-gaussian">Unimodal Gaussian</h3>
+
+<p>Consider a very simple experiment: approximating a one-dimensional Gaussian with another one-dimensional Gaussian. Specifically,</p>
+
+<p>\begin{align} p(x) &amp;= \mathcal{N}(0, 1) \\ q(x) &amp;= \mathcal{N}(\lambda_\mu, \lambda_{\sigma^2}). \end{align}</p>
+
+<p>Here, we’ll minimize the CUBO w.r.t. $\lambda_\mu$ an $\lambda_{\sigma^2}$. The animations below show the distributions over iterations of optimization (here, we use Adam to optimize the variational parameters).</p>
+
+<p float="left">
+  <img src="/assets/1d_gaussian_cubo.gif" width="500" />
+  <img src="/assets/1d_gaussian_elbo1.gif" width="500" /> 
+</p>
+
+<p>As we can see, the CUBO spreads the mass of the variational Gaussian wider than the true Gaussian, resulting in an overestimate of the variance.</p>
+
+<h3 id="bimodal-gaussian">Bimodal Gaussian</h3>
+
+<p>We can see the difference in behavior between the CUBO and ELBO even more clearly in the case of a multimodal $p$. Below, we consider a two-dimensional Gaussian with two modes. We use a multivariate $t$-distribution as our approximate distribution.</p>
+
+<p float="left">
+  <img src="/assets/2d_gaussian_cubo.gif" width="500" />
+  <img src="/assets/2d_gaussian_elbo.gif" width="500" /> 
+</p>
+
+<h2 id="code">Code</h2>
+
+<p>Code for the one-dimensional Gaussian experiment is below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">autograd</span> <span class="kn">import</span> <span class="n">grad</span><span class="p">,</span> <span class="n">value_and_grad</span><span class="p">,</span> <span class="n">vector_jacobian_product</span>
+<span class="kn">import</span> <span class="nn">autograd.numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">autograd.scipy.stats</span> <span class="kn">import</span> <span class="n">t</span><span class="p">,</span> <span class="n">norm</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">loggamma</span>
+<span class="kn">from</span> <span class="nn">autograd.core</span> <span class="kn">import</span> <span class="n">getval</span>
+<span class="kn">from</span> <span class="nn">autograd.numpy</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">npr</span>
+<span class="kn">from</span> <span class="nn">autograd.misc.optimizers</span> <span class="kn">import</span> <span class="n">adam</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">logsumexp</span>
+<span class="kn">import</span> <span class="nn">autograd.scipy.stats.t</span> <span class="k">as</span> <span class="n">t_dist</span>
+<span class="kn">from</span> <span class="nn">viabel.optimization</span> <span class="kn">import</span> <span class="n">RMSProp</span>
+<span class="kn">from</span> <span class="nn">viabel.objectives</span> <span class="kn">import</span> <span class="n">ExclusiveKL</span><span class="p">,</span> <span class="n">AlphaDivergence</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">multivariate_normal</span> <span class="k">as</span> <span class="n">mvn</span>
+<span class="kn">from</span> <span class="nn">autograd.scipy.stats</span> <span class="kn">import</span> <span class="n">multivariate_normal</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.animation</span> <span class="k">as</span> <span class="n">animation</span>
+<span class="kn">import</span> <span class="nn">matplotlib.image</span> <span class="k">as</span> <span class="n">mpimg</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c1"># use cubo if true, elbo if false
+</span><span class="n">CUBO_FLAG</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">MULTIMODAL_FLAG</span> <span class="o">=</span> <span class="bp">True</span>
+
+
+<span class="k">if</span> <span class="n">MULTIMODAL_FLAG</span><span class="p">:</span>
+	<span class="k">class</span> <span class="nc">Model</span><span class="p">():</span>
+
+		<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean1</span><span class="p">,</span> <span class="n">mean2</span><span class="p">,</span> <span class="n">stddev1</span><span class="p">,</span> <span class="n">stddev2</span><span class="p">):</span>
+			<span class="bp">self</span><span class="p">.</span><span class="n">mean1</span> <span class="o">=</span> <span class="n">mean1</span>
+			<span class="bp">self</span><span class="p">.</span><span class="n">mean2</span> <span class="o">=</span> <span class="n">mean2</span>
+			<span class="bp">self</span><span class="p">.</span><span class="n">stddev1</span> <span class="o">=</span> <span class="n">stddev1</span>
+			<span class="bp">self</span><span class="p">.</span><span class="n">stddev2</span> <span class="o">=</span> <span class="n">stddev2</span>
+
+		<span class="k">def</span> <span class="nf">log_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">):</span>
+			<span class="n">mode1_logdensity</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="n">norm</span><span class="p">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">mean1</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">stddev1</span><span class="p">)</span>
+			<span class="n">mode2_logdensity</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="n">norm</span><span class="p">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">mean2</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">stddev2</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">logaddexp</span><span class="p">(</span><span class="n">mode1_logdensity</span><span class="p">,</span> <span class="n">mode2_logdensity</span><span class="p">)</span>
+
+		<span class="c1"># def sample(self, n):
+</span>		<span class="c1"># 	num_clust1 = np.random.binomial(n=n, p=0.5)
+</span>		<span class="c1"># 	num_clust2 = n - num_clust1
+</span>		<span class="c1"># 	samples_mode1 = norm.rvs(self.mean1, self.stddev1, size=num_clust1)
+</span>		<span class="c1"># 	samples_mode2 = norm.rvs(self.mean2, self.stddev2, size=num_clust2)
+</span>		<span class="c1"># 	samples = np.concatenate([samples_mode1, samples_mode2])
+</span>		<span class="c1"># 	return samples
+</span>
+<span class="k">else</span><span class="p">:</span>
+
+	<span class="k">class</span> <span class="nc">Model</span><span class="p">():</span>
+
+		<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">stddev</span><span class="p">):</span>
+			<span class="bp">self</span><span class="p">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span>
+			<span class="bp">self</span><span class="p">.</span><span class="n">stddev</span> <span class="o">=</span> <span class="n">stddev</span>
+
+		<span class="k">def</span> <span class="nf">log_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">):</span>
+			<span class="k">return</span> <span class="n">norm</span><span class="p">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">stddev</span><span class="p">)</span>
+
+		<span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+			<span class="k">return</span> <span class="n">norm</span><span class="p">.</span><span class="n">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">stddev</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+
+
+
+<span class="k">class</span> <span class="nc">ApproxMFGaussian</span><span class="p">():</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">pass</span>
+
+	<span class="k">def</span> <span class="nf">log_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_param</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+		<span class="c1"># variational density evaluated at samples
+</span>		<span class="k">return</span> <span class="n">norm</span><span class="p">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">var_param</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var_param</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+	<span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_param</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
+		<span class="n">stddev</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var_param</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">return</span> <span class="n">var_param</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">seed</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">*</span> <span class="n">stddev</span>
+
+	<span class="c1"># def entropy(self, var_param):
+</span>	<span class="c1"># 	return 0.5 * (np.log(2*np.pi) + 1) + var_param[1] * 2
+</span>
+	<span class="k">def</span> <span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_param</span><span class="p">):</span>
+		<span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="p">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">+</span> <span class="n">var_param</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+
+<span class="k">class</span> <span class="nc">ApproxMFT</span><span class="p">():</span>
+	<span class="s">"""A mean-field Student's t approximation family."""</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+		<span class="bp">self</span><span class="p">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+
+	<span class="k">def</span> <span class="nf">log_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_param</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">t_dist</span><span class="p">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">df</span><span class="p">,</span> <span class="n">var_param</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var_param</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+	<span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_param</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">var_param</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var_param</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">seed</span><span class="p">.</span><span class="n">standard_t</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">df</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">S</span><span class="p">)</span>
+
+	
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+
+	<span class="n">n</span> <span class="o">=</span> <span class="mi">1000</span>
+	<span class="n">d</span> <span class="o">=</span> <span class="mi">1</span>
+	<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">400</span>
+
+	<span class="c1"># Generate data
+</span>	<span class="k">if</span> <span class="n">MULTIMODAL_FLAG</span><span class="p">:</span>
+		<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">mean1</span><span class="o">=-</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">mean2</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">stddev1</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">stddev2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">mean</span> <span class="o">=</span> <span class="mf">0.0</span>
+		<span class="n">stddev</span> <span class="o">=</span> <span class="mi">1</span>
+		<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="n">stddev</span><span class="p">)</span>
+	<span class="n">approx</span> <span class="o">=</span> <span class="n">ApproxMFGaussian</span><span class="p">()</span>
+	<span class="c1"># approx = ApproxMFT(df=2)
+</span>
+	<span class="n">S</span> <span class="o">=</span> <span class="mi">1000</span>
+	<span class="n">variational_mean</span> <span class="o">=</span> <span class="mf">0.0</span>
+	<span class="n">variational_log_stddev_diag</span> <span class="o">=</span> <span class="mf">0.0</span>
+	<span class="n">var_param</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">variational_mean</span><span class="p">,</span> <span class="n">variational_log_stddev_diag</span><span class="p">])</span>
+	<span class="n">seed</span> <span class="o">=</span> <span class="n">npr</span><span class="p">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">compute_log_weights</span><span class="p">(</span><span class="n">var_param</span><span class="p">):</span>
+		<span class="n">samples</span> <span class="o">=</span> <span class="n">approx</span><span class="p">.</span><span class="n">sample</span><span class="p">(</span><span class="n">var_param</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+		<span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">model</span><span class="p">.</span><span class="n">log_density</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">-</span> <span class="n">approx</span><span class="p">.</span><span class="n">log_density</span><span class="p">(</span><span class="n">var_param</span><span class="p">,</span> <span class="n">samples</span><span class="p">)</span>
+
+	<span class="n">log_weights_vjp</span> <span class="o">=</span> <span class="n">vector_jacobian_product</span><span class="p">(</span><span class="n">compute_log_weights</span><span class="p">)</span>
+	<span class="n">alpha</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># chivi
+</span>
+	<span class="k">def</span> <span class="nf">objective_cubo</span><span class="p">(</span><span class="n">var_param</span><span class="p">,</span> <span class="nb">iter</span><span class="p">):</span>
+		<span class="n">log_weights</span> <span class="o">=</span> <span class="n">compute_log_weights</span><span class="p">(</span><span class="n">var_param</span><span class="p">)</span>
+		<span class="n">log_norm</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
+		<span class="n">scaled_values</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_weights</span> <span class="o">-</span> <span class="n">log_norm</span><span class="p">)</span>
+		<span class="n">obj_value</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">scaled_values</span><span class="p">))</span><span class="o">/</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">log_norm</span>
+		<span class="k">return</span> <span class="n">obj_value</span>
+
+	<span class="k">def</span> <span class="nf">objective_elbo</span><span class="p">(</span><span class="n">variational_param</span><span class="p">,</span> <span class="nb">iter</span><span class="p">):</span>
+		<span class="n">samples</span> <span class="o">=</span> <span class="n">approx</span><span class="p">.</span><span class="n">sample</span><span class="p">(</span><span class="n">variational_param</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+		<span class="n">lik</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">log_density</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+		<span class="n">entropy</span> <span class="o">=</span> <span class="n">approx</span><span class="p">.</span><span class="n">entropy</span><span class="p">(</span><span class="n">variational_param</span><span class="p">)</span>
+
+		<span class="c1"># MC estimate of the ELBO
+</span>		<span class="n">elbo</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">lik</span> <span class="o">+</span> <span class="n">entropy</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="o">-</span><span class="n">elbo</span>
+
+	<span class="k">def</span> <span class="nf">plot_isocontours</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">xlimits</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">numticks</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">*</span><span class="n">xlimits</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">numticks</span><span class="p">)</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+		<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+		<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">()</span>
+
+	<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">8</span><span class="p">),</span> <span class="n">facecolor</span><span class="o">=</span><span class="s">'white'</span><span class="p">)</span>
+	<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="p">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">ion</span><span class="p">()</span>
+	<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">print_perf</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">grad</span><span class="p">):</span>
+
+		<span class="k">if</span> <span class="nb">iter</span> <span class="o">%</span> <span class="mi">50</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+			<span class="n">bound</span> <span class="o">=</span> <span class="n">objective_cubo</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">)</span>
+			<span class="n">message</span> <span class="o">=</span> <span class="s">"{:15}|{:20}|{:15}|{:15}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">iter</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="mi">2</span><span class="p">))</span>
+			<span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+			<span class="n">plt</span><span class="p">.</span><span class="n">cla</span><span class="p">()</span>
+			<span class="k">if</span> <span class="n">MULTIMODAL_FLAG</span><span class="p">:</span>
+				<span class="n">plt</span><span class="p">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">plt</span><span class="p">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+			<span class="n">target_distribution</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">log_density</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+			<span class="n">plot_isocontours</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">target_distribution</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s">"$p$"</span><span class="p">)</span>
+
+			<span class="n">variational_contour</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="n">approx</span><span class="p">.</span><span class="n">log_density</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+			<span class="n">plot_isocontours</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">variational_contour</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s">"$q$"</span><span class="p">)</span>
+
+			<span class="k">if</span> <span class="n">CUBO_FLAG</span><span class="p">:</span>
+				<span class="n">ax</span><span class="p">.</span><span class="n">annotate</span><span class="p">(</span><span class="s">"CUBO: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">objective_cubo</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">),</span> <span class="mi">3</span><span class="p">)),</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s">'axes fraction'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+	                <span class="n">horizontalalignment</span><span class="o">=</span><span class="s">'left'</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s">'top'</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">ax</span><span class="p">.</span><span class="n">annotate</span><span class="p">(</span><span class="s">"ELBO: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="nb">round</span><span class="p">(</span><span class="n">objective_elbo</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">),</span> <span class="mi">3</span><span class="p">)),</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s">'axes fraction'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">horizontalalignment</span><span class="o">=</span><span class="s">'left'</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s">'top'</span><span class="p">)</span>
+			<span class="n">plt</span><span class="p">.</span><span class="n">draw</span><span class="p">()</span>
+			<span class="n">plt</span><span class="p">.</span><span class="n">savefig</span><span class="p">(</span><span class="s">"./out/tmp{}.png"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">iter</span><span class="p">))</span>
+			<span class="n">plt</span><span class="p">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">30</span><span class="p">)</span>
+		
+	<span class="n">num_epochs</span> <span class="o">=</span> <span class="mi">10000</span>
+	<span class="n">step_size</span> <span class="o">=</span> <span class="p">.</span><span class="mi">01</span>
+
+	<span class="k">if</span> <span class="n">CUBO_FLAG</span><span class="p">:</span>
+		<span class="n">optimized_params</span> <span class="o">=</span> <span class="n">adam</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="n">grad</span><span class="p">(</span><span class="n">objective_cubo</span><span class="p">),</span> <span class="n">x0</span><span class="o">=</span><span class="n">var_param</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">print_perf</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">optimized_params</span> <span class="o">=</span> <span class="n">adam</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="n">grad</span><span class="p">(</span><span class="n">objective_elbo</span><span class="p">),</span> <span class="n">x0</span><span class="o">=</span><span class="n">var_param</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span> <span class="n">num_iters</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">print_perf</span><span class="p">)</span>
+
+	<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">()</span>
+	<span class="n">ims</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">):</span>
+		<span class="n">fname</span> <span class="o">=</span> <span class="s">"./out/tmp{}.png"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span>
+		<span class="n">img</span> <span class="o">=</span> <span class="n">mpimg</span><span class="p">.</span><span class="n">imread</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+		<span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+		<span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">gca</span><span class="p">()</span>
+		<span class="n">ax</span><span class="p">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+		<span class="n">ax</span><span class="p">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+		<span class="n">ims</span><span class="p">.</span><span class="n">append</span><span class="p">([</span><span class="n">im</span><span class="p">])</span>
+		<span class="n">os</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+
+
+	<span class="n">ani</span> <span class="o">=</span> <span class="n">animation</span><span class="p">.</span><span class="n">ArtistAnimation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">ims</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">blit</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">repeat_delay</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">MULTIMODAL_FLAG</span><span class="p">:</span>
+		<span class="n">fname_suffix</span> <span class="o">=</span> <span class="s">"_multimodal"</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">fname_suffix</span> <span class="o">=</span> <span class="s">""</span>
+	<span class="k">if</span> <span class="n">CUBO_FLAG</span><span class="p">:</span>
+		<span class="n">ani</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="s">"./out/1d_gaussian_cubo{}.gif"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">fname_suffix</span><span class="p">),</span> <span class="n">writer</span><span class="o">=</span><span class="s">'imagemagick'</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">ani</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="s">"./out/1d_gaussian_elbo{}.gif"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">fname_suffix</span><span class="p">),</span> <span class="n">writer</span><span class="o">=</span><span class="s">'imagemagick'</span><span class="p">)</span>
+
+
+</code></pre></div></div>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Dieng, Adji B., et al. “Variational Inference via $\chi $-Upper Bound Minimization.” arXiv preprint arXiv:1611.00328 (2016).</li>
+</ul>
+:ET

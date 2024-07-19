@@ -1,0 +1,91 @@
+I"�<p>Hypothesis testing is a fundamental part of mathematical statistics, but finding the best hypothesis test for a given problem is a nontrivial exercise. The Neyman-Pearson Lemma gives strong guidance about how to choose hypothesis tests – we review and prove it here.</p>
+
+<h2 id="background">Background</h2>
+
+<p>Hypothesis testing problems basically boil down to the following (informal) question: given some data that you have assumed to have come from some class of data generating processes (d.g.p.), in which part of the class’s parameter space do you think the true parameter lives?</p>
+
+<p>Typically, the parameter space $\Theta$ is divided into two parts, $\Theta_0$ and $\Theta_1$, which are the parameter values corresponding to the null and alternative hypotheses, respectively. During the testing procedure, when we receive some data $X$, we compute a test statistic $T(X)$, and check whether $T(X)$ exceeds some critical value. If it does, we reject the null hypothesis. If it doesn’t, we don’t reject.</p>
+
+<p>The simple accept/reject framework implies that there exist two types of errors: false positives (falsely reject) and false negatives (falsely accept). A good hypothesis test will minimize both of these errors, which inherently involves a trade-off between them.</p>
+
+<p>Notice that, a priori, there’s no reason to treat these two types of errors differently. In theory, we could try to minimize each type of error equally.</p>
+
+<p>However, Neyman and Pearson proposed a very specific approach. They reasoned that in most cases, false positives (i.e., falsely rejecting the null) would be much more harmful than false negatives (i.e., falsely accepting the null). This borders on a philosophical argument, although practically it can be seen that this is a reasonable choice in many situations. For example, when deciding whether a new pharmaceutical drug has any positive effect on patients, the FDA’s default belief will be that most medicines have no effect, and they will require overwhelming evidence to believe that some medicine does have an effect.</p>
+
+<p>In practice, Neyman and Pearson’s approach dictates that our primary goal should be to strictly control the probability of false positives, while our secondary goal should be to minimize false negatives.</p>
+
+<h2 id="definitions">Definitions</h2>
+
+<p>\paragraph{Power function} The power function $\beta(\theta)$ denotes the probability of rejecting the null hypothesis for a given $\theta$:</p>
+
+\[\beta(\theta) = \mathbb{P}_\theta\left[ \text{Reject }H_0 \right]\]
+
+<p>\paragraph{Uniformly most powerful tests} A hypothesis test with power function $\beta$ is uniformly most powerful in the class of tests $\mathcal{T}$ if it has higher power than all other tests in the class. That is, for every test in $\mathcal{T}$ that has power function $\widetilde{\beta}$,</p>
+
+\[\beta(\theta) \geq \widetilde{\beta}(\theta), \forall \theta \in \Theta_1.\]
+
+<p>\paragraph{Size} The size of a hypothesis test is the probability of incorrectly rejecting the null hypothesis:</p>
+
+\[\sup_{\theta \in \Theta_0}\mathbb{P}\left[ \text{Reject }H_0 \right]\]
+
+<p>\paragraph{Level} A hypothesis test with level $\alpha$ falsely rejects at most $\alpha$ fraction of the time:</p>
+
+\[\sup_{\theta \in \Theta_0}\mathbb{P}\left[ \text{Reject }H_0 \right] \leq \alpha\]
+
+<h2 id="neyman-pearson-lemma">Neyman-Pearson Lemma</h2>
+
+<p>The Neyman-Pearson Lemma is an important result that gives conditions for a hypothesis test to be uniformly most powerful. That is, the test will have the highest probability of rejecting the null hypothesis while maintaining a low false positive rate of $\alpha$.</p>
+
+<p>More formally, consider testing two simple hypotheses:</p>
+
+<p>\begin{align} H_0&amp;: \theta = \theta_0 \\ H_1&amp; : \theta = \theta_1 \\ \end{align}</p>
+
+<p>The Neyman-Pearson Lemma says the a test is uniformly most powerful test among $\alpha$-level tests if it rejects $H_0$ if and only if</p>
+
+\[\frac{f_X(x; \theta_1)}{f_X(x; \theta_0)} &gt; \kappa\]
+
+<p>for some $\kappa \in \mathbb{R}$, where</p>
+
+\[\alpha = \mathbb{P}_{\theta_0}\left[ \frac{f_X(x; \theta_1)}{f_X(x; \theta_0)} &gt; \kappa \right].\]
+
+<h3 id="proof">Proof</h3>
+
+<p>Consider a test $\phi(x)$ based on the lemma above, and consider another arbitrary level-$\alpha$ test $\widetilde{\phi}(x)$. In other words, let $\phi(x) = 1(x \in \mathbb{C})$, and let $\widetilde{\phi}(x) = 1(x \in \widetilde{\mathbb{C}})$, where $\mathbb{C}$ and $\widetilde{\mathbb{C}}$ are the critical regions for each.</p>
+
+<p>Consider the expression</p>
+
+\[(\phi(x) - \widetilde{\phi}(x))(f(x; \theta_1) - \kappa f(x; \theta_0)).\]
+
+<p>If $f(x; \theta_1) &gt; \kappa f(x; \theta_0)$, then $\phi(x) = 1$, and the whole expression is nonnegative. If $f(x; \theta_1) \leq \kappa f(x; \theta_0)$, then $\phi(x) = 0$, and the expression is again nonnegative. Thus, we know that</p>
+
+<p>\begin{align} &amp;(\phi(x) - \widetilde{\phi}(x))(f(x; \theta_1) - \kappa f(x; \theta_0)) \geq 0 \\ \implies&amp; \phi(x) f(x; \theta_1) - \widetilde{\phi}(x)f(x; \theta_1) - \kappa\phi(x)f(x; \theta_0) + \kappa\widetilde{\phi}(x)f(x; \theta_0) \geq 0 \\ \end{align}</p>
+
+<p>Integrating both sides (integration respects inequalities), we have</p>
+
+\[\int\left[\phi(x) f(x; \theta_1) - \widetilde{\phi}(x)f(x; \theta_1) - \kappa\phi(x)f(x; \theta_0) + \kappa\widetilde{\phi}(x)f(x; \theta_0)\right] \geq 0.\]
+
+<p>Notice that these terms correspond to the respective power functions: $\int\left[\phi(x) f(x; \theta_1)\right] = \beta(\theta_1)$, $\int\left[\phi(x) f(x; \theta_0)\right] = \beta(\theta_0)$, $\int\left[\widetilde{\phi}(x) f(x; \theta_1)\right] = \widetilde{\beta}(\theta_1)$, and $\int\left[\widetilde{\phi}(x) f(x; \theta_0)\right] = \widetilde{\beta}(\theta_0)$. Thus, we have</p>
+
+\[\beta(\theta_1) - \widetilde{\beta}(\theta_1) + \kappa(\beta(\theta_0) - \widetilde{\beta}(\theta_0)) \geq 0.\]
+
+<p>Because $\widetilde{\phi}(x)$ is a $\alpha$-level test, its power $\widetilde{\beta}$ will be less than or equal to $\beta$, and we have $\beta(\theta_0) - \widetilde{\beta}(\theta_0) \geq 0$</p>
+
+<p>Thus, we can conclude that</p>
+
+<p>\begin{align} &amp;\beta(\theta_1) - \widetilde{\beta}(\theta_1) \geq 0 \\ \implies&amp; \beta(\theta_1) \geq \widetilde{\beta}(\theta_1) \end{align}</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The Neyman-Pearson lemma gives statisticians strong guidance about how to search for a good hypothesis test. In particular, it says that a likelihood ratio test is the way to go for testing simple hypotheses against each other.</p>
+
+<p>Note that this lemma has been extended to composite hypotheses as well.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Casella, G. and R. L. Berger (2002): <em>Statistical Inference</em>, Duxbury.</li>
+  <li>Neyman, J., &amp; Pearson, E. S. (1933). IX. On the problem of the most efficient tests of statistical hypotheses. Philosophical Transactions of the Royal Society of London. Series A, Containing Papers of a Mathematical or Physical Character, 231(694-706), 289-337.</li>
+  <li>Lecture notes from Princeton’s ORF524.</li>
+</ul>
+
+:ET

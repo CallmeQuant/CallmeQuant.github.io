@@ -1,0 +1,134 @@
+I"0<p>“Recommending that scientists use Bayes’ theorem is like giving the neighborhood kids the key to your F-16” and other critiques.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Bayesian models are often praised for being automatic inference engines: the modeler states her assumptions, and when data arrives, she can draw principled conclusions about parameters, latent variables, future predictions, and other quantities of interest.</p>
+
+<p>However, Bayesian methods also receive an avalanche of criticism. The purpose of this post is to briefly review some of the most common and important challenges to Bayesian statistics. These issues range from practical computational issues to deeper issues with the Bayesian philosophy.</p>
+
+<p>At the end of the post, I discuss some proposed resolutions to these issues.</p>
+
+<h2 id="questionable-assumptions">Questionable assumptions</h2>
+
+<p>The most common critique of Bayesian statistics is that its reliance on subjective prior assumptions can lead to wild conclusions. Of course, Bayesian priors are also an advantage of Bayesian statistics: they require the statistician to be completely transparent about her assumptions.</p>
+
+<p>Nevertheless, there are some ways in which Bayesian inference can lead to confusing conclusions.</p>
+
+<h3 id="a-simple-example">A simple example</h3>
+
+<p>One simple example (given by Andrew Gelman <a href="https://statmodeling.stat.columbia.edu/2013/11/21/hidden-dangers-noninformative-priors/">here</a>) comes from the following simple model:</p>
+
+<p>\begin{align} x &amp;\sim \mathcal{N}(\mu, 1) \\ \pi(\mu) &amp;\propto 1 \end{align}</p>
+
+<p>where the prior on $\mu$ is a flat, noninformative prior.</p>
+
+<p>The posterior for $\mu$ is then</p>
+
+\[p(\mu | x) \propto p(x | \mu) p(\mu) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac12 (x - \mu)^2\right)(1).\]
+
+<p>Now, suppose we observe one data point where $x=1$. Plugging this into the posterior, we have</p>
+
+\[p(\mu | x) \propto \frac{1}{\sqrt{2\pi}} \exp\left(-\frac12 (1 - \mu)^2\right)(1).\]
+
+<p>We can compute the probability that $\mu &gt; 0$, which is</p>
+
+\[\int_0^\infty p(\mu | x) = 1 - \Phi(\mu &lt; 1) \approx 1 - 0.159 = 0.841\]
+
+<p>where $\Phi$ is the Gaussian CDF. This implies that there’s an $84\%$ posterior probability that $\mu$ is positive. Hence, after observing just one data point that is within one standard deviation from $0$, we are very confident that $\mu$ is positive. This feels a bit overconfident. If the “true” value of $\mu$ is 0, then observing one value of $x=1$ could be completely consistent with noise. Nevertheless, the staunch Bayesian concludes that $\mu$ is probably positive.</p>
+
+<h3 id="the-sorcery-of-choosing-priors">The sorcery of choosing priors</h3>
+
+<p>The above is just one (slightly contrived) example of how Bayesian models can arrive at non-standard conclusions. In this example, the noninformative prior essentially did nothing to influence our conclusions, so any inference was completely reliant on the data (which was just one data point in this case).</p>
+
+<p>Consider instead if we had placed a Gaussian prior on $\mu$, centered at $0$ with variance $1/10$ (i.e., we need lots of evidence to be convinced that $\mu$ is far away from $0$):</p>
+
+<p>\begin{align} x &amp;\sim \mathcal{N}(\mu, 1) \\ \mu &amp;\sim \mathcal{N}(0, 1/10) \end{align}</p>
+
+<p>The posterior is then</p>
+
+\[\mu | x \sim \mathcal{N}\left(\frac{1}{11}, 11\right).\]
+
+<p>Then the probbaility that $\mu$ is positive is</p>
+
+\[P(\mu &gt; 0) \approx 0.204,\]
+
+<p>which is much lower than before.</p>
+
+<p>Given these very different conclusions, how should $\mu$ be chosen? In general, deciding on prior distributions requires substantial domain knowledge about the problem at hand. The modeler should use any known mechanisms or previous results to make these decisions. However, even then it is usually not obvious how to choose them.</p>
+
+<p>The ability to choose these priors gives the modeler a lot of power, and any conclusions must be prefaced with the assumptions made. I enjoy the following <a href="http://www.stat.columbia.edu/~gelman/research/published/badbayesmain.pdf">quote</a> from Andrew Gelman (written in jest):</p>
+
+<blockquote>
+  <p>[…] recommending that scientists use Bayes’ theorem is like giving the neighborhood kids the key to your F-16.</p>
+</blockquote>
+
+<p>The flip side of this coin is that the F-16 could actually be really useful if used with care, as noted by Uncle Ben:</p>
+
+<blockquote>
+  <p>With great power comes great responsibility.</p>
+</blockquote>
+
+<h2 id="model-selection">Model selection</h2>
+
+<p>The very act of choosing a prior distribution immediately assumes that the true model is in the support of the prior. Thus, the problem of choosing subjective priors goes beyond the possibility that the candidate models are given the wrong weightings — it’s possible that the “true” model isn’t in the prior support at all.</p>
+
+<p>Gelman and Shalizi describe this as a “principal-agent problem” in which the modeler (the principal) and the model (the agent) might not have aligned incentives:</p>
+
+<blockquote>
+  <p>The problem is one of aligning incentives, so that the agent serves itself by serving the principal (Eggertsson, 1990). There is, as it were, a Bayesian principal–agent problem as well. The Bayesian agent is the methodological fiction (now often approximated in software) of a creature with a prior distribution over a welldefined hypothesis space $\Theta$, a likelihood function $p(y|\theta)$, and conditioning as its sole mechanism of learning and belief revision. The principal is the actual statistician or scientist.</p>
+</blockquote>
+
+<p>In other words, if the prior doesn’t contain the true underlying model, the modeler will never find it. If we make the very reasonable assumption that all models are wrong, then we need a way to quantify <em>how</em> wrong each model is. Are we just a little bit off from the true model, or is the true model not even in the realm of possibilities?</p>
+
+<h2 id="computation">Computation</h2>
+
+<p>An even more practical concern with Bayesian methods is the intense computation that they sometimes require. Consider, for example, computing the posterior distribution for a parameter $\theta$ given some data $X$. The simple Gaussian example above had a closed form; however, in general, computing the posterior involves a nasty integral,</p>
+
+\[p(\theta | X) = \frac{p(X | \theta) p(\theta)}{\int_\Theta p(X | \theta) p(\theta) d\theta}.\]
+
+<p>The denominator — which is the marginal likelihood $p(X)$ — will be intractable for any but the simplest models.</p>
+
+<p>Thus, to work around this integral, Bayesians typically use one of two solutions: 1) sampling-based methods for estimating the integral, or 2) approximations.</p>
+
+<p>Sampling methods include a whole zoo of clever Markov chain Monte Carlo (MCMC) methods, like Metropolis-Hastings, Gibbs sampling, Hamiltonian Monte Carlo, and No U-Turn Sampling (NUTS). Although most of these methods will converge to the true posterior in the limit of infinite sampling, they tend to be extremely slow, as drawing sequences of random samples is computationally intensive.</p>
+
+<p>On the other hand, approximation methods tend to be much faster, but the major downside is that they may never converge to the true posterior, even in the limit of infinite data. A popular approximation approach is variational inference. This approach requires the modeler to describe a second model — the “variational model” — which will then be fit to resemble the true posterior. However, numerous issues arise with variational methods. First, all of the issues with subjective priors in Bayesian statistics now reappear a second time: we must choose the priors of the underlying model <em>and</em> the variational model. Second, the approximate model might be a gross simplification of the desired model.</p>
+
+<p>Taken together, these computational issues can make Bayesian statistics unappealing. Some modelers may prefer to avoid these issues altogether by using other computationally-nice methods that aren’t weighed down by Bayesian integrals.</p>
+
+<h2 id="possible-resolutions">Possible resolutions</h2>
+
+<p>All of the issues raised here lead one to wonder whether Bayesian methods are so inherently flawed that they should be avoided altogether. While some statisticians definitely do take this stance, most of the issues can be at least partially addressed. Below, I sketch out some high-level arguments for dealing with the issues above.</p>
+
+<h3 id="model-checking">Model checking</h3>
+
+<p>Using Bayesian models blindly and choosing wacky priors is, of course, not the right way to go. However, when extreme care is taken throughout the modeling process, Bayesian methods can be really useful.</p>
+
+<p>A common pitfall of using Bayesian methods as an “automatic inference engine” is that a modeler might compute the posterior and call it a day. However, a crucial part of Bayesian analysis is model checking, as argued in depth in <a href="https://bpspsychub.onlinelibrary.wiley.com/doi/pdfdirect/10.1111/j.2044-8317.2011.02037.x">this piece</a> by Andrew Gelman and Cosma Shalizi.</p>
+
+<p>Model checking involves a whole series of steps beyond computing the posterior. For example, the modeler should ask: Do samples from the fitted model resemble my data? Can I make accurate predictions about held-out data or future data? Should I refine my model in some way?</p>
+
+<p>In their piece, Gelman and Shalizi argue that Bayesian statistics should not be used simply as an tool for induction. Blind induction here means starting with a prior model, observing some data, updating the model, and viewing the model’s predictions/parameters as truth. This approach assumes that the true model of the world exists within the model at hand, which is likely far from true.</p>
+
+<p>Instead, Gelman and Shalizi favor a “hypothetico-deductive” view of data analysis. In this approach, we allow the possibility that our model is wrong, and we actively test for this possibility. This also allows for falsification in some sense, unlike a completely inductive view.</p>
+
+<h3 id="empirical-bayes">Empirical Bayes</h3>
+
+<p>Empirical Bayesian methods take a concrete step toward making Bayesian priors less subjective. Rather than specifying the prior distribution(s) before observing any data, this family of methods uses the data to estimate the prior. This feels a bit weird — is it really a “prior” if we set it <em>after</em> seeing the data? — but these methods have been shown to have nice properties. And importantly, they only require placing as much information in the prior as the data allows.</p>
+
+<h3 id="a-willingness-to-be-wrong">A willingness to be wrong</h3>
+
+<p>As above, many of the abuses of Bayesian statistics occur when a model is blindly believed to be correct. Given a model and some data, it’s tempting to apply Bayesian methods as a black box and simply examine its outputs. But this approach can lead to disastrous conclusions, and probably slows down science in the long run.</p>
+
+<p>As a corollary to model checking, Bayesian methods require the modeler to remain steadfast in checking her conclusions and assumptions. There must be a constant suspicion (or even assumption) that the current model is incorrect, and she should always be on the lookout for improvements. Simply relying on the dogma of Bayes will lead to results and conclusions, but possibly not the right ones.</p>
+
+<h2 id="references">References</h2>
+<ul>
+  <li>Efron, Bradley. “Why isn’t everyone a Bayesian?.” The American Statistician 40.1 (1986): 1-5.</li>
+  <li>Gelman, Andrew. “Objections to Bayesian statistics.” Bayesian Analysis 3.3 (2008): 445-449.</li>
+  <li>Gelman, Andrew, et al. Bayesian data analysis. CRC press, 2013.</li>
+  <li>Lindley, Dennis V. “The future of statistics: a Bayesian 21st century.” Advances in Applied Probability 7 (1975): 106-115.</li>
+  <li>Talbott, William. “Bayesian epistemology.” (2001).</li>
+  <li>Gelman, Andrew, and Cosma Rohilla Shalizi. “Philosophy and the practice of Bayesian statistics.” British Journal of Mathematical and Statistical Psychology 66.1 (2013): 8-38.</li>
+</ul>
+:ET

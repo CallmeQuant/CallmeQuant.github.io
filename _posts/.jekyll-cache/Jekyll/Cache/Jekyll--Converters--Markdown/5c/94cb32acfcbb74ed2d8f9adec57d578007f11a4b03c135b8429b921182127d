@@ -1,0 +1,105 @@
+I"C <p>Schur complements are quantities that arise often in linear algebra in the context of block matrix inversion. Here, we review the basics and show an application in statistics.</p>
+
+<h2 id="ldu-decomposition">LDU decomposition</h2>
+
+<p>Consider a block matrix $M$:</p>
+
+\[M = \begin{bmatrix} A &amp; B \\ C &amp; D \\ \end{bmatrix}\]
+
+<p>where $A$ is $p \times p$, $B$ is $p \times q$, $C$ is $q \times p$, and $D$ is $q \times q$. Suppose we were interested in inverting $M$. One way would be to try to invert $M$ directly without capitalizing on its block structure. However, as we’ll see, we can find a more clever way to find $M^{-1}$.</p>
+
+<p>To start, let’s perform an LDU decomposition on $M$. If we right-multiply $M$ by</p>
+
+<p>\(L = \begin{bmatrix} I_p &amp; 0 \\ -D^{-1} C &amp; I_q \\ \end{bmatrix},\) we get</p>
+
+<p>\begin{align} ML &amp;=  \begin{bmatrix} A &amp; B \\ C &amp; D \\ \end{bmatrix}  \begin{bmatrix} I_p &amp; 0 \\ -D^{-1} C &amp; I_q \\ \end{bmatrix} \\ &amp;= \begin{bmatrix} A - BD^{-1} C &amp; B \\ 0 &amp; D  \end{bmatrix} \\ \end{align}</p>
+
+<p>This further decomposes as</p>
+
+<p>\begin{align} \begin{bmatrix} A - BD^{-1} C &amp; B \\ 0 &amp; D  \end{bmatrix} &amp;= \begin{bmatrix} I_p &amp; BD^{-1} \\ 0 &amp; I_q \end{bmatrix} \begin{bmatrix} A - BD^{-1} C &amp; 0 \\ 0 &amp; D  \end{bmatrix} \\ \end{align}</p>
+
+<p>Thus, we can rewrite $M$ as</p>
+
+\[M = \begin{bmatrix} I_p &amp; BD^{-1} \\ 0 &amp; I_q \end{bmatrix} \begin{bmatrix} A - BD^{-1} C &amp; 0 \\ 0 &amp; D  \end{bmatrix} \begin{bmatrix} I_p &amp; 0 \\ D^{-1} C &amp; I_q \\ \end{bmatrix}.\]
+
+<p>Notice that at this point, we have decomposed $M$ into to a upper-diagonal matrix, a diagonal matrix, and an lower-diagonal matrix.</p>
+
+<h2 id="inverting-m">Inverting $M$</h2>
+
+<p>Recall that for two matrices $A$ and $B$, the inverse of their product can be written as</p>
+
+\[(AB)^{-1} = B^{-1} A^{-1}.\]
+
+<p>For three matrices, we then have</p>
+
+\[(ABC)^{-1} = ((AB)C)^{-1} = C^{-1} (AB)^{-1} = C^{-1} B^{-1} A^{-1}.\]
+
+<p>Then, the inverse of $M$ can be written as</p>
+
+\[M^{-1} = \begin{bmatrix} I_p &amp; 0 \\ D^{-1} C &amp; I_q \\ \end{bmatrix}^{-1} \begin{bmatrix} A - BD^{-1} C &amp; 0 \\ 0 &amp; D  \end{bmatrix}^{-1} \begin{bmatrix} I_p &amp; BD^{-1} \\ 0 &amp; I_q \end{bmatrix}^{-1}.\]
+
+<p>For the first and third matrices, we have fairly simple inverses (just negate the lower-left and upper-right blocks, respecitively):</p>
+
+\[\begin{bmatrix} I_p &amp; 0 \\ D^{-1} C &amp; I_q \\ \end{bmatrix}^{-1} = \begin{bmatrix} I_p &amp; 0 \\ -D^{-1} C &amp; I_q \\ \end{bmatrix}\]
+
+<p>and</p>
+
+\[\begin{bmatrix} I_p &amp; BD^{-1} \\ 0 &amp; I_q \end{bmatrix}^{-1} = \begin{bmatrix} I_p &amp; -BD^{-1} \\ 0 &amp; I_q \end{bmatrix}.\]
+
+<p>For the middle matrix, the inverse is simply another block diagonal matrix with each block inverted:</p>
+
+\[\begin{bmatrix} A - BD^{-1} C &amp; 0 \\ 0 &amp; D  \end{bmatrix}^{-1} = \begin{bmatrix} (A - BD^{-1} C)^{-1} &amp; 0 \\ 0 &amp; D^{-1} \end{bmatrix}\]
+
+<p>Plugging in and simplifying, we have</p>
+
+<p>\begin{align} M^{-1} &amp;= \begin{bmatrix} I_p &amp; 0 \\ -D^{-1} C &amp; I_q \\ \end{bmatrix} \begin{bmatrix} (A - BD^{-1} C)^{-1} &amp; 0 \ 0 &amp; D^{-1}  \end{bmatrix}  \begin{bmatrix} I_p &amp; BD^{-1} \\ 0 &amp; I_q \end{bmatrix} \\ &amp;= \begin{bmatrix} (A - BD^{-1} C)^{-1} &amp; 0 \\ -D^{-1} C (A - BD^{-1} C)^{-1} &amp; D^{-1} \\ \end{bmatrix} \begin{bmatrix} I_p &amp; BD^{-1} \\ 0 &amp; I_q \end{bmatrix} \\ &amp;= \begin{bmatrix} (A - BD^{-1} C)^{-1} &amp; (A - BD^{-1} C)^{-1} BD^{-1} \\ -D^{-1} C (A - BD^{-1} C)^{-1} &amp; -D^{-1} C (A - BD^{-1} C)^{-1} BD^{-1} + D^{-1} \\ \end{bmatrix} \\ \end{align}</p>
+
+<p>Notice that to get the inverse of $M$, we now only need the the inverse of $D$ and the inverse of another quantity, $(A - BD^{-1} C)^{-1}$. This second quantity is known as the <strong>Schur complement</strong>.</p>
+
+<h2 id="multivariate-guassians">Multivariate Guassians</h2>
+
+<p>To illustrate the usefulness and prevalence of Schur complements, let’s take a look at an application of them in statistics.</p>
+
+<p>Consider two Gaussian random vectors $\mathbf{X}$ and $\mathbf{Y}$ of length $p$ and $q$, respectively, where we assume for the sake of simplicity that their means are 0:</p>
+
+<p>\begin{align} \mathbf{X} &amp;\sim \mathcal{N}_p(\mathbf{0}, \boldsymbol{\Sigma}_X) \\ \mathbf{Y} &amp;\sim \mathcal{N}_q(\mathbf{0}, \boldsymbol{\Sigma}_Y). \\ \end{align}</p>
+
+<p>Their joint distribution is then</p>
+
+\[(\mathbf{X}, \mathbf{Y}) \sim \mathcal{N}_{p + q}(\mathbf{0}, \boldsymbol{\Sigma})\]
+
+<p>where $\boldsymbol{\Sigma}$ has a block structure:</p>
+
+\[\boldsymbol{\Sigma} = \begin{bmatrix} \boldsymbol{\Sigma}_{XX} &amp; \boldsymbol{\Sigma}_{XY}^\top \\ \boldsymbol{\Sigma}_{XY} &amp; \boldsymbol{\Sigma}_{YY} \\ \end{bmatrix}.\]
+
+<p>Denote the precision matrix as $\boldsymbol{\Omega} = \boldsymbol{\Sigma}^{-1}$, and give it a similar block structure:</p>
+
+\[\boldsymbol{\Omega} = \begin{bmatrix} \boldsymbol{\Omega}_{XX} &amp; \boldsymbol{\Omega}_{XY}^\top \\ \boldsymbol{\Omega}_{XY} &amp; \boldsymbol{\Omega}_{YY} \\ \end{bmatrix}.\]
+
+<p>Using the Schur complement result above, we already know that</p>
+
+\[\boldsymbol{\Omega}_{XX} = (\boldsymbol{\Sigma}_{XX} - \boldsymbol{\Sigma}_{XY}^\top \boldsymbol{\Sigma}_{YY}^{-1} \boldsymbol{\Sigma}_{XY})^{-1}\]
+
+<p>Suppose we’re interested in the conditional distribution of $\mathbf{X} | \mathbf{Y} = \mathbf{y}$. Then we can write the conditional density as</p>
+
+<p>\begin{align} f(\mathbf{x} | \mathbf{y}) &amp;= 2\pi^{-p/2} |\boldsymbol{\Omega}|^{1/2} \exp\left( -\frac12 \begin{bmatrix} \mathbf{x} \\ \mathbf{y} \end{bmatrix}^\top \begin{bmatrix} \boldsymbol{\Omega}_{XX} &amp; \boldsymbol{\Omega}_{XY}^\top \ \boldsymbol{\Omega}_{XY} &amp; \boldsymbol{\Omega}_{YY} \ \end{bmatrix} \begin{bmatrix} \mathbf{x} \\ \mathbf{y} \end{bmatrix} \right) \\ &amp;\propto \exp\left( -\frac12 \begin{bmatrix} \mathbf{x}^\top \boldsymbol{\Omega}_{XX} + \mathbf{y}^\top \boldsymbol{\Omega}_{XY} \\ \mathbf{x}^\top \boldsymbol{\Omega}_{XY}^\top + \mathbf{y}^\top \boldsymbol{\Omega}_{YY} \end{bmatrix}^\top \begin{bmatrix} \mathbf{x} \\ \mathbf{y} \end{bmatrix} \right) \\ &amp;\propto \exp\left( -\frac12 (\mathbf{x}^\top \boldsymbol{\Omega}_{XX} \mathbf{x} + \mathbf{y}^\top \boldsymbol{\Omega}_{XY} \mathbf{x} + \mathbf{x}^\top \boldsymbol{\Omega}_{XY}^\top \mathbf{y} + \mathbf{y}^\top \boldsymbol{\Omega}_{YY} \mathbf{y})  \right) \\ \end{align}</p>
+
+<p>Ignoring the terms that don’t depend on $\mathbf{x}$, we have</p>
+
+<p>\begin{align} f(\mathbf{x} | \mathbf{y}) &amp;\propto \exp\left( -\frac12 (\mathbf{x}^\top \boldsymbol{\Omega}_{XX} \mathbf{x} + \mathbf{y}^\top \boldsymbol{\Omega}_{XY} \mathbf{x} + \mathbf{x}^\top \boldsymbol{\Omega}_{XY}^\top \mathbf{y}) \right) \\ &amp;\propto \exp\left( -\frac12 \mathbf{x}^\top \boldsymbol{\Omega}_{XX} \mathbf{x} - \mathbf{x}^\top \boldsymbol{\Omega}_{XY}^\top \mathbf{y}  \right) \\ \end{align}</p>
+
+<p>Putting this into a form that allows us to read off the covariance, we have</p>
+
+<p>\begin{align} \exp\left( -\frac12 \mathbf{x}^\top \boldsymbol{\Omega}_{XX} \mathbf{x} - \mathbf{x}^\top \boldsymbol{\Omega}_{XY}^\top \mathbf{y}  \right) &amp;= \exp\left( -\frac12 (\mathbf{x} - \boldsymbol{\Omega}_{XX}^{-1} \boldsymbol{\Omega}_{XY} \mathbf{y})^\top  \boldsymbol{\Omega}_{XX}  (\mathbf{x} - \boldsymbol{\Omega}_{XX}^{-1} \boldsymbol{\Omega}_{XY} \mathbf{y}) \right). \\ \end{align}</p>
+
+<p>Now, we can see that the covariance of $\mathbf{X} | \mathbf{Y} = \mathbf{y}$ is $\boldsymbol{\Omega}_{XX} = (\boldsymbol{\Sigma}_{XX} - \boldsymbol{\Sigma}_{XY}^\top \boldsymbol{\Sigma}_{YY}^{-1} \boldsymbol{\Sigma}_{XY})^{-1}$.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Wikipedia <a href="https://www.wikiwand.com/en/Schur_complement">entry on Schur complements</a></li>
+  <li>Prof. Jean Gallier’s <a href="https://www.cis.upenn.edu/~jean/schur-comp.pdf">notes on the Schur complement</a></li>
+  <li>Uhler, Caroline. “Gaussian graphical models: an algebraic and geometric perspective.” arXiv preprint arXiv:1707.04345 (2017).</li>
+  <li>Terry Tao’s <a href="https://terrytao.wordpress.com/tag/schur-complement/">post on the Schur complement</a></li>
+</ul>
+:ET
