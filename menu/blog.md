@@ -5,8 +5,6 @@ title:
 This repository includes (future) informal posts displaying on my personal website. 
 If there are errors in these posts, feel free to contact me 🤗
 
-I would be appreciated for your time paying a visit to my [blog](https://CallmeQuant.github.io)!
-
 <ul class="posts">
   {% for post in site.posts %}
     {% unless post.img == "essay" %}
