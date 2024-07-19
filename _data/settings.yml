@@ -9,7 +9,7 @@ google-ID: ''
 menu:
 - {name: 'Publications', path: 'menu', url: 'publications.html'}
 - {name: 'CV', path: 'menu', url: '../files/Resume_HoHuuBinh_Industry.pdf'}
-- {name: 'Technical blog', path: 'menu', url: 'blog.html'}
+- {name: 'Personal blog', path: 'menu', url: 'blog.html'}
 # - {name: 'Essays', path: 'menu', url: 'essays.html'}
 
 # Available social icons are powered by Font Awesome, so you can use any icon that they offer
