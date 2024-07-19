@@ -20,7 +20,7 @@ Furthermore, I will derive the likelihood, the *conjugate* prior, and the poster
 three cases. However, before we moving to the main part, I want to revise some helpful and special 
 properties of the (multivariate) normal distribution. 
 
-# Properties of Multivariate Normal Distribution (MVN)
+## Properties of Multivariate Normal Distribution (MVN)
 The multivariate normal random variables has the following density function 
 
 $$p(x; \mu, \Sigma) = \frac{1}{(2 \pi)^{n/2} |\Sigma|^{1/2}} \exp{\Big(-\frac{1}{2} (x - \mu)^{\intercal} \Sigma^{-1} (x - \mu) \Big)}$$

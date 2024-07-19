@@ -11,7 +11,7 @@ tags: []
 
 In this post, I first develop an intuition for variational inference as a pivotal family of algorithms using optimization for inference problems. From there, we  explore some derivations of the evidence lower bound (ELBO) and its properties.
 
-# **Introduction**
+## **Introduction**
 
 Whenever we refer to the Bayesian inference problem, modern statisticians have demaned computation techniques that are scalable to extremely large data sets with thousand of unknown parameters to infer. Moreover, inference about unknown quantities in the real world often requires the computation of complex posterior densities. That's why an algorithm that could efficiently approximate these densities would be favorable.
 
@@ -32,7 +32,7 @@ $$q^\ast(Z) = \underset{q(Z) \in \mathcal{Q}}{\operatorname{arg min}} KL[q(Z) ||
 
 From the view of KL divergence, minimizing KL divergence can be intepreted as minimizing the relative entropy between two distributions (or the amount of information needed in one distribution when transforming to another distribution)
 
-# **Evidence Lower Bound or (ELBO)**
+## **Evidence Lower Bound or (ELBO)**
 
 The previous section offers a brief introduction about the variational inference method. In this section, we will dive into the way the concept of variaional optimization can be applied to the inference problem. As discussed earlier, suppose that we have a fully Bayesian model in which all given parameters are specified with prior distributions. Normally, the evidence is not analytically tractable. That's why we need some bound (or more precisely lower bound) that could be used to approximate the Evidence, $P(X)$. There are two standard ways to compute the ELBO quantity: via Jensen's Inequality and Kullback-Leibler Divergence. 
 

@@ -11,7 +11,7 @@ tags: []
 
 In this post, I would display a brief and short proof of the Bessel's Correction, which is a formula of an unbiased estimator for the population variance. After this post, readers will comprehend the reason behind the denominator in the sample variance formula (which is $N-1$ rather than $N$). 
 
-# **Introduction**
+## **Introduction**
 In every introductory statistics course, students learn how to compute the sample moments (usually the fisrt and second moments or the mean and variance respectively). The sample mean is familiar to derive. Let us present some notations using for this post. Suppose that $X = \\{X_1, X_2, \dots, X_{n} \\}$ be a sample of $n$ i.i.d random variabels where i.i.d stands for identically and independently distributed. The sample mean $\bar{X}$ is calculated as
 
 $$ \bar{X} = \frac{1}{n} \sum_{i = 1}^{n} X_{i}. \tag{1} $$ 
@@ -32,7 +32,7 @@ $$ \mathbb{E} [s^2] - \sigma^2 = 0 \Leftrightarrow \mathbb{E} [s^2] = \sigma^2. 
 
 Now, we will commence with the proof of the Bessel's correction.
 
-# **A Brief Proof**
+## **A Brief Proof**
 First, I advocate the examination of the *biasedness* of the below estimator for the population variance:
 
 $$ s^2 = \frac{1}{n} \sum_{i=1}^{n} (X_{i} - \bar{X})^2. \tag{4} $$

@@ -11,7 +11,7 @@ tags: []
 
 In this post, I will introduce Boole's Inequality, an upperbound on the probability of occurrence of at least one of a countable number of events under the context of individual chances of each event.  In some senses, Boole's inequality is so straightforward and often emerges as a definitely compelling inequality for any finite or countable set of events. The attractive point of this inequality is due to its weakly required assumptions, that is, Boole's inequality does not require *independence*. Hence, it is a useful methods when we are working with collection of events.
 
-# **A short proof**
+## **A short proof**
 Boole's inequality can be stated formally as follows:
 
 **Boole's inequality**. *If* $A_1, A_2, \dots, A_{n}$ *are finite events in a probability space* $\Omega$, *then*
@@ -24,7 +24,7 @@ $$ P\Bigg(\bigcup_{i=1}^\infty A_i\Bigg) \le \sum_{i=1}^\infty P(A_i) $$
 
 We will prove this inequality by two approaches: by mathematical induction and by measure theory
 
-## *First approach: Mathematical induction*
+### *First approach: Mathematical induction*
 Suppose that a probability space $\Omega$ contains a countable collection of events $A_1, A_2, \dots, A_{n}, \dots$, then
 
 For the case n = 1, we have 
@@ -54,7 +54,7 @@ $$
 
 Hence, by repeating the same inductive argument for $n^\prime = n+1, n+2, \dots,$, we can prove desired result.
 
-## *Second approach: Measure theory*
+### *Second approach: Measure theory*
 Using measure-theoretic agruments, we can prove the general form of Boole's inequality for any countable collection of events in a given probability space. Assume a countable collection of events $\lbrace A_{i} \rbrace_{i=1}^{\infty}$ from a probability space $(\Omega, \mathcal{F}, P)$ (where the sample space $\Omega$ and the event space $\mathcal{F}$ are equipped with a *measure* or *set function* $P: \mathcal{F} \rightarrow \mathbb{R}, \quad P(\Omega) = 1$. From the formal definition of probability measure $P: \mathcal{F} \rightarrow [0,1]$, we have the following property:
 
 $$P \Bigg(\bigcup_{i=1}^\infty A_i\Bigg) \le \sum_{i=1}^\infty P(A_i).$$ 
