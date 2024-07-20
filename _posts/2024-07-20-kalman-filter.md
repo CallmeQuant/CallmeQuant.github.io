@@ -92,7 +92,7 @@ Suppose $\vect{x} \in \R^{n}$ and $\vect{y} \in \R^{m}$ with the given joint Gau
 
 $$
 \begin{pmatrix} \vect{x} \\ \vect{y} \end{pmatrix} \sim \Ncal \left(\begin{pmatrix} \vect{\mu_x} \\ \vect{\mu_y} \end{pmatrix}, 
-\begin{pmatrix} \vect{\Sigma_{xx}} & \Sigma_{xy} \\ \vect{\Sigma_{yx}}  & \vect{\Sigma_{yy}} \end{pmatrix} \right)
+\begin{pmatrix} \vect{\Sigma_{xx}} & \vect{\Sigma_{xy}} \\ \vect{\Sigma_{yx}}  & \vect{\Sigma_{yy}} \end{pmatrix} \right)
 $$
 
 then marginals and conditional distributions are given by 
@@ -101,8 +101,8 @@ $$
 \begin{align*}
 \vect{x} & \sim \Ncal(\vect{\mu_x}, \vect{\Sigma_{xx}}) \\
 \vect{y} & \sim \Ncal(\vect{\mu_y}, \vect{\Sigma_{yy}}) \\
-\vect{x} \lvert \vect{y} & \sim \Ncal \left(\vect{\mu_x} + \vect{\Sigma_{xy}} \vect{\Sigma_{yy}}^{-1} (x - \vect{\mu_{y}}) , \vect{\Sigma_{xx}} - \vect{\Sigma_{xy}} \vect{\Sigma_{yy}}^{-1} \vect{\Sigma_{yx}} \right) \\
-\vect{y} \lvert \vect{x} & \sim \Ncal \left(\vect{\mu_y} + \vect{\Sigma_{yx}} \vect{\Sigma_{xx}}^{-1} (y - \vect{\mu_{x}}) , \vect{\Sigma_{yy}} - \vect{\Sigma_{yx}} \vect{\Sigma_{xx}}^{-1} \vect{\Sigma_{xy}} \right)
+\vect{x} \lvert \vect{y} & \sim \Ncal \left(\vect{\mu_x} + \vect{\Sigma_{xy}} \vect{\Sigma_{yy}}^{-1} (\vect{x} - \vect{\mu_{y}}) , \vect{\Sigma_{xx}} - \vect{\Sigma_{xy}} \vect{\Sigma_{yy}}^{-1} \vect{\Sigma_{yx}} \right) \\
+\vect{y} \lvert \vect{x} & \sim \Ncal \left(\vect{\mu_y} + \vect{\Sigma_{yx}} \vect{\Sigma_{xx}}^{-1} (\vect{y} - \vect{\mu_{x}}) , \vect{\Sigma_{yy}} - \vect{\Sigma_{yx}} \vect{\Sigma_{xx}}^{-1} \vect{\Sigma_{xy}} \right)
 \end{align*}
 $$
 
