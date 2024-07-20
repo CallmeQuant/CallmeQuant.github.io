@@ -14,37 +14,25 @@ $$\newcommand{\abs}[1]{\lvert#1\rvert}$$
 $$\newcommand{\norm}[1]{\lVert#1\rVert}$$
 $$\newcommand{\innerproduct}[2]{\langle#1, #2\rangle}$$
 $$\newcommand{\Tr}[1]{\operatorname{Tr}\mleft(#1\mright)}$$
-
 $$\DeclareMathOperator*{\argmin}{argmin}$$
 $$\DeclareMathOperator*{\argmax}{argmax}$$
-
 $$\DeclareMathOperator{\diag}{diag}$$
-
 $$\newcommand{\converge}[1]{\xrightarrow{\makebox[2em][c]{$$\scriptstyle#1$$}}}$$
-
 $$\newcommand{\quotes}[1]{``#1''}$$
-
 $$\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}$$
-
 $$\newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}$$
-
 $$\newcommand{\E}{\mathbb{E}}$$
-
 $$\newcommand{\Var}{\mathrm{Var}}$$
-
 $$\newcommand{\Cov}{\mathrm{Cov}}$$
-
-$$\newcommand{\N}{\mathbb{N}}$$
-$$\newcommand{\Z}{\mathbb{Z}}$$
+$$\renewcommand{\N}{\mathbb{N}}$$
+$$\renewcommand{\Z}{\mathbb{Z}}$$
+$$\renewcommand{\R}{\mathbb{R}}$$
 $$\newcommand{\Q}{\mathbb{Q}}$$
-$$\newcommand{\R}{\mathbb{R}}$$
 $$\newcommand{\C}{\mathbb{C}}$$
 $$\newcommand{\bbP}{\mathbb{P}}$$
-
 $$\newcommand{\rmF}{\mathrm{F}}$$
 $$\newcommand{\iid}{\mathrm{iid}}$$
 $$\newcommand{\distas}[1]{\overset{#1}{\sim}}$$
-
 $$\newcommand{\Acal}{\mathcal{A}}$$
 $$\newcommand{\Bcal}{\mathcal{B}}$$
 $$\newcommand{\Ccal}{\mathcal{C}}$$
@@ -68,9 +56,7 @@ $$\newcommand{\Xcal}{\mathcal{X}}$$
 $$\newcommand{\Ycal}{\mathcal{Y}}$$
 $$\newcommand{\Zcal}{\mathcal{Z}}$$
 $$\newcommand{\Scal}{\mathcal{S}}$$
-
 $$\newcommand{\shorteqnote}[1]{ & \textcolor{blue}{\text{\small #1}}}$$
-
 $$\newcommand{\qimplies}{\quad\Longrightarrow\quad}$$
 $$\newcommand{\defeq}{\stackrel{\triangle}{=}}$$
 $$\newcommand{\longdefeq}{\stackrel{\text{def}}{=}}$$
@@ -89,14 +75,15 @@ Suppose $\vect{x} \in \R^{n}$ and $\vect{y} \in \R^{m}$ are Gaussian random vari
 $$
 \begin{align*}
 \vect{x} &\sim \Ncal(\vect{\mu}, \vect{\Sigma}) \\
-\vect{y} &\lvert x \sim \Ncal(\vect{Ax} + \vect{b}, \vect{R})
+\vect{y} &\lvert \vect{x} \sim \Ncal(\vect{Ax} + \vect{b}, \vect{R})
 \end{align*}
 $$
 
 then, the joint distribution for $(x, y)$ is given by 
 
 $$
-\begin{pmatrix} \vect{x} \\ \vect{y} \end{pmatrix} \sim \mathcal{N}_{n+m}\left(\begin{pmatrix} \vect{\mu} \\ \vect{A\mu} + b \end{pmatrix}, 
+\begin{pmatrix} \vect{x} \\ \vect{y} \end{pmatrix} \sim \mathcal{N}_{n+m} 
+\left(\begin{pmatrix} \vect{\mu} \\ \vect{A\mu} + \vect{b} \end{pmatrix}, 
 \begin{pmatrix} \vect{\Sigma} & \vect{A \Sigma^\top} \\ \vect{\Sigma A} & \vect{A \Sigma A^\top} + \vect{R} \end{pmatrix} \right).
 $$
 
@@ -105,9 +92,8 @@ $$
 Suppose $\vect{x} \in \R^{n}$ and $\vect{y} \in \R^{m}$ with the given joint Gaussian distribution of the form
 
 $$
-\begin{pmatrix} \vect{x} \\ \vect{y} \end{pmatrix} \sim \Ncal \left(\begin{pmatrix} \vect{\mu_x} \\ \vect{\mu_y}, 
-\begin{pmatrix} \vect{\Sigma_{xx}} & \Sigma_{xy} \\
-\vect{\Sigma_{yx}}  & \vect{\Sigma_{yy}} \end{pmatrix} \right)
+\begin{pmatrix} \vect{x} \\ \vect{y} \end{pmatrix} \sim \Ncal \left(\begin{pmatrix} \vect{\mu_x} \\ \vect{\mu_y} \end{pmatrix}, 
+\begin{pmatrix} \vect{\Sigma_{xx}} & \Sigma_{xy} \\ \vect{\Sigma_{yx}}  & \vect{\Sigma_{yy}} \end{pmatrix} \right)
 $$
 
 then marginals and conditional distributions are given by 
