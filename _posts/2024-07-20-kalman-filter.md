@@ -9,7 +9,7 @@ tags: []
 <!-- image: -->
 ---
 
-$$\newcommand{\vect}[1]{{\mathbf{\boldsymbol{{#1}}}}}$$
+$$\renewcommand{\vect}[1]{{\mathbf{\boldsymbol{{#1}}}}}$$
 $$\newcommand{\abs}[1]{\lvert#1\rvert}$$
 $$\newcommand{\norm}[1]{\lVert#1\rVert}$$
 $$\newcommand{\innerproduct}[2]{\langle#1, #2\rangle}$$
