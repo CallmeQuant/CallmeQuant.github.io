@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "A quick look at Kalman Filter"
+title: "A quick look at Kalman filter"
 author: "Binh Ho"
 categories: Statistics
 blurb: "The Kalman filter, a cornerstone in estimation theory, is a powerful algorithm that excels at inferring the hidden state of a system based on noisy measurements. "
@@ -123,8 +123,8 @@ then the Kalman filter is a recursive algorithm which in turn *predict* and *upd
 
 $$
 \begin{align*}
-p(\vect{z_{t}} \lvert \vect{y}_{1:t-1}) &= \Ncal(\vect{z_t} \lvert \vect{\mu_{t \lvert t-1}}, \vect{\Sigma_{t \lvert t-1}}) \quad (\text{Predict step}) \\
-p(\vect{z_{t}} \lvert \vect{y_t}, \vect{y}_{1:t-1}) &= \Ncal(\vect{z_t} \lvert \vect{\mu_{t \lvert t}}, \vect{\Sigma_{t \lvert t}}) \quad (\text{Update step})
+p(\vect{z_{t}} \lvert \vect{y_{1:t-1}}) &= \Ncal(\vect{z_t} \lvert \vect{\mu_{t \lvert t-1}}, \vect{\Sigma_{t \lvert t-1}}) \quad (\text{Predict step}) \\
+p(\vect{z_{t}} \lvert \vect{y_t}, \vect{y_{1:t-1}}) &= \Ncal(\vect{z_t} \lvert \vect{\mu_{t \lvert t}}, \vect{\Sigma_{t \lvert t}}) \quad (\text{Update step})
 \end{align*}
 $$
 
