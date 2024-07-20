@@ -184,7 +184,7 @@ where
 $$
 \begin{align*}
 \vect{\mu}' &= \begin{pmatrix} \vect{\mu_{t-1 \lvert t-1}} \\ \vect{F_t} \vect{\mu_{t-1 \lvert t-1}} \end{pmatrix} \\
-\vect{\Sigma}' = \begin{pmatrix} \vect{\Sigma_{t-1 \lvert t-1}} & \vect{\Sigma_{t-1 \lvert t-1}} \vect{F_t}^\top  \\
+\vect{\Sigma}' & = \begin{pmatrix} \vect{\Sigma_{t-1 \lvert t-1}} & \vect{\Sigma_{t-1 \lvert t-1}} \vect{F_t}^\top  \\
 \vect{F_t} \vect{\Sigma_{t-1 \lvert t-1}} & \vect{F_t} \vect{\Sigma_{t-1 \lvert t-1}} \vect{F_t}^\top \end{pmatrix}
 \end{align*}
 $$
@@ -230,7 +230,7 @@ $$
 $$
 \begin{align*}
 p(\vect{z_t} \lvert \vect{y_t}, \vect{y_{1:t-1}}) &= \Ncal(\vect{z_{t}} \lvert \vect{\mu_{t \lvert t}}, \vect{\Sigma_{t \lvert t}}) \\
-\vect{\mu_{t \lvert t}} &= \vect{\mu_{t \lvert t-1}} + \vect{\Sigma_{t \lvert t-1}} \vect{H_t}^\top (\vect{H_t} \vect{\Sigma_{t \lvert t-1}} \vect{H_t}^\top)^{-1} (\vect{y_t} - \vect{H_t} \vect{\mu_{t \lvert t-1}} \\
+\vect{\mu_{t \lvert t}} &= \vect{\mu_{t \lvert t-1}} + \vect{\Sigma_{t \lvert t-1}} \vect{H_t}^\top (\vect{H_t} \vect{\Sigma_{t \lvert t-1}} \vect{H_t}^\top)^{-1} (\vect{y_t} - \vect{H_t} \vect{\mu_{t \lvert t-1}}) \\
 &= \vect{\mu_{t \lvert t-1}} + \vect{K_t} \vect{e_t}\\
 \vect{\Sigma_{t \lvert t}} &= \vect{\Sigma_{t \lvert t-1}} - \vect{\Sigma_{t \lvert t-1}} \vect{H_t}^\top (\vect{H_t} \vect{\Sigma_{t \lvert t-1}} \vect{H_t}^\top)^{-1}  \vect{H_t} \vect{\Sigma_{t \lvert t-1}} \\
 &=  \vect{\Sigma_{t \lvert t-1}} - \vect{K_t} \vect{H_t} \vect{\Sigma_{t \lvert t-1}} \\
