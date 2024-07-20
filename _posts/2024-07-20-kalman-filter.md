@@ -153,12 +153,14 @@ $$
 ### Proof Strategy
 
 In the derivation of the algorithm, we notice that due to the nice properties of the Gaussian distribution and the Markovian structure of the hidden state, the inference will be simplified to become analytic. Thus, our strategy will be as follows:
+
 1. Prediction step 
     + Derive the joint distribution $p(\vect{z_t}, \vect{z_{t-1}} \lvert \vect{y_{1:t-1}})$
     + Marginalize over $\vect{z_{t-1}}$ to arrive at $p(\vect{z_t} \lvert \vect{y_{1:t-1}})$. This distribution is equal to $\Ncal(\vect{z_t} \lvert \vect{\mu_{t \lvert t-1}}, \vect{\Sigma_{t \lvert t-1}})$ 
 2. Update step 
     + Derive the joint distribution $p(\vect{z_t}, \vect{y_{t}} \lvert \vect{y_{1:t-1}})$ 
     + Condition on $\vect{y_t}$, we arrive at $p(\vect{z_t} \lvert \vect{y_{1:t}})$, which is $\Ncal(\vect{z_t} \lvert \vect{\mu_{t \lvert t}}, \vect{\Sigma_{t \lvert t}})$
+
 The first three substeps will utilize the result on joint distribution of Gaussian random variables, while the last substep will be an application of the conditional distribution result.
 
 ### Proof
