@@ -86,7 +86,7 @@ Then we can conclude, using Slutsky's theorem, that
 
 $$\sqrt{n} (\hat{\theta}_{\text{MLE}} - \theta_{0,g}) \to_d \mathcal{N}(0, \mathbb{E}_f[\ell''(\theta_{0,g})]^{-1} \mathbb{V}[\ell'(\theta_{0, g})] \mathbb{E}_f[\ell''(\theta_{0,g})]^{-1}).$$
 
-Thus, the MLE is still asymptotically normal under a misspecified model. Notice that the asymptotic variance has the same form as the "sandwich estimator" for the variance, which I covered in a post about M-estimators [here](https://andrewcharlesjones.github.io/posts/2019/12/mestimation/).
+Thus, the MLE is still asymptotically normal under a misspecified model. Notice that the asymptotic variance has the same form as the "sandwich estimator" for the variance, which I covered in a post about M-estimators [here](https://callmequant.github.io/posts/2019/12/mestimation/).
 
 ## Conclusion
 

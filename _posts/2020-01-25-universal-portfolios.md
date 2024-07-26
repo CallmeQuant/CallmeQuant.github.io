@@ -106,7 +106,7 @@ Sticking with only one of the stocks won't make any money, but splitting and mai
 
 Here, we introduced the idea of universal portfolios, and reviewed Thomas Cover's simple algorithm for computing a daily portfolio. There has been a lot of work advancing these concepts since Cover's initial paper, showing that more sophisticated online learning algorithms can provide even better guarantees in terms of rates of convergence and bounds on regret.
 
-Code for the examples above can be found [here](https://github.com/andrewcharlesjones/universal_portfolios).
+<!-- Code for the examples above can be found [here](https://github.com/andrewcharlesjones/universal_portfolios). -->
 
 ## References
 

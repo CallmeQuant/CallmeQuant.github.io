@@ -13,7 +13,7 @@ A sketch of the derivation for Ito's Lemma and a simple example.
 
 ## Ito's Lemma
 
-Suppose a variable $x$ follows an Ito process: $$dx = a(x, t) dt + b(x, t) dz$$ where $dz$ is a Wiener process (see my [previous post](https://andrewcharlesjones.github.io/posts/2020/10/wiener-ito-processes/) for a brief introduction to Wiener processes. 
+Suppose a variable $x$ follows an Ito process: $$dx = a(x, t) dt + b(x, t) dz$$ where $dz$ is a Wiener process (see my [previous post](https://callmequant.github.io/posts/2020/10/wiener-ito-processes/) for a brief introduction to Wiener processes. 
 
 Ito's lemma shows that if we take a function of the variable $f(x, t)$, we can again write down the process that this function follows. Specifically, the lemma shows that we can write down the form of the differential $df$ in a fairly simple form. Ito's lemma is very similar in spirit to the chain rule, but traditional calculus fails in the regime of stochastic processes (where processes can be differentiable nowhere).
 

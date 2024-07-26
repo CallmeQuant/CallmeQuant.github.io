@@ -52,7 +52,7 @@ Breaking these partial derivatives down, we have
 
 \begin{align} \frac{\partial \ell_i}{\partial \theta_i} &= \frac{y_i - b'(\theta_i)}{a(\phi)} = \frac{y_i - \mu_i}{a(\phi)} \\\ \frac{\partial \theta_i}{\partial \mu_i} &= g'(\mu_i) = (b''(y_i))^{-1} =  \frac{a(\phi)}{\text{Var}(y_i)} = \frac{1}{v(y_i)} \\\ \frac{\partial \eta_i}{\partial \beta_j} &= X_{ij} \\\ \end{align} 
 
-The expression for $\frac{\partial \ell_i}{\partial \theta_i}$ follows because $b'(\theta)$ is equal to the mean $\mu$ in the exponential family (see [here](https://andrewcharlesjones.github.io/posts/2020/03/generalizedpca/) for an explanation). We won't specify $\frac{\partial \mu_i}{\partial \eta_j}$ further, just to allow for an arbitrary relationship between $\mu$ and $\eta$.
+The expression for $\frac{\partial \ell_i}{\partial \theta_i}$ follows because $b'(\theta)$ is equal to the mean $\mu$ in the exponential family. We won't specify $\frac{\partial \mu_i}{\partial \eta_j}$ further, just to allow for an arbitrary relationship between $\mu$ and $\eta$.
 
 Putting these together, we have
 
