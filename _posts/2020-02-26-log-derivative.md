@@ -54,7 +54,7 @@ $$\mathbb{E}_{p(x; \theta)}[\nabla_\theta \log  p(x; \theta)  f(x)] \approx \fra
 
 Although relatively straightforward, the score function estimator shows up all over the place. In reinforcement learning, it's known as the [REINFORCE](https://link.springer.com/article/10.1007/BF00992696) method, in which the gradient of the policy is being taken. In variational inference, it shows up when trying to optimize the evidence lower bound (ELBO). And in computational finance, this estimator is important for performing "sensitivity analysis", or understanding how financial outcomes change with underlying model assumptions.
 
-Another interesting line of work has been exploring ways to reduce the variance of the score function estimator, which can have extremely high variance, especially in discrete settings. Much work has been done to design effective [control variates](https://callmequant.github.io/posts/2020/02/controlvariates/). Also, in discrete latent variable models, another popular approach is to introduce a continuous relaxation of the problem, which reduces gradient variance.
+Another interesting line of work has been exploring ways to reduce the variance of the score function estimator, which can have extremely high variance, especially in discrete settings. Much work has been done to design effective [control variates](https://callmequant.github.io/statistics/controlvariates.html). Also, in discrete latent variable models, another popular approach is to introduce a continuous relaxation of the problem, which reduces gradient variance.
 
 ## Conclusion
 
