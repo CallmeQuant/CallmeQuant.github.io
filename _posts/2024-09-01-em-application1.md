@@ -263,7 +263,7 @@ $$
 \end{align*}
 $$
 
-This result provides the update formula for the covariance matrices $\vect{\Sigma}_k$ in the M-step of the EM algorithm, ensuring that each matrix is a weighted average of the outer products of the differences between the data points and the respective cluster means, weighted by the responsibilities $\gamma_{t,i,k}$. This completes the EM algorithm's parameter update steps for Gaussian Mixture Models.
+This result provides the update formula for the covariance matrices $\vect{\Sigma_k}$ in the M-step of the EM algorithm, ensuring that each matrix is a weighted average of the outer products of the differences between the data points and the respective cluster means, weighted by the responsibilities $\gamma_{t,i,k}$. This completes the EM algorithm's parameter update steps for Gaussian Mixture Models.
 
 ## Experiment 
 In this experiment, synthetic data is generated to form a scenario where Gaussian Mixture Models (GMM) can be applied to identify and analyze three distinct clusters. The data generation process involves creating three separate sets of data points, each drawn from a different multivariate normal distribution, reflecting different clusters. As you can see, as the iterations increase, the means and covariances of each Gaussian begin to shift and stretch to minimize the overlap and better capture the underlying structure of the data. 
