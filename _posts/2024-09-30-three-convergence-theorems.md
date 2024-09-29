@@ -8,6 +8,74 @@ img: ""
 tags: []
 <!-- image: -->
 ---
+
+$$\newcommand{\abs}[1]{\lvert#1\rvert}$$
+$$\newcommand{\norm}[1]{\lVert#1\rVert}$$
+$$\newcommand{\innerproduct}[2]{\langle#1, #2\rangle}$$
+$$\newcommand{\Tr}[1]{\operatorname{Tr}\mleft(#1\mright)}$$
+$$\DeclareMathOperator*{\argmin}{argmin}$$
+$$\DeclareMathOperator*{\argmax}{argmax}$$
+$$\DeclareMathOperator{\diag}{diag}$$
+$$\newcommand{\converge}[1]{\xrightarrow{\makebox[2em][c]{$$\scriptstyle#1$$}}}$$
+$$\newcommand{\quotes}[1]{``#1''}$$
+$$\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}$$
+$$\newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}$$
+$$\newcommand{\E}{\mathbb{E}}$$
+$$\newcommand{\Var}{\mathrm{Var}}$$
+$$\newcommand{\Cov}{\mathrm{Cov}}$$
+$$\renewcommand{\N}{\mathbb{N}}$$
+$$\renewcommand{\Z}{\mathbb{Z}}$$
+$$\renewcommand{\R}{\mathbb{R}}$$
+$$\newcommand{\Q}{\mathbb{Q}}$$
+$$\newcommand{\C}{\mathbb{C}}$$
+$$\newcommand{\bbP}{\mathbb{P}}$$
+$$\newcommand{\rmF}{\mathrm{F}}$$
+$$\newcommand{\iid}{\mathrm{iid}}$$
+$$\newcommand{\distas}[1]{\overset{#1}{\sim}}$$
+$$\newcommand{\Acal}{\mathcal{A}}$$
+$$\newcommand{\Bcal}{\mathcal{B}}$$
+$$\newcommand{\Ccal}{\mathcal{C}}$$
+$$\newcommand{\Dcal}{\mathcal{D}}$$
+$$\newcommand{\Ecal}{\mathcal{E}}$$
+$$\newcommand{\Fcal}{\mathcal{F}}$$
+$$\newcommand{\Gcal}{\mathcal{G}}$$
+$$\newcommand{\Hcal}{\mathcal{H}}$$
+$$\newcommand{\Ical}{\mathcal{I}}$$
+$$\newcommand{\Jcal}{\mathcal{J}}$$
+$$\newcommand{\Lcal}{\mathcal{L}}$$
+$$\newcommand{\Mcal}{\mathcal{M}}$$
+$$\newcommand{\Pcal}{\mathcal{P}}$$
+$$\newcommand{\Ocal}{\mathcal{O}}$$
+$$\newcommand{\Qcal}{\mathcal{Q}}$$
+$$\newcommand{\Ucal}{\mathcal{U}}$$
+$$\newcommand{\Vcal}{\mathcal{V}}$$
+$$\newcommand{\Ncal}{\mathcal{N}}$$
+$$\newcommand{\Tcal}{\mathcal{T}}$$
+$$\newcommand{\Xcal}{\mathcal{X}}$$
+$$\newcommand{\Ycal}{\mathcal{Y}}$$
+$$\newcommand{\Zcal}{\mathcal{Z}}$$
+$$\newcommand{\Scal}{\mathcal{S}}$$
+$$\newcommand{\shorteqnote}[1]{ & \textcolor{blue}{\text{\small #1}}}$$
+$$\newcommand{\qimplies}{\quad\Longrightarrow\quad}$$
+$$\newcommand{\defeq}{\stackrel{\triangle}{=}}$$
+$$\newcommand{\longdefeq}{\stackrel{\text{def}}{=}}$$
+$$\newcommand{\equivto}{\iff}$$
+
+<style>
+.column {
+  float: left;
+  width: 30%;
+  padding: 5px;
+}
+
+/* Clear floats after image containers */
+.row::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+</style>
+
 In this post, we dive into three essential convergence theorems in integration theory and explore how the Lebesgue integral handles limits so effectively. We'll break down the Monotone Convergence Theorem along with two other key theorems, showing why the Lebesgue approach is so powerful when working with limits. Whether you're looking to deepen your understanding of measure theory or enhance your integration skills, this guide provides clear explanations and insightful proofs to help you grasp the important role of convergence in mathematical analysis.
 
 
