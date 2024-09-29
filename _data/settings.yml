@@ -8,7 +8,7 @@ google-ID: ''
 
 menu:
 - {name: 'Publications', path: 'menu', url: 'publications.html'}
-- {name: 'CV', path: 'menu', url: '../files/Resume_HoHuuBinh_Industry.pdf'}
+- {name: 'CV', path: 'menu', url: '../files/Resume_BinhHo_2024_v2.pdf'}
 - {name: 'Personal blog', path: 'menu', url: 'blog.html'}
 # - {name: 'Essays', path: 'menu', url: 'essays.html'}
 
