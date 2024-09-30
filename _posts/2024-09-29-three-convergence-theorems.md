@@ -16,7 +16,6 @@ $$\newcommand{\Tr}[1]{\operatorname{Tr}\mleft(#1\mright)}$$
 $$\DeclareMathOperator*{\argmin}{argmin}$$
 $$\DeclareMathOperator*{\argmax}{argmax}$$
 $$\DeclareMathOperator{\diag}{diag}$$
-$$\newcommand{\converge}[1]{\xrightarrow{\makebox[2em][c]{$$\scriptstyle#1$$}}}$$
 $$\newcommand{\quotes}[1]{``#1''}$$
 $$\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}$$
 $$\newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}$$
@@ -85,7 +84,7 @@ b) $f_n(x) \to f(x)$ as $n \to \infty$, for all $x \in X$.
 Then $f$ is measurable and
 
 $$
-\int_X f_n \, d\mu \converge{n \to \infty} \int_X f \, d\mu.
+\int_X f_n \, d\mu \xrightarrow{n \to \infty} \int_X f \, d\mu.
 $$
 
 **Proof:**
@@ -121,7 +120,7 @@ $$
 \int_X s \, d\mu \leq \alpha.
 $$
 
-For a given $c \in (0, 1)$, define the sets
+That is, to bridge the limit we have to approximate the non-negative measureable function using simple functions. For a given $c \in (0, 1)$, define the sets
 
 $$
 E_n = \{ x \in X : f_n(x) \geq c s(x) \}, \quad n \in \mathbb{N}.
@@ -167,7 +166,7 @@ $$
 and hence
 
 $$
-\int_X f_n \, d\mu \converge{n \to \infty} \int_X f \, d\mu.
+\int_X f_n \, d\mu \xrightarrow{n \to \infty} \int_X f \, d\mu.
 $$
 
 This completes the proof.
@@ -216,7 +215,7 @@ $\square$
 
 ## Fatou's Lemma
 
-**Corollary (Fatou's Lemma):** Let \( (f_n) \) be a sequence of measurable functions \( f_n : X \to [0, \infty) \) for each \( n \in \mathbb{N} \). Then
+**Corollary (Fatou's Lemma):** Let $ (f_n) $ be a sequence of measurable functions $ f_n : X \to [0, \infty) $ for each $ n \in \mathbb{N} $. Then
 
 $$
 \int_X \liminf_{n \to \infty} f_n \, d\mu \leq \liminf_{n \to \infty} \int_X f_n \, d\mu.
@@ -224,25 +223,25 @@ $$
 
 **Proof:**
 
-Define, for each \( k \in \mathbb{N} \) and for all \( x \in X \),
+Define, for each $ k \in \mathbb{N} $ and for all $ x \in X $,
 
 $$
 g_k(x) = \inf_{n \geq k} f_n(x).
 $$
 
-That is, for each \( x \in X \),
+That is, for each $ x \in X $,
 
 $$
 g_k(x) = \inf \{ f_k(x), f_{k+1}(x), \dots \}.
 $$
 
-Since \( g_k \leq f_k \) for all \( k \), it follows that
+Since $ g_k \leq f_k $ for all $ k $, it follows that
 
 $$
 \int_X g_k \, d\mu \leq \int_X f_k \, d\mu.
 $$
 
-Taking the infimum over all \( k \geq n \), we have
+Taking the infimum over all $ k \geq n $, we have
 
 $$
 \inf_{k \geq n} \int_X g_k \, d\mu \leq \inf_{k \geq n} \int_X f_k \, d\mu,
@@ -260,19 +259,19 @@ $$
 \liminf_{k \to \infty} \int_X g_k \, d\mu \leq \liminf_{k \to \infty} \int_X f_k \, d\mu. \quad \text{(1)}
 $$
 
-By **Theorem 2.1.9**, the sequence \( (g_k) \) consists of measurable functions. Moreover, since
+By **Theorem 2.1.9**, the sequence $ (g_k) $ consists of measurable functions. Moreover, since
 
 $$
 \inf \{ f_k(x), f_{k+1}(x), \dots \} \leq \inf \{ f_{k+1}(x), f_{k+2}(x), \dots \} \leq \dots,
 $$
 
-the sequence \( (g_k) \) is non-decreasing. Applying the **Monotone Convergence Theorem** to the increasing sequence \( (g_k) \), we obtain
+the sequence $ (g_k) $ is non-decreasing. Applying the **Monotone Convergence Theorem** to the increasing sequence $ (g_k) $, we obtain
 
 $$
 \lim_{k \to \infty} \int_X g_k \, d\mu = \int_X \lim_{k \to \infty} g_k \, d\mu. \quad \text{(2)}
 $$
 
-Since \( g_k \) is non-decreasing and converges to \( \liminf_{n \to \infty} f_n \), we have
+Since $ g_k $ is non-decreasing and converges to $ \liminf_{n \to \infty} f_n $, we have
 
 $$
 \lim_{k \to \infty} g_k(x) = \liminf_{n \to \infty} f_n(x) \quad \text{for all } x \in X.
@@ -294,7 +293,7 @@ $\square$
 
 **Note:** The inequality in Fatou's Lemma can be strict. For instance, consider the following example:
 
-Let \( X = \mathbb{N} \), let \( \mu \) be the counting measure on \( \mathbb{N} \), and define \( f_n = \chi_{\{n\}} \) for each \( n \in \mathbb{N} \). Then,
+Let $ X = \mathbb{N} $, let $ \mu $ be the counting measure on $ \mathbb{N} $, and define $ f_n = \chi_{\{n\}} $ for each $ n \in \mathbb{N} $. Then,
 
 $$
 \int_X \liminf_{n \to \infty} f_n \, d\mu = \int_X 0 \, d\mu = 0,
@@ -312,7 +311,7 @@ $$
 
 ## Lebesgue Dominated Convergence Theorem
 
-**Theorem (Lebesgue Dominated Convergence Theorem):** Let \( (f_n) \) be a sequence of measurable functions \( f_n : X \to \mathbb{R} \) that converge to \( f \) pointwise almost everywhere (μ-a.e.) on \( X \). Suppose there exists an integrable function \( g : X \to [0, \infty) \) such that
+**Theorem (Lebesgue Dominated Convergence Theorem):** Let $ (f_n) $ be a sequence of measurable functions $ f_n : X \to \mathbb{R} $ that converge to $ f $ pointwise almost everywhere (μ-a.e.) on $ X $. Suppose there exists an integrable function $ g : X \to [0, \infty) $ such that
 
 $$
 |f_n(x)| \leq g(x) \quad \text{for all } n \in \mathbb{N} \text{ and } x \in X.
@@ -326,7 +325,7 @@ $$
 
 **Proof:**
 
-Since \( g \pm f_n \geq 0 \) for all \( n \), we can apply Fatou’s Lemma to the sequences \( g - f_n \) and \( g + f_n \). By Fatou’s Lemma,
+Since $ g \pm f_n \geq 0 $ for all $ n $, we can apply Fatou’s Lemma to the sequences $ g - f_n $ and $ g + f_n $. By Fatou’s Lemma,
 
 $$
 \int_X g \, d\mu - \limsup_{n \to \infty} \int_X f_n \, d\mu = \liminf_{n \to \infty} \int_X (g - f_n) \, d\mu \geq \int_X \liminf_{n \to \infty} (g - f_n) \, d\mu = \int_X g \, d\mu - \int_X f \, d\mu,
@@ -344,7 +343,7 @@ $$
 \limsup_{n \to \infty} \int_X f_n \, d\mu \leq \int_X f \, d\mu \leq \liminf_{n \to \infty} \int_X f_n \, d\mu.
 $$
 
-Since \( \limsup \) is always greater than or equal to \( \liminf \), the only possibility is that all three expressions are equal. Therefore,
+Since $ \limsup $ is always greater than or equal to $ \liminf $, the only possibility is that all three expressions are equal. Therefore,
 
 $$
 \lim_{n \to \infty} \int_X f_n \, d\mu = \int_X f \, d\mu.
@@ -352,7 +351,7 @@ $$
 
 $\square$
 
-**Corollary:** Let \( (f_n) \) be a sequence of measurable functions \( f_n : X \to \mathbb{R} \) that converge to \( f \) μ-a.e. Suppose there exists an integrable function \( g : X \to [0, \infty) \) such that
+**Corollary:** Let $ (f_n) $ be a sequence of measurable functions $ f_n : X \to \mathbb{R} $ that converge to $ f $ μ-a.e. Suppose there exists an integrable function $ g : X \to [0, \infty) $ such that
 
 $$
 |f_n(x)| \leq g(x) \quad \text{μ-a.e. for all } n \in \mathbb{N}.
@@ -364,13 +363,13 @@ $$
 \lim_{n \to \infty} \int_X f_n \, d\mu = \int_X f \, d\mu.
 $$
 
-**Corollary (Bounded Convergence Theorem):** Let \( (X, \Sigma, \mu) \) be a finite measure space (i.e., \( \mu(X) < \infty \)). Let \( (f_n) \) be a sequence of measurable functions such that there exists a constant \( M > 0 \) satisfying
+**Corollary (Bounded Convergence Theorem):** Let $ (X, \Sigma, \mu) $ be a finite measure space (i.e., $ \mu(X) < \infty $). Let $ (f_n) $ be a sequence of measurable functions such that there exists a constant $ M > 0 $ satisfying
 
 $$
 |f_n(x)| \leq M \quad \text{for all } n \in \mathbb{N} \text{ and } x \in X.
 $$
 
-If \( f_n \to f \) μ-a.e. on \( X \), then
+If $ f_n \to f $ μ-a.e. on $ X $, then
 
 $$
 \lim_{n \to \infty} \int_X f_n \, d\mu = \int_X f \, d\mu.
@@ -378,13 +377,13 @@ $$
 
 **Proof:**
 
-Apply the **Lebesgue Dominated Convergence Theorem** with the dominating function \( g(x) = M \). Since \( \mu(X) < \infty \) and \( M \) is a constant,
+Apply the **Lebesgue Dominated Convergence Theorem** with the dominating function $ g(x) = M $. Since $ \mu(X) < \infty $ and $ M $ is a constant,
 
 $$
 \int_X |g| \, d\mu = M \mu(X) < \infty,
 $$
 
-which means \( g \) is integrable. Therefore, the conditions of the Dominated Convergence Theorem are satisfied, and we conclude that
+which means $ g $ is integrable. Therefore, the conditions of the Dominated Convergence Theorem are satisfied, and we conclude that
 
 $$
 \lim_{n \to \infty} \int_X f_n \, d\mu = \int_X f \, d\mu.
@@ -392,11 +391,11 @@ $$
 
 $\square$
 
-Certainly! Below is the LaTeX-formatted section on **Convergence in Measure**, including definitions, examples, propositions, and proofs. The notation has been adjusted to consistently use \( X \) instead of \( \Omega \), aligning with the previous sections of your blog post.
+Certainly! Below is the LaTeX-formatted section on **Convergence in Measure**, including definitions, examples, propositions, and proofs. The notation has been adjusted to consistently use $ X $ instead of $ \Omega $, aligning with the previous sections of your blog post.
 
 ## Convergence in Measure
 
-**Definition:** Let \( (f_n) \) be a sequence of measurable functions. We say that \( (f_n) \) **converges in measure** to a measurable function \( f \) if for any \( \varepsilon > 0 \), we have
+**Definition:** Let $ (f_n) $ be a sequence of measurable functions. We say that $ (f_n) $ **converges in measure** to a measurable function $ f $ if for any $ \varepsilon > 0 $, we have
 
 $$
 \lim_{n \to \infty} \mu\{ |f_n - f| \geq \varepsilon \} = 0.
@@ -404,33 +403,33 @@ $$
 
 **Example:**
 
-Consider the space \( X = \mathbb{N} \) with \( \mu \) as the counting measure. Let \( f_n = \chi_{\{n\}} \), the characteristic function of the singleton set \( \{n\} \). Then \( (f_n) \) is a sequence of measurable functions converging pointwise to zero, but it does **not** converge in measure to any function \( f \).
+Consider the space $ X = \mathbb{N} $ with $ \mu $ as the counting measure. Let $ f_n = \chi_{\{n\}} $, the characteristic function of the singleton set $ \{n\} $. Then $ (f_n) $ is a sequence of measurable functions converging pointwise to zero, but it does **not** converge in measure to any function $ f $.
 
 To see this, note that:
 
-- If \( |f(m)| \geq \varepsilon \) for some \( m \in \mathbb{N} \) and \( \varepsilon > 0 \), then
+- If $ |f(m)| \geq \varepsilon $ for some $ m \in \mathbb{N} $ and $ \varepsilon > 0 $, then
 
   $$
   \mu\{ |f_n - f| \geq \varepsilon \} \geq 1
   $$
 
-  for all \( n > m \).
+  for all $ n > m $.
 
-- Otherwise, \( f \equiv 0 \), so
+- Otherwise, $ f \equiv 0 $, so
 
   $$
   \mu\{ |f_n - f| \geq 1 \} \geq 1
   $$
 
-  for all \( n \).
+  for all $ n $.
 
-In both cases, the measure does not tend to zero as \( n \to \infty \), hence \( (f_n) \) does not converge in measure to any function \( f \).
+In both cases, the measure does not tend to zero as $ n \to \infty $, hence $ (f_n) $ does not converge in measure to any function $ f $.
 
-**Proposition 1:** Let \( f \) and \( g \) be measurable functions. Suppose that \( (f_n) \) is a sequence of measurable functions converging in measure to \( f \). Then \( (f_n) \) also converges in measure to \( g \) if and only if \( f = g \) \( \mu \)-a.e.
+**Proposition 1:** Let $ f $ and $ g $ be measurable functions. Suppose that $ (f_n) $ is a sequence of measurable functions converging in measure to $ f $. Then $ (f_n) $ also converges in measure to $ g $ if and only if $ f = g $ $ \mu $-a.e.
 
 **Proof:**
 
-(⇒) **Assume** \( (f_n) \) converges in measure to both \( f \) and \( g \). For any \( \varepsilon > 0 \), by the triangle inequality,
+(⇒) **Assume** $ (f_n) $ converges in measure to both $ f $ and $ g $. For any $ \varepsilon > 0 $, by the triangle inequality,
 
 $$
 |f - g| \leq |f - f_n| + |f_n - g|.
@@ -448,41 +447,41 @@ $$
 \mu\{ |f - g| \geq \varepsilon \} \leq \mu\{ |f - f_n| \geq \varepsilon/2 \} + \mu\{ |f_n - g| \geq \varepsilon/2 \}.
 $$
 
-As \( n \to \infty \), both \( \mu\{ |f - f_n| \geq \varepsilon/2 \} \) and \( \mu\{ |f_n - g| \geq \varepsilon/2 \} \) tend to zero. Therefore,
+As $ n \to \infty $, both $ \mu\{ |f - f_n| \geq \varepsilon/2 \} $ and $ \mu\{ |f_n - g| \geq \varepsilon/2 \} $ tend to zero. Therefore,
 
 $$
 \mu\{ |f - g| \geq \varepsilon \} = 0 \quad \text{for all } \varepsilon > 0,
 $$
 
-which implies \( f = g \) \( \mu \)-a.e.
+which implies $ f = g $ $ \mu $-a.e.
 
-(⇐) **Assume** \( f = g \) \( \mu \)-a.e. Then,
+(⇐) **Assume** $ f = g $ $ \mu $-a.e. Then,
 
 $$
 \{ |f_n - g| \geq \varepsilon \} \subseteq \{ |f_n - f| \geq \varepsilon \} \cup \{ |f - g| \geq \varepsilon \}.
 $$
 
-Since \( f = g \) \( \mu \)-a.e., \( \mu\{ |f - g| \geq \varepsilon \} = 0 \). Hence,
+Since $ f = g $ $ \mu $-a.e., $ \mu\{ |f - g| \geq \varepsilon \} = 0 $. Hence,
 
 $$
 \mu\{ |f_n - g| \geq \varepsilon \} \leq \mu\{ |f_n - f| \geq \varepsilon \}.
 $$
 
-As \( n \to \infty \), \( \mu\{ |f_n - f| \geq \varepsilon \} \to 0 \), so \( \mu\{ |f_n - g| \geq \varepsilon \} \to 0 \). Therefore, \( (f_n) \) converges in measure to \( g \).
+As $ n \to \infty $, $ \mu\{ |f_n - f| \geq \varepsilon \} \to 0 $, so $ \mu\{ |f_n - g| \geq \varepsilon \} \to 0 $. Therefore, $ (f_n) $ converges in measure to $ g $.
 
 $\square$
 
-**Proposition 2:** Let \( (f_n) \) be a sequence of measurable functions converging in measure to a measurable function \( f \). Then there exists a subsequence \( (f_{n_k}) \) that converges pointwise to \( f \) \( \mu \)-a.e.
+**Proposition 2:** Let $ (f_n) $ be a sequence of measurable functions converging in measure to a measurable function $ f $. Then there exists a subsequence $ (f_{n_k}) $ that converges pointwise to $ f $ $ \mu $-a.e.
 
 **Proof:**
 
-For each \( k \in \mathbb{N} \), choose \( n_k \) such that
+For each $ k \in \mathbb{N} $, choose $ n_k $ such that
 
 $$
 \mu\{ |f_{n_k} - f| > 1/(2k) \} < 1/(2k).
 $$
 
-Let \( S_k = \{ |f_{n_k} - f| > 1/(2k) \} \). Then,
+Let $ S_k = \{ |f_{n_k} - f| > 1/(2k) \} $. Then,
 
 $$
 \mu(S_k) < \frac{1}{2k}.
@@ -500,25 +499,25 @@ $$
 \mu\left( \bigcup_{k \geq m} S_k \right) \leq \sum_{k \geq m} \mu(S_k) \leq \sum_{k \geq m} \frac{1}{2k} = \frac{1}{2} \sum_{k \geq m} \frac{1}{k} \leq \frac{1}{2(m - 1)} \quad \text{for } m \geq 2.
 $$
 
-As \( m \to \infty \),
+As $ m \to \infty $,
 
 $$
 \mu(S) \leq \lim_{m \to \infty} \frac{1}{2(m - 1)} = 0.
 $$
 
-Thus, \( \mu(S) = 0 \). For \( \omega \in X \setminus S \), there exists \( N \geq 1 \) such that \( \omega \notin S_k \) for all \( k \geq N \). Hence,
+Thus, $ \mu(S) = 0 $. For $ \omega \in X \setminus S $, there exists $ N \geq 1 $ such that $ \omega \notin S_k $ for all $ k \geq N $. Hence,
 
 $$
 |f_{n_k}(\omega) - f(\omega)| \leq \frac{1}{2k} \quad \text{for all } k \geq N.
 $$
 
-As \( k \to \infty \), \( |f_{n_k}(\omega) - f(\omega)| \to 0 \). Therefore, \( f_{n_k}(\omega) \to f(\omega) \) for all \( \omega \in X \setminus S \), which has measure 1.
+As $ k \to \infty $, $ |f_{n_k}(\omega) - f(\omega)| \to 0 $. Therefore, $ f_{n_k}(\omega) \to f(\omega) $ for all $ \omega \in X \setminus S $, which has measure 1.
 
 $\square$
 
 **Extension of the Lebesgue Dominated Convergence Theorem (Convergence in Measure):**
 
-**Theorem:** Let \( (f_n) \) be a sequence of measurable functions converging in measure to a measurable function \( f \). Suppose that there exists an integrable function \( g \) such that
+**Theorem:** Let $ (f_n) $ be a sequence of measurable functions converging in measure to a measurable function $ f $. Suppose that there exists an integrable function $ g $ such that
 
 $$
 |f_n| \leq g \quad \text{for all } n \in \mathbb{N}.
@@ -532,9 +531,9 @@ $$
 
 **Proof:**
 
-Recall a fundamental result from real analysis: a sequence of real numbers \( (a_n) \) converges to \( L \) if and only if every subsequence \( (a_{n_k}) \) has a further subsequence \( (a_{n_{k_l}}) \) converging to \( L \).
+Recall a fundamental result from real analysis: a sequence of real numbers $ (a_n) $ converges to $ L $ if and only if every subsequence $ (a_{n_k}) $ has a further subsequence $ (a_{n_{k_l}}) $ converging to $ L $.
 
-Consider any subsequence \( (f_{n_k}) \) of \( (f_n) \). Since \( (f_n) \) converges in measure to \( f \), so does \( (f_{n_k}) \). By **Proposition 2**, there exists a further subsequence \( (f_{n_{k_l}}) \) that converges pointwise to \( f \) \( \mu \)-a.e.
+Consider any subsequence $ (f_{n_k}) $ of $ (f_n) $. Since $ (f_n) $ converges in measure to $ f $, so does $ (f_{n_k}) $. By **Proposition 2**, there exists a further subsequence $ (f_{n_{k_l}}) $ that converges pointwise to $ f $ $ \mu $-a.e.
 
 On this subsequence, by the **Lebesgue Dominated Convergence Theorem**, we have
 
@@ -542,18 +541,18 @@ $$
 \lim_{l \to \infty} \int_X f_{n_{k_l}} \, d\mu = \int_X f \, d\mu.
 $$
 
-Therefore, every subsequence \( \left( \int_X f_{n_k} \, d\mu \right) \) has a further subsequence converging to \( \int_X f \, d\mu \). This implies that the entire sequence \( \left( \int_X f_n \, d\mu \right) \) must converge to \( \int_X f \, d\mu \).
+Therefore, every subsequence $ \left( \int_X f_{n_k} \, d\mu \right) $ has a further subsequence converging to $ \int_X f \, d\mu $. This implies that the entire sequence $ \left( \int_X f_n \, d\mu \right) $ must converge to $ \int_X f \, d\mu $.
 
 $\square$
 
 
-**Corollary (Bounded Convergence Theorem):** Let \( (X, \Sigma, \mu) \) be a finite measure space (i.e., \( \mu(X) < \infty \)). Let \( (f_n) \) be a sequence of measurable functions such that there exists a constant \( M > 0 \) satisfying
+**Corollary (Bounded Convergence Theorem):** Let $ (X, \Sigma, \mu) $ be a finite measure space (i.e., $ \mu(X) < \infty $). Let $ (f_n) $ be a sequence of measurable functions such that there exists a constant $ M > 0 $ satisfying
 
 $$
 |f_n(x)| \leq M \quad \text{for all } n \in \mathbb{N} \text{ and } x \in X.
 $$
 
-If \( f_n \to f \) \( \mu \)-a.e. on \( X \), then
+If $ f_n \to f $ $ \mu $-a.e. on $ X $, then
 
 $$
 \lim_{n \to \infty} \int_X f_n \, d\mu = \int_X f \, d\mu.
@@ -561,13 +560,13 @@ $$
 
 **Proof:**
 
-Apply the **Lebesgue Dominated Convergence Theorem** with the dominating function \( g(x) = M \). Since \( \mu(X) < \infty \) and \( M \) is a constant,
+Apply the **Lebesgue Dominated Convergence Theorem** with the dominating function $ g(x) = M $. Since $ \mu(X) < \infty $ and $ M $ is a constant,
 
 $$
 \int_X |g| \, d\mu = M \mu(X) < \infty,
 $$
 
-which means \( g \) is integrable. Therefore, the conditions of the Dominated Convergence Theorem are satisfied, and we conclude that
+which means $ g $ is integrable. Therefore, the conditions of the Dominated Convergence Theorem are satisfied, and we conclude that
 
 $$
 \lim_{n \to \infty} \int_X f_n \, d\mu = \int_X f \, d\mu.
