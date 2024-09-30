@@ -78,7 +78,6 @@ $$\newcommand{\equivto}{\iff}$$
 
 In this post, we dive into three essential convergence theorems in integration theory and explore how the Lebesgue integral handles limits so effectively. We'll break down the Monotone Convergence Theorem along with two other key theorems, showing why the Lebesgue approach is so powerful when working with limits. Whether you're looking to deepen your understanding of measure theory or enhance your integration skills, this guide provides clear explanations and insightful proofs to help you grasp the important role of convergence in mathematical analysis.
 
-
 ## Monotone Convergence Theorem
 **Theorem (Monotone Convergence Theorem):** Let $(f_n)$ be a sequence of measurable functions on $X$ such that:
 a) $0 \leq f_1(x) \leq f_2(x) \leq \dots \leq f_n(x) \leq \dots \leq \infty$, for all $x \in X$,
