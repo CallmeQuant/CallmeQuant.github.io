@@ -259,7 +259,7 @@ $$
 \liminf_{k \to \infty} \int_X g_k \, d\mu \leq \liminf_{k \to \infty} \int_X f_k \, d\mu. \quad \text{(1)}
 $$
 
-By **Theorem 2.1.9**, the sequence $ (g_k) $ consists of measurable functions. Moreover, since
+By **MCT**, the sequence $ (g_k) $ consists of measurable functions. Moreover, since
 
 $$
 \inf \{ f_k(x), f_{k+1}(x), \dots \} \leq \inf \{ f_{k+1}(x), f_{k+2}(x), \dots \} \leq \dots,
@@ -391,8 +391,6 @@ $$
 
 $\square$
 
-Certainly! Below is the LaTeX-formatted section on **Convergence in Measure**, including definitions, examples, propositions, and proofs. The notation has been adjusted to consistently use $ X $ instead of $ \Omega $, aligning with the previous sections of your blog post.
-
 ## Convergence in Measure
 
 **Definition:** Let $ (f_n) $ be a sequence of measurable functions. We say that $ (f_n) $ **converges in measure** to a measurable function $ f $ if for any $ \varepsilon > 0 $, we have
@@ -406,21 +404,19 @@ $$
 Consider the space $ X = \mathbb{N} $ with $ \mu $ as the counting measure. Let $ f_n = \chi_{\{n\}} $, the characteristic function of the singleton set $ \{n\} $. Then $ (f_n) $ is a sequence of measurable functions converging pointwise to zero, but it does **not** converge in measure to any function $ f $.
 
 To see this, note that:
-
-- If $ |f(m)| \geq \varepsilon $ for some $ m \in \mathbb{N} $ and $ \varepsilon > 0 $, then
++ If $ |f(m)| \geq \varepsilon $ for some $ m \in \mathbb{N} $ and $ \varepsilon > 0 $, then
 
   $$
   \mu\{ |f_n - f| \geq \varepsilon \} \geq 1
   $$
 
   for all $ n > m $.
-
-- Otherwise, $ f \equiv 0 $, so
++ Otherwise, $ f \equiv 0 $, so
 
   $$
   \mu\{ |f_n - f| \geq 1 \} \geq 1
   $$
-
+  
   for all $ n $.
 
 In both cases, the measure does not tend to zero as $ n \to \infty $, hence $ (f_n) $ does not converge in measure to any function $ f $.
@@ -447,7 +443,7 @@ $$
 \mu\{ |f - g| \geq \varepsilon \} \leq \mu\{ |f - f_n| \geq \varepsilon/2 \} + \mu\{ |f_n - g| \geq \varepsilon/2 \}.
 $$
 
-As $ n \to \infty $, both $ \mu\{ |f - f_n| \geq \varepsilon/2 \} $ and $ \mu\{ |f_n - g| \geq \varepsilon/2 \} $ tend to zero. Therefore,
+As $n \to \infty$, both $\mu\{ |f - f_n| \geq \varepsilon/2 \}$ and $\mu\{ |f_n - g| \geq \varepsilon/2 \}$ tend to zero. Therefore,
 
 $$
 \mu\{ |f - g| \geq \varepsilon \} = 0 \quad \text{for all } \varepsilon > 0,
@@ -467,7 +463,7 @@ $$
 \mu\{ |f_n - g| \geq \varepsilon \} \leq \mu\{ |f_n - f| \geq \varepsilon \}.
 $$
 
-As $ n \to \infty $, $ \mu\{ |f_n - f| \geq \varepsilon \} \to 0 $, so $ \mu\{ |f_n - g| \geq \varepsilon \} \to 0 $. Therefore, $ (f_n) $ converges in measure to $ g $.
+As $n \to \infty$, $ \mu\{ |f_n - f| \geq \varepsilon \} \to 0 $, so $ \mu\{ |f_n - g| \geq \varepsilon \} \to 0 $. Therefore, $ (f_n) $ converges in measure to $ g $.
 
 $\square$
 
