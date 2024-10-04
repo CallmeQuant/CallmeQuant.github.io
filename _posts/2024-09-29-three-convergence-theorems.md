@@ -445,7 +445,7 @@ $$
 \mu\{ |f - g| \geq \varepsilon \} \leq \mu\{ |f - f_n| \geq \varepsilon/2 \} + \mu\{ |f_n - g| \geq \varepsilon/2 \}.
 $$
 
-As $n \to \infty$, both $\mu \{ |f - f_n| \geq \varepsilon/2 \}$ and $\mu\{\abs{f_n - g} \geq \varepsilon/2 \}$ tend to zero. Therefore,
+As $n \to \infty$, both $\mu \{ \abs{f - f_n} \geq \varepsilon/2 \}$ and $\mu\{\abs{f_n - g} \geq \varepsilon/2 \}$ tend to zero. Therefore,
 
 $$
 \mu\{ |f - g| \geq \varepsilon \} = 0 \quad \text{for all } \varepsilon > 0,
@@ -456,16 +456,16 @@ which implies $ f = g $ $ \mu $-a.e.
 (⇐) **Assume** $ f = g $ $ \mu $-a.e. Then,
 
 $$
-\{ |f_n - g| \geq \varepsilon \} \subseteq \{ |f_n - f| \geq \varepsilon \} \cup \{ |f - g| \geq \varepsilon \}.
+\{\abs{f_n - g} \geq \varepsilon \} \subseteq \{\abs{f_n - f} \geq \varepsilon \} \cup \{\abs{f - g} \geq \varepsilon \}.
 $$
 
-Since $f = g, \, \mu $-a.e., $ \mu\{ |f - g| \geq \varepsilon \} = 0 $. Hence,
+Since $f = g \,\mu $-a.e., $\mu \{\abs{f - g} \geq \varepsilon\} = 0$. Hence,
 
 $$
 \mu\{ |f_n - g| \geq \varepsilon \} \leq \mu\{ |f_n - f| \geq \varepsilon \}.
 $$
 
-As $n \to \infty$, $ \mu\{ |f_n - f| \geq \varepsilon \} \to 0 $, so $ \mu\{ |f_n - g| \geq \varepsilon \} \to 0 $. Therefore, $ (f_n) $ converges in measure to $ g $.
+As $n \to \infty$, $\mu\{\abs{f_n - f} \geq \varepsilon\} \to 0$, so $\mu\{\abs{f_n - g} \geq \varepsilon\} \to 0$. Therefore, $ (f_n)$ converges in measure to $g$.
 
 $\square$
 
