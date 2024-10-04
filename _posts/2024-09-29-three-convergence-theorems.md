@@ -404,14 +404,16 @@ $$
 Consider the space $ X = \mathbb{N} $ with $ \mu $ as the counting measure. Let $ f_n = \chi_{\{n\}} $, the characteristic function of the singleton set $ \{n\} $. Then $ (f_n) $ is a sequence of measurable functions converging pointwise to zero, but it does **not** converge in measure to any function $ f $.
 
 To see this, note that:
-+ If $ |f(m)| \geq \varepsilon $ for some $ m \in \mathbb{N} $ and $ \varepsilon > 0 $, then
+
+- If $\abs{f(m)} \geq \varepsilon$ for some $m \in \mathbb{N}$ and $\varepsilon > 0$, then
 
   $$
   \mu\{ |f_n - f| \geq \varepsilon \} \geq 1
   $$
 
   for all $ n > m $.
-+ Otherwise, $ f \equiv 0 $, so
+  
+- Otherwise, $ f \equiv 0 $, so
 
   $$
   \mu\{ |f_n - f| \geq 1 \} \geq 1
@@ -443,7 +445,7 @@ $$
 \mu\{ |f - g| \geq \varepsilon \} \leq \mu\{ |f - f_n| \geq \varepsilon/2 \} + \mu\{ |f_n - g| \geq \varepsilon/2 \}.
 $$
 
-As $n \to \infty$, both $\mu\{ |f - f_n| \geq \varepsilon/2 \}$ and $\mu\{ |f_n - g| \geq \varepsilon/2 \}$ tend to zero. Therefore,
+As $n \to \infty$, both $\mu \{ |f - f_n| \geq \varepsilon/2 \}$ and $\mu\{\abs{f_n - g} \geq \varepsilon/2 \}$ tend to zero. Therefore,
 
 $$
 \mu\{ |f - g| \geq \varepsilon \} = 0 \quad \text{for all } \varepsilon > 0,
@@ -457,7 +459,7 @@ $$
 \{ |f_n - g| \geq \varepsilon \} \subseteq \{ |f_n - f| \geq \varepsilon \} \cup \{ |f - g| \geq \varepsilon \}.
 $$
 
-Since $ f = g $ $ \mu $-a.e., $ \mu\{ |f - g| \geq \varepsilon \} = 0 $. Hence,
+Since $f = g, \, \mu $-a.e., $ \mu\{ |f - g| \geq \varepsilon \} = 0 $. Hence,
 
 $$
 \mu\{ |f_n - g| \geq \varepsilon \} \leq \mu\{ |f_n - f| \geq \varepsilon \}.
@@ -477,7 +479,7 @@ $$
 \mu\{ |f_{n_k} - f| > 1/(2k) \} < 1/(2k).
 $$
 
-Let $ S_k = \{ |f_{n_k} - f| > 1/(2k) \} $. Then,
+Let $S_k = \{ \abs{f_{n_k} - f} > 1/(2k) \}$. Then,
 
 $$
 \mu(S_k) < \frac{1}{2k}.
@@ -507,7 +509,7 @@ $$
 |f_{n_k}(\omega) - f(\omega)| \leq \frac{1}{2k} \quad \text{for all } k \geq N.
 $$
 
-As $ k \to \infty $, $ |f_{n_k}(\omega) - f(\omega)| \to 0 $. Therefore, $ f_{n_k}(\omega) \to f(\omega) $ for all $ \omega \in X \setminus S $, which has measure 1.
+As $k \to \infty$, $|f_{n_k}(\omega) - f(\omega)| \to 0$. Therefore, $f_{n_k}(\omega) \to f(\omega)$ for all $\omega \in X \setminus S$, which has measure 1.
 
 $\square$
 
