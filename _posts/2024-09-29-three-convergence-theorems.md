@@ -509,7 +509,7 @@ $$
 |f_{n_k}(\omega) - f(\omega)| \leq \frac{1}{2k} \quad \text{for all } k \geq N.
 $$
 
-As $k \to \infty$, $|f_{n_k}(\omega) - f(\omega)| \to 0$. Therefore, $f_{n_k}(\omega) \to f(\omega)$ for all $\omega \in X \setminus S$, which has measure 1.
+As $k \to \infty$, $\abs{f_{n_k}(\omega) - f(\omega)} \to 0$. Therefore, $f_{n_k}(\omega) \to f(\omega)$ for all $\omega \in X \setminus S$, which has measure 1.
 
 $\square$
 
