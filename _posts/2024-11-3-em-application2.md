@@ -76,8 +76,6 @@ $$\newcommand{\equivto}{\iff}$$
 }
 </style>
 
-# Stochastic EM Algorithm for Gaussian Mixture Models (GMMs)
-
 In this blog post, we'll explore the Stochastic Expectation-Maximization (SEM) algorithm and its application to Gaussian Mixture Models (GMMs). Building upon the traditional EM algorithm, SEM introduces stochasticity into the estimation process, offering potential advantages in terms of escaping local optima and handling large datasets. We'll carefully examine the mathematical derivations and provide a concrete example of GMMs using SEM.
 
 ## Introduction to SEM
