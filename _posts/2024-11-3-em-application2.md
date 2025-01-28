@@ -108,11 +108,11 @@ By introducing stochasticity, SEM can offer advantages in terms of convergence p
 
 Let's consider a GMM with $ K $ Gaussian components. Our goal is to estimate the parameters $ \Theta = \{ \pi_k, \vect{\mu}_k, \vect{\Sigma}_k \}_{k=1}^K $, where:
 
-- $ \pi_k $ are the mixture weights (with $ \sum_{k=1}^K \pi_k = 1 $),
-- $ \vect{\mu}_k $ are the means,
-- $ \vect{\Sigma}_k $ are the covariance matrices.
+- $\pi_k$ are the mixture weights (with $\sum_{k=1}^K \pi_k = 1$),
+- $\vect{\mu}_k$ are the means,
+- $\vect{\Sigma}_k$ are the covariance matrices.
 
-Given observed data $ X = \{\vect{x}_1, \dots, \vect{x}_n\} $, we introduce latent variables $ Z = \{z_1, \dots, z_n\} $, where $ z_i \in \{1, \dots, K\} $ indicates the component assignment for $ \vect{x}_i $.
+Given observed data $X = \{\vect{x}_1, \dots, \vect{x}_n\}$, we introduce latent variables $Z = \{z_1, \dots, z_n\}$, where $z_i \in \{1, \dots, K\}$ indicates the component assignment for $\vect{x}_i$.
 
 ### Objective Function
 
@@ -122,11 +122,11 @@ $$
 \log p(X, Z \mid \Theta) = \sum_{i=1}^n \log \left( \pi_{z_i} \mathcal{N}(\vect{x}_i \mid \vect{\mu}_{z_i}, \vect{\Sigma}_{z_i}) \right)
 $$
 
-In SEM, we alternate between sampling the latent variables $ Z $ and updating the parameters $ \Theta $.
+In SEM, we alternate between sampling the latent variables $Z$ and updating the parameters $\Theta$.
 
 ### E-Step (Stochastic Step)
 
-**S-Step:** For each data point $ \vect{x}_i $, sample $ z_i $ from the posterior distribution:
+**S-Step:** For each data point $\vect{x}_i$, sample $z_i$ from the posterior distribution:
 
 $$
 P(z_i = k \mid \vect{x}_i; \Theta_t) = \gamma_{t, i, k} = \frac{\pi_{t, k} \mathcal{N}(\vect{x}_i \mid \vect{\mu}_{t, k}, \vect{\Sigma}_{t, k})}{\sum_{j=1}^K \pi_{t, j} \mathcal{N}(\vect{x}_i \mid \vect{\mu}_{t, j}, \vect{\Sigma}_{t, j})}
@@ -136,21 +136,21 @@ Rather than computing the expected value over $ Z $, we sample each $ z_i $ acco
 
 ### M-Step (Maximization Step)
 
-Given the sampled $ Z $, we maximize the complete-data log-likelihood with respect to $ \Theta $:
+Given the sampled $Z$, we maximize the complete-data log-likelihood with respect to $\Theta$:
 
 $$
 \Theta_{t+1} = \arg\max_{\Theta} \sum_{i=1}^n \log \left( \pi_{z_i} \mathcal{N}(\vect{x}_i \mid \vect{\mu}_{z_i}, \vect{\Sigma}_{z_i}) \right)
 $$
 
-We can derive the update equations for $ \pi_k $, $ \vect{\mu}_k $, and $ \vect{\Sigma}_k $.
+We can derive the update equations for $\pi_k$, $\vect{\mu}_k$, and $\vect{\Sigma}_k$.
 
 ---
 
-### Detailed Derivation
+## Detailed Derivation
 
-#### E-Step (Stochastic Step)
+### E-Step (Stochastic Step)
 
-For each data point $ \vect{x}_i $:
+For each data point $\vect{x}_i$:
 
 1. **Compute Responsibilities:**
 
@@ -158,23 +158,23 @@ For each data point $ \vect{x}_i $:
    \gamma_{t, i, k} = P(z_i = k \mid \vect{x}_i; \Theta_t) = \frac{\pi_{t, k} \mathcal{N}(\vect{x}_i \mid \vect{\mu}_{t, k}, \vect{\Sigma}_{t, k})}{\sum_{j=1}^K \pi_{t, j} \mathcal{N}(\vect{x}_i \mid \vect{\mu}_{t, j}, \vect{\Sigma}_{t, j})}
    $$
 
-2. **Sample $ z_i $:**
+2. **Sample $z_i$:**
 
-   - Sample $ z_i $ from the categorical distribution defined by $ \gamma_{t, i, k} $.
+   - Sample $ z_i $ from the categorical distribution defined by $\gamma_{t, i, k}$.
 
-#### M-Step (Maximization Step)
+### M-Step (Maximization Step)
 
 Given the sampled $ Z $, we update the parameters.
 
-##### Update Mixing Coefficients $ \pi_k $
+#### Update Mixing Coefficients $\pi_k$
 
-The likelihood w.r.t $ \pi_k $ is:
+The likelihood w.r.t $\pi_k$ is:
 
 $$
 L(\pi) = \sum_{i=1}^n \log \pi_{z_i}
 $$
 
-Subject to the constraint $ \sum_{k=1}^K \pi_k = 1 $. Using the method of Lagrange multipliers:
+Subject to the constraint $\sum_{k=1}^K \pi_k = 1$. Using the method of Lagrange multipliers:
 
 1. **Formulate Lagrangian:**
 
@@ -184,19 +184,19 @@ Subject to the constraint $ \sum_{k=1}^K \pi_k = 1 $. Using the method of Lagran
 
 2. **Compute Gradient and Set to Zero:**
 
-   For each $ \pi_k $:
+   For each $\pi_k$:
 
    $$
    \frac{\partial \mathcal{L}}{\partial \pi_k} = \sum_{i: z_i = k} \frac{1}{\pi_k} + \lambda = 0
    $$
 
-3. **Solve for $ \pi_k $:**
+3. **Solve for $\pi_k$:**
 
    $$
    \pi_k = -\frac{N_k}{\lambda}
    $$
 
-   Where $ N_k = \sum_{i=1}^n \delta(z_i = k) $ is the number of data points assigned to component $ k $.
+   Where $N_k = \sum_{i=1}^n \delta(z_i = k)$ is the number of data points assigned to component $k$.
 
 4. **Apply Constraint:**
 
@@ -210,7 +210,7 @@ Subject to the constraint $ \sum_{k=1}^K \pi_k = 1 $. Using the method of Lagran
    \pi_k = \frac{N_k}{n}
    $$
 
-##### Update Means $ \vect{\mu}_k $
+#### Update Means $\vect{\mu}_k$
 
 We need to maximize:
 
@@ -224,19 +224,19 @@ $$
 \sum_{i: z_i = k} (\vect{x}_i - \vect{\mu}_k)^T \vect{\Sigma}_k^{-1} (\vect{x}_i - \vect{\mu}_k)
 $$
 
-Setting the derivative w.r.t $ \vect{\mu}_k $ to zero:
+Setting the derivative w.r.t $\vect{\mu}_k$ to zero:
 
 $$
 \frac{\partial L}{\partial \vect{\mu}_k} = \sum_{i: z_i = k} \vect{\Sigma}_k^{-1} (\vect{x}_i - \vect{\mu}_k) = 0
 $$
 
-Solving for $ \vect{\mu}_k $:
+Solving for $\vect{\mu}_k$:
 
 $$
 \vect{\mu}_k = \frac{1}{N_k} \sum_{i: z_i = k} \vect{x}_i
 $$
 
-##### Update Covariances $ \vect{\Sigma}_k $
+#### Update Covariances $\vect{\Sigma}_k$
 
 We maximize:
 
@@ -250,7 +250,7 @@ $$
 \sum_{i: z_i = k} \left[ \log \det \vect{\Sigma}_k + (\vect{x}_i - \vect{\mu}_k)^T \vect{\Sigma}_k^{-1} (\vect{x}_i - \vect{\mu}_k) \right]
 $$
 
-Setting the derivative w.r.t $ \vect{\Sigma}_k $ to zero:
+Setting the derivative w.r.t $\vect{\Sigma}_k$ to zero:
 
 1. **Compute Gradient:**
 
@@ -258,7 +258,7 @@ Setting the derivative w.r.t $ \vect{\Sigma}_k $ to zero:
    \frac{\partial L}{\partial \vect{\Sigma}_k} = \frac{N_k}{2} \vect{\Sigma}_k^{-1} - \frac{1}{2} \vect{\Sigma}_k^{-1} \left( \sum_{i: z_i = k} (\vect{x}_i - \vect{\mu}_k)(\vect{x}_i - \vect{\mu}_k)^T \right) \vect{\Sigma}_k^{-1} = 0
    $$
 
-2. **Solve for $ \vect{\Sigma}_k $:**
+2. **Solve for $\vect{\Sigma}_k$:**
 
    $$
    \vect{\Sigma}_k = \frac{1}{N_k} \sum_{i: z_i = k} (\vect{x}_i - \vect{\mu}_k)(\vect{x}_i - \vect{\mu}_k)^T
@@ -270,18 +270,18 @@ Setting the derivative w.r.t $ \vect{\Sigma}_k $ to zero:
 
 The SEM algorithm for GMMs can be summarized as follows:
 
-1. **Initialize** $ \Theta_0 = \{ \pi_{0, k}, \vect{\mu}_{0, k}, \vect{\Sigma}_{0, k} \} $.
+1. **Initialize** $\Theta_0 = \{ \pi_{0, k}, \vect{\mu}_{0, k}, \vect{\Sigma}_{0, k} \}$.
 
-2. **For** $ t = 0 $ to convergence:
+2. **For** $t = 0$ to convergence:
 
    - **E-Step (Stochastic Step):**
-     - For each $ i $:
+     - For each $i$:
        - Compute responsibilities $ \gamma_{t, i, k} $ for $ k = 1, \dots, K $.
-       - Sample $ z_i \sim \text{Categorical}(\gamma_{t, i, 1}, \dots, \gamma_{t, i, K}) $.
+       - Sample $z_i \sim \text{Categorical}(\gamma_{t, i, 1}, \dots, \gamma_{t, i, K})$.
 
    - **M-Step:**
-     - For each $ k $:
-       - Compute $ N_k = \sum_{i=1}^n \delta(z_i = k) $.
+     - For each $k$:
+       - Compute $N_k = \sum_{i=1}^n \delta(z_i = k)$.
        - Update mixing coefficients:
          $$
          \pi_{t+1, k} = \frac{N_k}{n}
@@ -308,12 +308,12 @@ The Stochastic EM algorithm offers an alternative to the traditional EM algorith
 1. **Initialize Parameters:** Set initial values for $ \pi_k $, $ \vect{\mu}_k $, and $ \vect{\Sigma}_k $.
 2. **Iterate Until Convergence:**
    - **E-Step (Stochastic Step):**
-     - Compute responsibilities $ \gamma_{i, k} $.
+     - Compute responsibilities $\gamma_{i, k}$.
      - Sample $ z_i $ from $ \text{Categorical}(\gamma_{i, 1}, \dots, \gamma_{i, K}) $.
    - **M-Step:**
-     - Update $ \pi_k = \frac{N_k}{n} $.
-     - Update $ \vect{\mu}_k = \frac{1}{N_k} \sum_{i: z_i = k} \vect{x}_i $.
-     - Update $ \vect{\Sigma}_k = \frac{1}{N_k} \sum_{i: z_i = k} (\vect{x}_i - \vect{\mu}_k)(\vect{x}_i - \vect{\mu}_k)^T $.
+     - Update $\pi_k = \frac{N_k}{n}$.
+     - Update $\vect{\mu}_k = \frac{1}{N_k} \sum_{i: z_i = k} \vect{x}_i$.
+     - Update $\vect{\Sigma}_k = \frac{1}{N_k} \sum_{i: z_i = k} (\vect{x}_i - \vect{\mu}_k)(\vect{x}_i - \vect{\mu}_k)^T$.
 3. **Convergence Check:** Monitor log-likelihood or parameter changes.
 
 **Advantages of SEM:**
