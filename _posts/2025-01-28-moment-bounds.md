@@ -103,7 +103,7 @@ $$
 
 **Proof:**  
 
-Since $X \ge 0$, we note that $X \mathbf{1}_{\{X \ge t\}} \ge t\mathbf{1}_{\{X \ge t\}}$. Taking expectations on both sides and observing that $X \mathbf{1}_{\{X \ge t\}} \le X$ gives
+Since $X \ge 0$,
 
 $$
 \mathbb{E}[X] \ge \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] \ge t \,\mathbb{P}(X \ge t).
