@@ -102,7 +102,8 @@ $$
 $$
 
 **Proof:**  
-Since $X \ge 0$, we note that $X \mathbf{1}_{\{X \ge t\}} \ge t \mathbf{1}_{\{X \ge t\}}$. Taking expectations on both sides and observing that $X \mathbf{1}_{\{X \ge t\}} \le X$ gives
+
+Since $X \ge 0$, we note that $X \mathbf{1}_{\{X \ge t\}} \ge t\mathbf{1}_{\{X \ge t\}}$. Taking expectations on both sides and observing that $X \mathbf{1}_{\{X \ge t\}} \le X$ gives
 
 $$
 \mathbb{E}[X] \ge \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] \ge t \,\mathbb{P}(X \ge t).
@@ -173,7 +174,11 @@ $$
 \mathbb{P}(X - \mu \ge t) = \mathbb{P}(Y \ge e^{\lambda t}) \le \exp(-\lambda t)\,\mathbb{E}[e^{\lambda (X - \mu)}].
 $$
 
-To deal with optimization, we take log both sides (still ensure the optimum since log is monotonic), we solve to obtain the optimal choice for $\lambda^* = \underset{\lambda \in [0, b]}{\inf} \left \{ \log\E[e^{\lambda(X-\mu)}] - \lambda t \right \}$. With $\lambda^*$, we get the tightest result yielding the Chernoff bound. Below, we present the Chernoff bound for Gaussians
+To deal with optimization, we take log both sides (still ensure the optimum since log is monotonic), we solve to obtain the optimal choice for $\lambda$ 
+
+$$\lambda^* = \underset{\lambda \in [0, b]}{\inf} \left \{ \log\E[e^{\lambda(X-\mu)}] - \lambda t \right \}.$$ 
+
+With $\lambda^*$, we get the tightest result yielding the Chernoff bound. Below, we present the Chernoff bound for Gaussians
 
 **Theorem (Chernoff Bound for Gaussians).**
 
@@ -337,10 +342,10 @@ $$
 \mathbb{E}\left[e^{\lambda X}\right] \le \frac{b}{b - a} e^{\lambda a} + \frac{-a}{b - a} e^{\lambda b}.
 $$
 
-To further bound this expression, we apply the inequality $e^{\lambda x} \le 1 + \lambda x + \frac{\lambda^2 x^2}{2} e^{|\lambda x|}$ for appropriate values of $\lambda$ and $x$. However, a more straightforward approach involves expanding the exponential function using its Taylor series up to the second order:
+To further bound this expression, we expand the exponential function using its Taylor series up to the second order:
 
 $$
-e^{\lambda x} \le 1 + \lambda x + \frac{\lambda^2 x^2}{2} + \frac{\lambda^3 |x|^3}{6} + \cdots.
+e^{\lambda x} \le 1 + \lambda x + \frac{\lambda^2 x^2}{2} + \frac{\lambda^3 \abs{x}^3}{6} + \cdots.
 $$
 
 Given that $\mathbb{E}[X] = 0$ and $X$ is bounded, the higher-order terms can be controlled. Specifically, since $X$ lies within $[a, b]$, the higher-order moments $\mathbb{E}[X^k]$ for $k \ge 3$ are bounded, and their contributions to the MGF can be bounded by a quadratic term in $\lambda$.
@@ -352,6 +357,7 @@ $$
 $$
 
 This inequality holds for all $\lambda \in \mathbb{R}$, thereby completing the proof of Hoeffding's Lemma.
+
 ---
 
 ### 3. Bernstein Inequality
@@ -406,9 +412,3 @@ $$
 illustrating that subexponential variables have heavier tails than subgaussian ones, though they still exhibit exponential decay (possibly with different regimes depending on the size of $t$).
 
 Subgaussian variables exhibit strong concentration around their mean—similar to or stronger than the Gaussian distribution—while subexponential variables have heavier tails. These concepts unify many classical distributions under a single theoretical framework, guiding both theoretical analyses (e.g., concentration of sample sums) and practical modeling assumptions (e.g., controlling rare but large deviations).
-
----
-
-## Final words
-
-From the elementary Markov and Chebyshev bounds to more refined results like Bernstein and Hoeffding—and ultimately to classifications such as subgaussian and subexponential distributions—the theory of concentration inequalities systematically controls the probability of large deviations. Moment-based methods yield broad but sometimes loose polynomial decay, while MGF-based approaches uncover exponential tails under additional assumptions, such as boundedness or independence. These results form a cornerstone of modern probabilistic analyses, ensuring that random effects remain manageable and that large deviations can be rigorously constrained, thereby enabling robust and reliable algorithms across a range of high-dimensional and data-intensive applications.
