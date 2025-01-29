@@ -3,7 +3,7 @@ layout: post
 title: "Moment generating function based bounds"
 author: "Binh Ho"
 categories: Statistics
-blurb: "In the realm of probability and statistics, controlling uncertainty is paramount. How likely is a random variable to deviate significantly from its expected value? What tools do we have to quantify this risk? In this post, we explore *moment-based* and *moment generating function (MGF)-based* concentration inequalities — powerful techniques to bound tail probabilities."
+blurb: "In the realm of probability and statistics, controlling uncertainty is paramount. How likely is a random variable to deviate significantly from its expected value? What tools do we have to quantify this risk? In this post, we explore moment-based and moment generating function (MGF)-based concentration inequalities — powerful techniques to bound tail probabilities."
 img: ""
 tags: []
 <!-- image: -->
@@ -249,13 +249,14 @@ Chernoff’s technique becomes especially potent when $X$ can be written as a su
 **Remark.**  The $k^{th}$ moment bound with an optimal choice of $k$ is
 never worse than the bound chernoff bound. To see this, we observe that with $X > 0$, using the Taylor expansion
 
-\begin{align*}
+$$
+\begin{aligned}
 \E[e^{\lambda X}]
 = \sum_{n=0}^\infty \frac{\lambda^n}{n!} \E[\abs{X}^n]
-& \ge \parens{\sum_{n=0}^\infty \frac{(\lambda \delta)^n}{n!}} \inf_{k = 0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k] \\
+& \ge {\sum_{n=0}^\infty \frac{(\lambda \delta)^n}{n!}} \inf_{k = 0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k] \\
 & \ge e^{\lambda \delta} \inf_{k=0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k].
-\end{align*}
-
+\end{aligned}
+$$
 ---
 
 ### 2. Hoeffding’s Inequality
@@ -353,10 +354,12 @@ $$
 
 Hence, for any $x \in [a, b]$, the exponential function satisfies:
 
-\begin{align*}
+$$
+\begin{aligned}
 \E[e^{\lambda x}] &\le \E[\frac{b - x_0}{b - a} e^{\lambda a} + \frac{x_0 - a}{b - a} e^{\lambda b}] \\
 &= \ddfrac{b e^{\lambda a} - a e^{\lambda b}}{b-a}
-\end{align*}
+\end{aligned}
+$$
 
 Next, set $F(\lambda) = \log\mathbb{E}[e^{\lambda X}]$. Clearly, $F(0) = \log\mathbb{E}[1] = 0$. Its first derivative at $\lambda=0$ is
 
@@ -366,20 +369,25 @@ $$
 
 and the second derivative at $\lambda=0$ is $\mathbb{E}[X^2]$:
 
-\begin{align*}
+$$
+\begin{aligned}
 F''(0) \;&=\; \frac{d}{d\lambda} F'(\lambda) \Big|_{\lambda=0} \\
 &= \ddfrac{\E[X^2 e^{\lambda X}] - \E[X e^{\lambda X}] \E[X e^{\lambda X}]}{(\E[e^{\lambda X}])^2} \\
 & = \E[X^2] - \E[X]^2 = \E[X^2]
-\end{align*}
+\end{aligned}
+$$
 
 Since $X\in[a,b]$ and $\mathbb{E}[X]=0$, one has 
 
-\begin{align*}
+$$
+\begin{aligned}
 \Var[X] = \mathbb{E}[X^2] &\le \E[X_0^2] \\
 &= \ddfrac{ba^2 - ab^2}{b-a} = -ab
 & \le \tfrac{(b-a)^2}{4} 
-\end{align*}
-since (b-a)^2 + 4ab \ge 0 \implies -ab \le \frac{(b-a)^2}{4}. Hence, by the second‐order Taylor expansion of $F(\lambda)$ around 0,
+\end{aligned}
+$$
+
+Since (b-a)^2 + 4ab \ge 0 \implies -ab \le \frac{(b-a)^2}{4}. Hence, by the second‐order Taylor expansion of $F(\lambda)$ around 0,
 
 $$
 \log\mathbb{E}[e^{\lambda X}] \;=\; F(\lambda) 
