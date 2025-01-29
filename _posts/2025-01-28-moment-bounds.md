@@ -246,6 +246,16 @@ $$
 
 Chernoff’s technique becomes especially potent when $X$ can be written as a sum of independent random variables. In that case, $\mathbb{E}[e^{tX}]$ factorizes neatly, often permitting explicit evaluation or tractable bounds on the exponential generating function.
 
+**Remark.**  The $k^{th}$ moment bound with an optimal choice of $k$ is
+never worse than the bound chernoff bound. To see this, we observe that with $X > 0$, using the Taylor expansion
+
+\begin{align*}
+\E[e^{\lambda X}]
+= \sum_{n=0}^\infty \frac{\lambda^n}{n!} \E[\abs{X}^n]
+& \ge \parens{\sum_{n=0}^\infty \frac{(\lambda \delta)^n}{n!}} \inf_{k = 0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k] \\
+& \ge e^{\lambda \delta} \inf_{k=0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k].
+\end{align*}
+
 ---
 
 ### 2. Hoeffding’s Inequality
@@ -314,9 +324,22 @@ $$
 
 **Proof:**
 
-Since $X$ is almost surely bounded in the interval $[a, b]$ and has zero mean, we can leverage these properties to bound its moment generating function (MGF). Consider the MGF of $X$, which is $\mathbb{E}\left[e^{\lambda X}\right]$. To find an upper bound for this expectation, we observe that the function $e^{\lambda x}$ is convex in $x$. By Jensen's inequality, for any convex function $\phi$ and any random variable $Y$, we have $\mathbb{E}[\phi(Y)] \ge \phi(\mathbb{E}[Y])$. However, since we seek an upper bound, we instead consider the worst-case scenario for the distribution of $X$ within its bounded support that maximizes the MGF.
+Since $X$ is almost surely bounded in the interval $[a, b]$ and has zero mean, we can leverage these properties to bound its moment generating function (MGF). 
+Consider the MGF of $X$, which is $\mathbb{E}\left[e^{\lambda X}\right]$. To find an upper bound for this expectation, we observe that the function $x\mapsto e^{\lambda x}$ is convex on $[a,b]$, 
+it must lie below the chord connecting the points $(a,e^{\lambda a})$ and $(b,e^{\lambda b})$. Thus,
 
-The maximum of $\mathbb{E}\left[e^{\lambda X}\right]$ under the constraints that $X \in [a, b]$ and $\mathbb{E}[X] = 0$ is achieved when $X$ takes the values at the endpoints of the interval with appropriate probabilities. Specifically, suppose $X$ takes the value $a$ with probability $p$ and $b$ with probability $1 - p$. The zero mean condition $\mathbb{E}[X] = 0$ implies:
+$$
+e^{\lambda x} \le \frac{b - x}{b - a}e^{\lambda a} \;+\; \frac{x - a}{b - a}e^{\lambda b}.
+$$
+
+Taking expectations of both sides and using $\mathbb{E}[X] = 0$ gives
+$$
+\mathbb{E}[e^{\lambda X}] \;\le\; \frac{be^{\lambda a} - ae^{\lambda b}}{b - a}.
+$$
+
+Another way to see tthat as follow. Since we seek an upper bound, we consider the worst-case scenario for the distribution of $X$ within its bounded support that maximizes the MGF.
+
+The maximum of $\mathbb{E}\left[e^{\lambda X}\right]$ under the constraints that $X \in [a, b]$ and $\mathbb{E}[X] = 0$ is achieved when $X$ takes the values at the endpoints of the interval with appropriate probabilities. Specifically, suppose $X_0$ is a *discrete* random variable taking the value $a$ with probability $p$ and $b$ with probability $1 - p$ with zero expectation. The zero mean condition $\mathbb{E}[X_0] = 0$ implies:
 
 $$
 p \cdot a + (1 - p) \cdot b = 0 \quad \Rightarrow \quad p = \frac{b}{b - a}.
@@ -325,35 +348,49 @@ $$
 Substituting $p$ back, the MGF of this two-point distribution becomes:
 
 $$
-\mathbb{E}\left[e^{\lambda X}\right] = p e^{\lambda a} + (1 - p) e^{\lambda b} = \frac{b}{b - a} e^{\lambda a} + \frac{-a}{b - a} e^{\lambda b}.
+\mathbb{E}\left[e^{\lambda X_0}\right] = p e^{\lambda a} + (1 - p) e^{\lambda b} = \frac{b}{b - a} e^{\lambda a} + \frac{-a}{b - a} e^{\lambda b}.
 $$
 
-To simplify this expression, let us define $\theta = \frac{b - a}{2}$ and shift the interval so that $X$ is centered around zero. This transformation is not strictly necessary but can aid in simplifying the algebra. However, for the purpose of this proof, we proceed directly with the original bounds.
+Hence, for any $x \in [a, b]$, the exponential function satisfies:
 
-Using the fact that $e^{\lambda x}$ is convex and applying the arithmetic mean-geometric mean inequality, we can bound the MGF as follows. Observe that for any $x \in [a, b]$, the exponential function satisfies:
+\begin{align*}
+\E[e^{\lambda x}] &\le \E[\frac{b - x_0}{b - a} e^{\lambda a} + \frac{x_0 - a}{b - a} e^{\lambda b}] \\
+&= \ddfrac{b e^{\lambda a} - a e^{\lambda b}}{b-a}
+\end{align*}
 
-$$
-e^{\lambda x} \le \frac{b - x}{b - a} e^{\lambda a} + \frac{x - a}{b - a} e^{\lambda b}.
-$$
-
-Taking expectations on both sides, we obtain:
-
-$$
-\mathbb{E}\left[e^{\lambda X}\right] \le \frac{b}{b - a} e^{\lambda a} + \frac{-a}{b - a} e^{\lambda b}.
-$$
-
-To further bound this expression, we expand the exponential function using its Taylor series up to the second order:
+Next, set $F(\lambda) = \log\mathbb{E}[e^{\lambda X}]$. Clearly, $F(0) = \log\mathbb{E}[1] = 0$. Its first derivative at $\lambda=0$ is
 
 $$
-e^{\lambda x} \le 1 + \lambda x + \frac{\lambda^2 x^2}{2} + \frac{\lambda^3 \abs{x}^3}{6} + \cdots.
+F'(0) \;=\; \frac{d}{d\lambda}\bigl[\log\mathbb{E}[e^{\lambda X}]\bigr]\Big|_{\lambda=0} \;=\; \mathbb{E}[X] \;=\; 0,
 $$
 
-Given that $\mathbb{E}[X] = 0$ and $X$ is bounded, the higher-order terms can be controlled. Specifically, since $X$ lies within $[a, b]$, the higher-order moments $\mathbb{E}[X^k]$ for $k \ge 3$ are bounded, and their contributions to the MGF can be bounded by a quadratic term in $\lambda$.
+and the second derivative at $\lambda=0$ is $\mathbb{E}[X^2]$:
 
-By carefully analyzing the coefficients and ensuring that the contributions from higher-order terms do not exceed the quadratic term, we arrive at the bound:
+\begin{align*}
+F''(0) \;&=\; \frac{d}{d\lambda} F'(\lambda) \Big|_{\lambda=0} \\
+&= \ddfrac{\E[X^2 e^{\lambda X}] - \E[X e^{\lambda X}] \E[X e^{\lambda X}]}{(\E[e^{\lambda X}])^2} \\
+& = \E[X^2] - \E[X]^2 = \E[X^2]
+\end{align*}
+
+Since $X\in[a,b]$ and $\mathbb{E}[X]=0$, one has 
+
+\begin{align*}
+\Var[X] = \mathbb{E}[X^2] &\le \E[X_0^2] \\
+&= \ddfrac{ba^2 - ab^2}{b-a} = -ab
+& \le \tfrac{(b-a)^2}{4} 
+\end{align*}
+since (b-a)^2 + 4ab \ge 0 \implies -ab \le \frac{(b-a)^2}{4}. Hence, by the second‐order Taylor expansion of $F(\lambda)$ around 0,
 
 $$
-\mathbb{E}\left[e^{\lambda X}\right] \le \exp\left(\frac{\lambda^2 (b - a)^2}{8}\right).
+\log\mathbb{E}[e^{\lambda X}] \;=\; F(\lambda) 
+\;\le\; 0 \;+\; 0\cdot \lambda \;+\; \tfrac12\,\tfrac{(b-a)^2}{4}\,\lambda^2 
+\;=\; \frac{\lambda^2(b-a)^2}{8}.
+$$
+
+Exponentiating both sides recovers the usual Hoeffding bound
+
+$$
+\mathbb{E}[e^{\lambda X}] \;\le\; \exp\!\Bigl(\tfrac{\lambda^2(b-a)^2}{8}\Bigr),
 $$
 
 This inequality holds for all $\lambda \in \mathbb{R}$, thereby completing the proof of Hoeffding's Lemma.
