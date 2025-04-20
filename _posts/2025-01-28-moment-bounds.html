@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Binh Ho">
+
+<title>Moment generating function based bounds</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="2025-01-28-moment-bounds_files/libs/clipboard/clipboard.min.js"></script>
+<script src="2025-01-28-moment-bounds_files/libs/quarto-html/quarto.js"></script>
+<script src="2025-01-28-moment-bounds_files/libs/quarto-html/popper.min.js"></script>
+<script src="2025-01-28-moment-bounds_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="2025-01-28-moment-bounds_files/libs/quarto-html/anchor.min.js"></script>
+<link href="2025-01-28-moment-bounds_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="2025-01-28-moment-bounds_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="2025-01-28-moment-bounds_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="2025-01-28-moment-bounds_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="2025-01-28-moment-bounds_files/libs/bootstrap/bootstrap-8a79a254b8e706d3c925cde0a310d4f0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Moment generating function based bounds</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Statistics</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Binh Ho </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><span class="math display">\[\newcommand{\abs}[1]{\lvert#1\rvert}\]</span> <span class="math display">\[\newcommand{\norm}[1]{\lVert#1\rVert}\]</span> <span class="math display">\[\newcommand{\innerproduct}[2]{\langle#1, #2\rangle}\]</span> <span class="math display">\[\newcommand{\Tr}[1]{\operatorname{Tr}\mleft(#1\mright)}\]</span> <span class="math display">\[\DeclareMathOperator*{\argmin}{argmin}\]</span> <span class="math display">\[\DeclareMathOperator*{\argmax}{argmax}\]</span> <span class="math display">\[\DeclareMathOperator{\diag}{diag}\]</span> <span class="math display">\[\newcommand{\converge}[1]{\xrightarrow{\makebox[2em][c]{\]</span>#1<span class="math display">\[}}}\]</span> <span class="math display">\[\newcommand{\quotes}[1]{``#1''}\]</span> <span class="math display">\[\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}\]</span> <span class="math display">\[\newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}\]</span> <span class="math display">\[\newcommand{\E}{\mathbb{E}}\]</span> <span class="math display">\[\newcommand{\Var}{\mathrm{Var}}\]</span> <span class="math display">\[\newcommand{\Cov}{\mathrm{Cov}}\]</span> <span class="math display">\[\renewcommand{\N}{\mathbb{N}}\]</span> <span class="math display">\[\renewcommand{\Z}{\mathbb{Z}}\]</span> <span class="math display">\[\renewcommand{\R}{\mathbb{R}}\]</span> <span class="math display">\[\newcommand{\Q}{\mathbb{Q}}\]</span> <span class="math display">\[\newcommand{\C}{\mathbb{C}}\]</span> <span class="math display">\[\newcommand{\bbP}{\mathbb{P}}\]</span> <span class="math display">\[\newcommand{\rmF}{\mathrm{F}}\]</span> <span class="math display">\[\newcommand{\iid}{\mathrm{iid}}\]</span> <span class="math display">\[\newcommand{\distas}[1]{\overset{#1}{\sim}}\]</span> <span class="math display">\[\newcommand{\cA}{\mathcal{A}}\]</span> <span class="math display">\[\newcommand{\cB}{\mathcal{B}}\]</span> <span class="math display">\[\newcommand{\cC}{\mathcal{C}}\]</span> <span class="math display">\[\newcommand{\cD}{\mathcal{D}}\]</span> <span class="math display">\[\newcommand{\cE}{\mathcal{E}}\]</span> <span class="math display">\[\newcommand{\cF}{\mathcal{F}}\]</span> <span class="math display">\[\newcommand{\cG}{\mathcal{G}}\]</span> <span class="math display">\[\newcommand{\cH}{\mathcal{H}}\]</span> <span class="math display">\[\newcommand{\cI}{\mathcal{I}}\]</span> <span class="math display">\[\newcommand{\cJ}{\mathcal{J}}\]</span> <span class="math display">\[\newcommand{\cL}{\mathcal{L}}\]</span> <span class="math display">\[\newcommand{\cM}{\mathcal{M}}\]</span> <span class="math display">\[\newcommand{\cP}{\mathcal{P}}\]</span> <span class="math display">\[\newcommand{\cO}{\mathcal{O}}\]</span> <span class="math display">\[\newcommand{\cQ}{\mathcal{Q}}\]</span> <span class="math display">\[\newcommand{\cU}{\mathcal{U}}\]</span> <span class="math display">\[\newcommand{\cV}{\mathcal{V}}\]</span> <span class="math display">\[\newcommand{\cN}{\mathcal{N}}\]</span> <span class="math display">\[\newcommand{\cT}{\mathcal{T}}\]</span> <span class="math display">\[\newcommand{\cX}{\mathcal{X}}\]</span> <span class="math display">\[\newcommand{\cY}{\mathcal{Y}}\]</span> <span class="math display">\[\newcommand{\cZ}{\mathcal{Z}}\]</span> <span class="math display">\[\newcommand{\cS}{\mathcal{S}}\]</span> <span class="math display">\[\newcommand{\shorteqnote}[1]{ &amp; \textcolor{blue}{\text{\small #1}}}\]</span> <span class="math display">\[\newcommand{\qimplies}{\quad\Longrightarrow\quad}\]</span> <span class="math display">\[\newcommand{\defeq}{\stackrel{\triangle}{=}}\]</span> <span class="math display">\[\newcommand{\longdefeq}{\stackrel{\text{def}}{=}}\]</span> <span class="math display">\[\newcommand{\equivto}{\iff}\]</span></p>
+<style>
+.column {
+  float: left;
+  width: 30%;
+  padding: 5px;
+}
+
+/* Clear floats after image containers */
+.row::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+</style>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Concentration inequalities address a fundamental probabilistic question: Given a random variable <span class="math inline">\(X\)</span>, what is the probability that <span class="math inline">\(X\)</span> deviates from its mean by more than a specified amount? These results are crucial in statistics, machine learning, and theoretical computer science, facilitating the analysis of estimator reliability, the generalization properties of learning algorithms, and phase transitions in high-dimensional settings.</p>
+<p>Two main strategies typically underlie such inequalities:</p>
+<ol type="1">
+<li><p><strong>Moment methods</strong>, which use information about the moments (mean, variance, etc.) of <span class="math inline">\(X\)</span> to establish polynomial-type bounds on tail probabilities</p></li>
+<li><p><strong>MGF methods</strong>, which exploit the exponential generating function <span class="math inline">\(\mathbb{E}[e^{tX}]\)</span> to produce exponential-type decay rates. We begin with moment-based bounds, gradually incorporating higher moments, and then introduce MGF-based techniques that yield tighter, often exponentially decaying, bounds.</p></li>
+</ol>
+<hr>
+</section>
+<section id="moment-methods" class="level2">
+<h2 class="anchored" data-anchor-id="moment-methods">Moment Methods</h2>
+<section id="markovs-inequality-first-moment" class="level3">
+<h3 class="anchored" data-anchor-id="markovs-inequality-first-moment">1. Markov’s Inequality (First Moment)</h3>
+<p>The simplest, though often weakest, inequality requires only the first moment.</p>
+<p><strong>Theorem (Markov).</strong><br>
+For a nonnegative random variable <span class="math inline">\(X \ge 0\)</span> and any <span class="math inline">\(t &gt; 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}(X \ge t) \le \frac{\mathbb{E}[X]}{t}.
+\]</span></p>
+<p><strong>Proof:</strong></p>
+<p>Since <span class="math inline">\(X \ge 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{E}[X] \ge \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] \ge t \,\mathbb{P}(X \ge t).
+\]</span></p>
+<p>Another way to see this is to use the law of total expectation:</p>
+<p><span class="math display">\[
+\mathbb{E}[X] = \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] + \mathbb{E}[X \mathbf{1}_{\{X &lt; t\}}] \ge \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] \ge t,
+\]</span></p>
+<p>Rearranging immediately yields</p>
+<p><span class="math display">\[
+\mathbb{P}(X \ge t) \le \frac{\mathbb{E}[X]}{t}.
+\]</span></p>
+<p>Markov’s inequality is extremely general—requiring only nonnegativity and a finite mean—but can be very loose unless the distribution of <span class="math inline">\(X\)</span> is heavily concentrated near zero. It remains useful as a quick upper bound on tail probabilities when no further information (like variance or boundedness) is available.</p>
+<hr>
+</section>
+<section id="chebyshevs-inequality-second-moment" class="level3">
+<h3 class="anchored" data-anchor-id="chebyshevs-inequality-second-moment">2. Chebyshev’s Inequality (Second Moment)</h3>
+<p>By applying Markov’s inequality to the squared deviation <span class="math inline">\((X - \mu)^2\)</span>, one obtains a bound involving the variance.</p>
+<p><strong>Theorem (Chebyshev).</strong><br>
+For a random variable <span class="math inline">\(X\)</span> with mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma^2\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}(\lvert X - \mu\rvert \ge t) \le \frac{\sigma^2}{t^2}.
+\]</span></p>
+<p><strong>Proof:</strong><br>
+One sets <span class="math inline">\(Y = (X - \mu)^2\)</span> and applies Markov’s inequality. Since <span class="math inline">\(Y \ge 0\)</span> and <span class="math inline">\(\mathbb{E}[Y] = \sigma^2\)</span>, it follows that <span class="math inline">\(\mathbb{P}(Y \ge t^2) \le \sigma^2/t^2\)</span>. Because the event <span class="math inline">\(\{\lvert X - \mu\rvert \ge t\}\)</span> is the same as <span class="math inline">\(\{(X - \mu)^2 \ge t^2\} = \{Y \ge t^2\}\)</span>, the desired inequality holds immediately.</p>
+<p>Chebyshev’s inequality refines Markov’s by leveraging the second moment. It can still be relatively loose for distributions with light tails (e.g., Gaussian), yet it is often the foundational tool in constructing basic confidence intervals in classical statistics.</p>
+<hr>
+</section>
+<section id="higher-order-moment-bounds" class="level3">
+<h3 class="anchored" data-anchor-id="higher-order-moment-bounds">3. Higher-Order Moment Bounds</h3>
+<p>A natural generalization of Chebyshev’s approach is to use the <span class="math inline">\(k\)</span>-th central moment <span class="math inline">\(\mathbb{E}[\lvert X - \mu\rvert^k]\)</span>.</p>
+<p><strong>Theorem (<span class="math inline">\(k\)</span>-th Moment Bound).</strong><br>
+For any <span class="math inline">\(k &gt; 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}\bigl(\lvert X - \mu\rvert \ge t\bigr) \le \frac{\mathbb{E}[\lvert X - \mu\rvert^k]}{t^k}.
+\]</span></p>
+<p><strong>Proof:</strong><br>
+Defining <span class="math inline">\(Y = \lvert X - \mu\rvert^k\)</span>, we note that <span class="math inline">\(Y \ge 0\)</span> and that <span class="math inline">\(\{\lvert X - \mu\rvert \ge t\}\)</span> is equivalent to <span class="math inline">\(\{Y \ge t^k\}\)</span>. Applying Markov’s inequality to <span class="math inline">\(Y\)</span> gives <span class="math inline">\(\mathbb{P}(Y \ge t^k) \le \mathbb{E}[Y]/t^k\)</span>, which is the stated result.</p>
+<p>These polynomial tail bounds reflect how higher moments constrain the distribution of <span class="math inline">\(X\)</span>. However, they still yield power-law (rather than exponential) tail decay. For tighter bounds—especially when <span class="math inline">\(X\)</span> exhibits exponential-type tails—we move to MGF-based techniques.</p>
+<hr>
+</section>
+</section>
+<section id="mgf-methods" class="level2">
+<h2 class="anchored" data-anchor-id="mgf-methods">MGF Methods</h2>
+<section id="chernoff-bound" class="level3">
+<h3 class="anchored" data-anchor-id="chernoff-bound">1. Chernoff Bound</h3>
+<p>The Chernoff bound is a central technique in deriving exponential tail bounds, optimizing an exponential transform of <span class="math inline">\(X\)</span>.</p>
+<p><strong>Theorem (Chernoff).</strong><br>
+For any random variable <span class="math inline">\(X\)</span> obtaining moment generating function in a neighborhood of zero. In other words, <span class="math inline">\(\mathbb{E}[e^{\lambda(X-\mu)}]\)</span> exists for any <span class="math inline">\(\lambda \leq \abs{b}\)</span>. Then for any <span class="math inline">\(\lambda \in  [0,b]\)</span>, we apply the Markov’s inequality to <span class="math inline">\(Y=e^{\lambda(X -\mu)}\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}(X - \mu \ge t) = \mathbb{P}(Y \ge e^{\lambda t}) \le \exp(-\lambda t)\,\mathbb{E}[e^{\lambda (X - \mu)}].
+\]</span></p>
+<p>To deal with optimization, we take log both sides (still ensure the optimum since log is monotonic), we solve to obtain the optimal choice for <span class="math inline">\(\lambda\)</span></p>
+<p><span class="math display">\[\lambda^* = \underset{\lambda \in [0, b]}{\inf} \left \{ \log\E[e^{\lambda(X-\mu)}] - \lambda t \right \}.\]</span></p>
+<p>With <span class="math inline">\(\lambda^*\)</span>, we get the tightest result yielding the Chernoff bound. Below, we present the Chernoff bound for Gaussians</p>
+<p><strong>Theorem (Chernoff Bound for Gaussians).</strong></p>
+<p>Let <span class="math inline">\(X_1, X_2, \dots, X_n\)</span> be independent random variables where each <span class="math inline">\(X_i\)</span> is normally distributed with mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma^2\)</span>, i.e., <span class="math inline">\(X_i \sim \mathcal{N}(\mu, \sigma^2)\)</span>. Define <span class="math inline">\(X = \sum_{i=1}^{n} X_i\)</span>. Then, for any <span class="math inline">\(t &gt; 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}\left( \frac{X}{n} - \mu \geq t \right) \leq \exp\left( -\frac{n t^2}{2 \sigma^2} \right).
+\]</span></p>
+<p><strong>Proof:</strong></p>
+<p>Since each <span class="math inline">\(X_i\)</span> is normally distributed, its moment generating function (MGF) is</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda X_i}\right] = \exp\left(\mu \lambda + \frac{\sigma^2 \lambda^2}{2}\right)
+\]</span></p>
+<p>for all <span class="math inline">\(\lambda \in \mathbb{R}\)</span>. Centering the variables by subtracting the mean <span class="math inline">\(\mu\)</span>, we obtain</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda (X_i - \mu)}\right] = \exp\left(\frac{\sigma^2 \lambda^2}{2}\right).
+\]</span></p>
+<p>Since the <span class="math inline">\(X_i\)</span> are independent, the MGF of their sum <span class="math inline">\(X - n\mu\)</span> is the product of their individual MGFs:</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda (X - n\mu)}\right] = \prod_{i=1}^{n} \mathbb{E}\left[e^{\lambda (X_i - \mu)}\right] = \exp\left(\frac{n \sigma^2 \lambda^2}{2}\right).
+\]</span></p>
+<p>Applying the Chernoff bound, for any <span class="math inline">\(\lambda \geq 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}(X - n\mu \geq nt) \leq e^{-\lambda n t} \mathbb{E}\left[e^{\lambda (X - n\mu)}\right].
+\]</span></p>
+<p>Substituting the MGF, we get</p>
+<p><span class="math display">\[
+\mathbb{P}\left(\frac{X}{n} - \mu \geq t\right) = \mathbb{P}(X - n\mu \geq nt) \leq \exp\left(-\lambda n t + \frac{n \sigma^2 \lambda^2}{2}\right).
+\]</span></p>
+<p>To obtain the tightest bound, we minimize the exponent with respect to <span class="math inline">\(\lambda\)</span>. Consider the function</p>
+<p><span class="math display">\[
+f(\lambda) = -\lambda n t + \frac{n \sigma^2 \lambda^2}{2}.
+\]</span></p>
+<p>Taking the derivative with respect to <span class="math inline">\(\lambda\)</span> and setting it to zero,</p>
+<p><span class="math display">\[
+f'(\lambda) = -n t + n \sigma^2 \lambda = 0 \quad \Rightarrow \quad \lambda^* = \frac{t}{\sigma^2}.
+\]</span></p>
+<p>Substituting <span class="math inline">\(\lambda^*\)</span> back into the exponent,</p>
+<p><span class="math display">\[
+f(\lambda^*) = -\frac{n t^2}{\sigma^2} + \frac{n \sigma^2 \left(\frac{t}{\sigma^2}\right)^2}{2} = -\frac{n t^2}{2 \sigma^2}.
+\]</span></p>
+<p>Therefore, the probability is bounded by</p>
+<p><span class="math display">\[
+\mathbb{P}\left(\frac{X}{n} - \mu \geq t\right) \leq \exp\left(-\frac{n t^2}{2 \sigma^2}\right).
+\]</span></p>
+<p>Chernoff’s technique becomes especially potent when <span class="math inline">\(X\)</span> can be written as a sum of independent random variables. In that case, <span class="math inline">\(\mathbb{E}[e^{tX}]\)</span> factorizes neatly, often permitting explicit evaluation or tractable bounds on the exponential generating function.</p>
+<p><strong>Remark.</strong> The <span class="math inline">\(k^{th}\)</span> moment bound with an optimal choice of <span class="math inline">\(k\)</span> is never worse than the bound chernoff bound. To see this, we observe that with <span class="math inline">\(X &gt; 0\)</span>, using the Taylor expansion</p>
+<p><span class="math display">\[
+\begin{aligned}
+\E[e^{\lambda X}]
+= \sum_{n=0}^\infty \frac{\lambda^n}{n!} \E[\abs{X}^n]
+&amp; \ge {\sum_{n=0}^\infty \frac{(\lambda \delta)^n}{n!}} \inf_{k = 0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k] \\
+&amp; \ge e^{\lambda \delta} \inf_{k=0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k].
+\end{aligned}
+\]</span></p>
+<hr>
+</section>
+<section id="hoeffdings-inequality" class="level3">
+<h3 class="anchored" data-anchor-id="hoeffdings-inequality">2. Hoeffding’s Inequality</h3>
+<p>For independent and bounded random variables, Hoeffding’s inequality leverages a direct MGF bound for each <span class="math inline">\(X_i\)</span> to yield a strong exponential decay in tail probabilities.</p>
+<p><strong>Theorem (Hoeffding).</strong></p>
+<p>If <span class="math inline">\(X_1,\dots,X_n\)</span> are independent random variables with each <span class="math inline">\(X_i\)</span> almost surely bounded in the interval <span class="math inline">\([a_i, b_i]\)</span>, then for any <span class="math inline">\(t &gt; 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}\left(\sum_{i=1}^n \left(X_i - \mathbb{E}[X_i]\right) \ge t\right) \le \exp\left(-\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right).
+\]</span></p>
+<p><strong>Proof:</strong></p>
+<p>Let <span class="math inline">\(S = \sum_{i=1}^n (X_i - \mathbb{E}[X_i])\)</span>. We aim to bound the probability <span class="math inline">\(\mathbb{P}(S \ge t)\)</span> for a given <span class="math inline">\(t &gt; 0\)</span>. To achieve this, we employ the Chernoff bound technique, which involves analyzing the moment generating function (MGF) of <span class="math inline">\(S\)</span>.</p>
+<p>First, consider the MGF of each centered random variable <span class="math inline">\(X_i - \mathbb{E}[X_i]\)</span>. Since <span class="math inline">\(X_i\)</span> is almost surely bounded in <span class="math inline">\([a_i, b_i]\)</span>, the centered variable <span class="math inline">\(X_i - \mathbb{E}[X_i]\)</span> is bounded in <span class="math inline">\([a_i - \mathbb{E}[X_i], b_i - \mathbb{E}[X_i]]\)</span>. Hoeffding’s lemma provides a bound for the MGF of such bounded, zero-mean random variables. Specifically, for any <span class="math inline">\(\lambda &gt; 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda (X_i - \mathbb{E}[X_i])}\right] \le \exp\left(\frac{\lambda^2 (b_i - a_i)^2}{8}\right).
+\]</span></p>
+<p>Since the random variables <span class="math inline">\(X_1, \dots, X_n\)</span> are independent, the MGF of their sum <span class="math inline">\(S\)</span> is the product of their individual MGFs. Therefore,</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda S}\right] = \prod_{i=1}^n \mathbb{E}\left[e^{\lambda (X_i - \mathbb{E}[X_i])}\right] \le \prod_{i=1}^n \exp\left(\frac{\lambda^2 (b_i - a_i)^2}{8}\right) = \exp\left(\frac{\lambda^2}{8} \sum_{i=1}^n (b_i - a_i)^2\right).
+\]</span></p>
+<p>Applying Markov’s inequality to the random variable <span class="math inline">\(e^{\lambda S}\)</span> for <span class="math inline">\(\lambda &gt; 0\)</span>, we obtain</p>
+<p><span class="math display">\[
+\mathbb{P}(S \ge t) = \mathbb{P}\left(e^{\lambda S} \ge e^{\lambda t}\right) \le \frac{\mathbb{E}\left[e^{\lambda S}\right]}{e^{\lambda t}} \le \exp\left(-\lambda t + \frac{\lambda^2}{8} \sum_{i=1}^n (b_i - a_i)^2\right).
+\]</span></p>
+<p>To obtain the tightest possible bound, we minimize the exponent <span class="math inline">\(-\lambda t + \frac{\lambda^2}{8} \sum_{i=1}^n (b_i - a_i)^2\)</span> with respect to <span class="math inline">\(\lambda\)</span>. Taking the derivative with respect to <span class="math inline">\(\lambda\)</span> and setting it to zero yields</p>
+<p><span class="math display">\[
+-\ t + \frac{\lambda}{4} \sum_{i=1}^n (b_i - a_i)^2 = 0 \quad \Rightarrow \quad \lambda^* = \frac{4t}{\sum_{i=1}^n (b_i - a_i)^2}.
+\]</span></p>
+<p>Substituting <span class="math inline">\(\lambda^*\)</span> back into the exponent, we have</p>
+<p><span class="math display">\[
+-\lambda^* t + \frac{(\lambda^*)^2}{8} \sum_{i=1}^n (b_i - a_i)^2 = -\frac{4t^2}{\sum_{i=1}^n (b_i - a_i)^2} + \frac{16t^2}{8 \sum_{i=1}^n (b_i - a_i)^2} = -\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}.
+\]</span></p>
+<p>Therefore, the probability is bounded by</p>
+<p><span class="math display">\[
+\mathbb{P}(S \ge t) \le \exp\left(-\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right).
+\]</span></p>
+<p>Hoeffding’s inequality is a cornerstone in the analysis of random samples with bounded support. It implies that sums of bounded independent random variables display exponential concentration around their mean, making it invaluable in algorithms and statistical learning theory, where boundedness assumptions often hold or are enforced (e.g., via truncation).</p>
+<p>Below, I also present the proof of the Hoeffding’s Lemma</p>
+<p><strong>Hoeffding’s Lemma</strong></p>
+<p>Let <span class="math inline">\(X\)</span> be a real-valued random variable with <span class="math inline">\(\mathbb{E}[X] = 0\)</span> and almost surely bounded in the interval <span class="math inline">\([a, b]\)</span>. Then, for any <span class="math inline">\(\lambda \in \mathbb{R}\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda X}\right] \le \exp\left(\frac{\lambda^2 (b - a)^2}{8}\right).
+\]</span></p>
+<p><strong>Proof:</strong></p>
+<p>Since <span class="math inline">\(X\)</span> is almost surely bounded in the interval <span class="math inline">\([a, b]\)</span> and has zero mean, we can leverage these properties to bound its moment generating function (MGF). Consider the MGF of <span class="math inline">\(X\)</span>, which is <span class="math inline">\(\mathbb{E}\left[e^{\lambda X}\right]\)</span>. To find an upper bound for this expectation, we observe that the function <span class="math inline">\(x\mapsto e^{\lambda x}\)</span> is convex on <span class="math inline">\([a,b]\)</span>, it must lie below the chord connecting the points <span class="math inline">\((a,e^{\lambda a})\)</span> and <span class="math inline">\((b,e^{\lambda b})\)</span>. Thus,</p>
+<p><span class="math display">\[
+e^{\lambda x} \le \frac{b - x}{b - a}e^{\lambda a} \;+\; \frac{x - a}{b - a}e^{\lambda b}.
+\]</span></p>
+<p>Taking expectations of both sides and using <span class="math inline">\(\mathbb{E}[X] = 0\)</span> gives <span class="math display">\[
+\mathbb{E}[e^{\lambda X}] \;\le\; \frac{be^{\lambda a} - ae^{\lambda b}}{b - a}.
+\]</span></p>
+<p>Another way to see tthat as follow. Since we seek an upper bound, we consider the worst-case scenario for the distribution of <span class="math inline">\(X\)</span> within its bounded support that maximizes the MGF.</p>
+<p>The maximum of <span class="math inline">\(\mathbb{E}\left[e^{\lambda X}\right]\)</span> under the constraints that <span class="math inline">\(X \in [a, b]\)</span> and <span class="math inline">\(\mathbb{E}[X] = 0\)</span> is achieved when <span class="math inline">\(X\)</span> takes the values at the endpoints of the interval with appropriate probabilities. Specifically, suppose <span class="math inline">\(X_0\)</span> is a <em>discrete</em> random variable taking the value <span class="math inline">\(a\)</span> with probability <span class="math inline">\(p\)</span> and <span class="math inline">\(b\)</span> with probability <span class="math inline">\(1 - p\)</span> with zero expectation. The zero mean condition <span class="math inline">\(\mathbb{E}[X_0] = 0\)</span> implies:</p>
+<p><span class="math display">\[
+p \cdot a + (1 - p) \cdot b = 0 \quad \Rightarrow \quad p = \frac{b}{b - a}.
+\]</span></p>
+<p>Substituting <span class="math inline">\(p\)</span> back, the MGF of this two-point distribution becomes:</p>
+<p><span class="math display">\[
+\mathbb{E}\left[e^{\lambda X_0}\right] = p e^{\lambda a} + (1 - p) e^{\lambda b} = \frac{b}{b - a} e^{\lambda a} + \frac{-a}{b - a} e^{\lambda b}.
+\]</span></p>
+<p>Hence, for any <span class="math inline">\(x \in [a, b]\)</span>, the exponential function satisfies:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\E[e^{\lambda x}] &amp;\le \E[\frac{b - x_0}{b - a} e^{\lambda a} + \frac{x_0 - a}{b - a} e^{\lambda b}] \\
+&amp;= \ddfrac{b e^{\lambda a} - a e^{\lambda b}}{b-a}
+\end{aligned}
+\]</span></p>
+<p>Next, set <span class="math inline">\(F(\lambda) = \log\mathbb{E}[e^{\lambda X}]\)</span>. Clearly, <span class="math inline">\(F(0) = \log\mathbb{E}[1] = 0\)</span>. Its first derivative at <span class="math inline">\(\lambda=0\)</span> is</p>
+<p><span class="math display">\[
+F'(0) \;=\; \frac{d}{d\lambda}\bigl[\log\mathbb{E}[e^{\lambda X}]\bigr]\Big|_{\lambda=0} \;=\; \mathbb{E}[X] \;=\; 0,
+\]</span></p>
+<p>and the second derivative at <span class="math inline">\(\lambda=0\)</span> is <span class="math inline">\(\mathbb{E}[X^2]\)</span>:</p>
+<p><span class="math display">\[
+\begin{aligned}
+F''(0) \;&amp;=\; \frac{d}{d\lambda} F'(\lambda) \Big|_{\lambda=0} \\
+&amp;= \ddfrac{\E[X^2 e^{\lambda X}] - \E[X e^{\lambda X}] \E[X e^{\lambda X}]}{(\E[e^{\lambda X}])^2} \\
+&amp; = \E[X^2] - \E[X]^2 = \E[X^2]
+\end{aligned}
+\]</span></p>
+<p>Since <span class="math inline">\(X\in[a,b]\)</span> and <span class="math inline">\(\mathbb{E}[X]=0\)</span>, one has</p>
+<p><span class="math display">\[
+\begin{aligned}
+\Var[X] = \mathbb{E}[X^2] &amp;\le \E[X_0^2] \\
+&amp;= \ddfrac{ba^2 - ab^2}{b-a} = -ab
+&amp; \le \tfrac{(b-a)^2}{4}
+\end{aligned}
+\]</span></p>
+<p>Since (b-a)^2 + 4ab -ab . Hence, by the second‐order Taylor expansion of <span class="math inline">\(F(\lambda)\)</span> around 0,</p>
+<p><span class="math display">\[
+\log\mathbb{E}[e^{\lambda X}] \;=\; F(\lambda)
+\;\le\; 0 \;+\; 0\cdot \lambda \;+\; \tfrac12\,\tfrac{(b-a)^2}{4}\,\lambda^2
+\;=\; \frac{\lambda^2(b-a)^2}{8}.
+\]</span></p>
+<p>Exponentiating both sides recovers the usual Hoeffding bound</p>
+<p><span class="math display">\[
+\mathbb{E}[e^{\lambda X}] \;\le\; \exp\!\Bigl(\tfrac{\lambda^2(b-a)^2}{8}\Bigr),
+\]</span></p>
+<p>This inequality holds for all <span class="math inline">\(\lambda \in \mathbb{R}\)</span>, thereby completing the proof of Hoeffding’s Lemma.</p>
+<hr>
+</section>
+<section id="bernstein-inequality" class="level3">
+<h3 class="anchored" data-anchor-id="bernstein-inequality">3. Bernstein Inequality</h3>
+<p>Bernstein’s inequality refines Hoeffding’s by incorporating both the variance and a bound on the maximum magnitude of each <span class="math inline">\(X_i\)</span>.</p>
+<p><strong>Theorem (Bernstein).</strong><br>
+Let <span class="math inline">\(X_1,\dots,X_n\)</span> be independent, zero-mean random variables with <span class="math inline">\(\mathrm{Var}(X_i) = \sigma_i^2\)</span> and <span class="math inline">\(\lvert X_i\rvert \le M\)</span> almost surely. For any <span class="math inline">\(t &gt; 0\)</span>,</p>
+<p><span class="math display">\[
+\mathbb{P}\Bigl(\sum_{i=1}^n X_i \ge t\Bigr) \le \exp\Bigl(-\frac{t^2}{2\sum_{i=1}^n \sigma_i^2 + \tfrac{2}{3}Mt}\Bigr).
+\]</span></p>
+<p><strong>Proof Sketch:</strong><br>
+One applies Chernoff’s bound to the sum <span class="math inline">\(\sum_{i=1}^n X_i\)</span> and exploits independence to factor the MGF. A Taylor expansion for <span class="math inline">\(\mathbb{E}[e^{tX_i}]\)</span> combined with the bound <span class="math inline">\(\lvert X_i\rvert \le M\)</span> shows that each factor is bounded by something akin to <span class="math inline">\(\exp\bigl(t^2 \sigma_i^2/(2(1 - tM/3))\bigr)\)</span>. Multiplying these exponential factors and choosing <span class="math inline">\(t\)</span> optimally yields the stated bound. The variance term governs the small-deviation regime, while the <span class="math inline">\(M\)</span> term controls the tail from large (but bounded) fluctuations.</p>
+<p>Bernstein’s bound is more versatile than Hoeffding’s in scenarios where the variance of each <span class="math inline">\(X_i\)</span> is known or small, but the variables still remain bounded. It blends the “Gaussian-like” decay from variance considerations with the “boundedness-driven” exponential decay, making it a powerful tool in both theoretical and applied analyses.</p>
+<hr>
+</section>
+<section id="subgaussian-and-subexponential-random-variables" class="level3">
+<h3 class="anchored" data-anchor-id="subgaussian-and-subexponential-random-variables">4. Subgaussian and Subexponential Random Variables</h3>
+<p>A random variable <span class="math inline">\(X\)</span> is <strong>subgaussian</strong> if there exists a <span class="math inline">\(\sigma &gt; 0\)</span> such that <span class="math display">\[
+\mathbb{E}[e^{t(X - \mu)}] \le \exp\Bigl(\frac{t^2 \sigma^2}{2}\Bigr)
+\quad
+\text{for all real } t.
+\]</span></p>
+<p>This implies a Gaussian-style tail bound</p>
+<p><span class="math display">\[
+\mathbb{P}(\lvert X - \mu\rvert \ge t) \le 2\,\exp\Bigl(-\frac{t^2}{2\sigma^2}\Bigr).
+\]</span></p>
+<p>Bounded random variables and Gaussian variables are prime examples of subgaussianity.</p>
+<p>A random variable <span class="math inline">\(X\)</span> is <strong>subexponential</strong> if there exist <span class="math inline">\(\nu &gt; 0\)</span> and <span class="math inline">\(\alpha &gt; 0\)</span> such that</p>
+<p><span class="math display">\[
+\mathbb{E}[e^{t(X - \mu)}] \le \exp\Bigl(\frac{t^2 \nu^2}{2}\Bigr)
+\quad
+\text{for all } |t| \le 1/\alpha.
+\]</span></p>
+<p>This yields the tail bound</p>
+<p><span class="math display">\[
+\mathbb{P}(\lvert X - \mu\rvert \ge t) \le 2\,\exp\Bigl(-\,\min\Bigl\{\frac{t^2}{2\nu^2}, \frac{t}{2\alpha}\Bigr\}\Bigr),
+\]</span></p>
+<p>illustrating that subexponential variables have heavier tails than subgaussian ones, though they still exhibit exponential decay (possibly with different regimes depending on the size of <span class="math inline">\(t\)</span>).</p>
+<p>Subgaussian variables exhibit strong concentration around their mean—similar to or stronger than the Gaussian distribution—while subexponential variables have heavier tails. These concepts unify many classical distributions under a single theoretical framework, guiding both theoretical analyses (e.g., concentration of sample sums) and practical modeling assumptions (e.g., controlling rare but large deviations).</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
