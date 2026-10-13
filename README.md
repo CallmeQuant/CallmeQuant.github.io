@@ -1,6 +1,6 @@
 # callmequant.github.io
 
-Source of Binh Ho's personal website, built with Jekyll on GitHub Pages.
+Source of my personal website, built with Jekyll on GitHub Pages.
 
 ## Layout
 
