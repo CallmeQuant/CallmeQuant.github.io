@@ -1,6 +1,11 @@
-_site
-Gemfile.lock
-*.gem
-.sass-cache
+_site/
+.sass-cache/
+.jekyll-cache/
 .jekyll-metadata
+Gemfile.lock
+vendor/
 .DS_Store
+.idea/
+figures/**/output/
+__pycache__/
+*.Rhistory

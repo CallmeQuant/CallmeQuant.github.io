@@ -1,213 +1,156 @@
 ---
-layout: post
-title: "Boostrapping with Extension to Markov Chain"
-author: "Binh Ho"
-categories: Statistics
-blurb: ""
-img: ""
-tags: []
-<!-- image: -->
+title: "Bootstrapping intermittent demand with a Markov chain"
+date: 2022-10-20
+topic: Stochastic processes and time series
+summary: "The bootstrap of Willemain, Smart and Schwarz forecasts the distribution of intermittent demand over a lead time by combining a two-state Markov chain for demand occurrence, resampled demand sizes and a jittering step. The note gives an R implementation, compares the method with the ordinary bootstrap on simulated data, and derives the maximum likelihood estimator of a transition matrix."
 ---
 
+Intermittent demand is demand that is zero in most periods and positive, with variable size, in the others. Spare parts, slow-moving retail items and many products in large inventories behave this way. Standard forecasting models for continuous, smoothly varying series fit such data poorly, and the classical alternative, Croston's method (Croston, 1972), forecasts the mean demand per period by smoothing the sizes and the intervals between demands separately. For inventory control, however, the mean is not the quantity of interest. What matters is the distribution of the *total* demand over the replenishment lead time, since a reorder point that achieves a 95% service level is the 0.95 quantile of that distribution.
 
-## Motivation and Algorithm Sketch
-In the context of forecasting intermittent demands, many bootstrapping approaches have been proposed to overcome the obstacles with this specific pattern of time series, which is not efficiently manipulated by many parametric models (Shenstone and Hyndman, 2003). The boostrapping approach propose by Willemain et al., (2004) is the most attracted and well-approved in both academic literature and real-world applications. To improve the accuracy of forecasting procedures of products posed highly intermittent patterns, Willemain devised the simple boostrapping method by plug in two features (extensions), the use of discrete-time Markov Chain and the process of "Jittering". 
-	
-Concerning conventional boostrapping, which was developed by Efron (1979), the method involves repetitively sampling with replacement from the original data set, thus construct independent boostrap replications, in order to estimate the empirical distribution of the demand (or sale volumes under our concern). Nevertheless, two significant drawbacks acknowledged in this method are: First, the possibility of any autocorrelations presenting in the data violates the assumption of independence amongst observations and Second, the generated values of the reconstructed distribution may not be observed, yet still compatible with the earlier distribution.
-	
-To transcend these limitations, Willemain 's WSS method utilizes the Markov chain to explicitly capture the autocorrelation between occurrences of demand and non-occurrences by evaluating the empirical distribution of the transition matrix. We will first summarize the incorporation of the dependency of current demand state on the previous demand occurrence status as follows:
-+ Estimate the transition probability (in this context, it will be a $2 \times 2$ matrix) between two states defined above.
-+ Based upon this estimated transition probabilities and the **last** observed demand, generate a sequence of zero/non-zero values for the entire forecast horizon. 
-	
-Hence, within the process above, we try to encompass the conditional structure of the occurrence (or non-occurrence) with respect to the previous periods. After generating the future sequence of demands' states, we will only perform resampling demand size restricted to the previous periods where demands occurred and random selections will be collected based on these previous non-zero demands. As previously concerned, possible values that have not been observed in the past data set might be appeared in the future; thereby, need to be accounted in the boostrapped resamples. Willemain proposed a modification to this issue by introducing a "jittering" process which permits a greater variation around the selected positive values. The flow of the jittering procedures is as below:
-	
-+ Replace all values where demand occurred with values from a set of positive previous demand sizes. 
-+ Jittering the values with the deviated realization of standard normal $Z$. If we assume that the forecast is $X$ and $X^{\ast}$ then $X$ would be:
+Willemain, Smart and Schwarz (2004) proposed a bootstrap that targets this distribution directly. It modifies the ordinary bootstrap of Efron (1979) in two ways: a Markov chain carries the serial dependence between periods with and without demand, and a "jittering" step allows demand sizes that did not occur in the history. Below I describe the method, give an implementation in R, check it on simulated data for which the true lead-time distribution is known, and derive the maximum likelihood estimator of the transition probabilities that the method uses.
+
+## Why the ordinary bootstrap is not enough
+
+Let $$y_1, \dots, y_n$$ be the observed demands, nonnegative integers. The ordinary bootstrap would build a lead-time demand replicate by drawing $$L$$ values independently and with replacement from $$\{y_1, \dots, y_n\}$$ and adding them. This has two defects for intermittent series.
+
+1. *It destroys serial dependence.* Demand occurrence is often autocorrelated: periods with demand tend to cluster, or, for items bought in single large orders, to repel each other. Independent resampling treats the periods as exchangeable. It reproduces the long-run mean of the lead-time total, but it ignores the current state of the series and gets the spread wrong.
+2. *It reproduces only observed values.* Every resampled demand size is a value already seen. With a short history, sizes that are plausible but happened not to occur get probability zero, and the upper tail of the lead-time distribution is cut off.
+
+The method addresses the first defect with a Markov chain and the second by jittering.
+
+## The method
+
+Write $$I_t = \mathbf 1\{y_t > 0\}$$ for the demand indicator. The occurrence process $$(I_t)$$ is modelled as a two-state Markov chain with transition probabilities
 
 $$
-X = 
-\begin{cases}
-& 1 + \text{INT}(X^{\ast} + Z\sqrt{X^{\ast}}), \quad \text{if } X \gt 0 \\
-& 0, \quad \text{otherwise} 
-\end{cases}
+p_{01} = \P(I_t = 1 \mid I_{t-1} = 0), \qquad p_{11} = \P(I_t = 1 \mid I_{t-1} = 1),
 $$
-	
-We repeat the process multiple times (Willemain et al., 2004 used $1,000$ replications to obtain the empirical distribution). As we clearly inspect, the design of "jittering" process is to shift up or down the primary values by a random quantity which equals to $\sqrt{X^{\ast}}Z$. Since this generated quantity could reduce the original values to be below zero, we restrict them to be $X$ if negative values are returned. Finally, we average the values obtained for each future time step $h$ to obtain is each expected values for future horizon. 
+
+and $$p_{00} = 1 - p_{01}$$, $$p_{10} = 1 - p_{11}$$. The demand sizes in periods with demand are treated as draws from the distribution of the positive values in the history, independent of the occurrence process. One bootstrap replicate of the demand over the next $$L$$ periods is generated as follows.
+
+1. Estimate the transition probabilities from the observed indicators $$I_1, \dots, I_n$$ by maximum likelihood: $$\hat p_{ij}$$ is the number of transitions from $$i$$ to $$j$$ divided by the number of transitions out of $$i$$ (derived in the appendix).
+2. Starting from the last observed state $$I_n$$, simulate $$I_{n+1}, \dots, I_{n+L}$$ from the estimated chain.
+3. For each simulated period with $$I_{n+h} = 1$$, draw a size $$X^\ast$$ uniformly at random from the positive demands $$\{y_t : y_t > 0\}$$, counted with their multiplicities.
+4. Jitter the size: with $$Z \sim N(0, 1)$$ independent of everything else, set
+   
+   $$
+   X = \begin{cases} 1 + \operatorname{int}\bigl(X^\ast + Z\sqrt{X^\ast}\bigr) & \text{if this value is positive,} \\ X^\ast & \text{otherwise,} \end{cases}
+   $$
+   
+   where $$\operatorname{int}$$ denotes the integer part (truncation towards zero). Periods with $$I_{n+h} = 0$$ get demand $$0$$.
+5. Sum the $$L$$ simulated demands.
+
+Repeating the steps $$B$$ times gives $$B$$ draws from the estimated lead-time demand distribution. Its empirical quantiles serve as reorder points, and the average of the replicates for each future period gives per-period point forecasts if those are needed.
+
+The jittering step has two properties that affect the output. Its spread is of order $$\sqrt{X^\ast}$$, as for a Poisson count with mean $$X^\ast$$, so large sizes are perturbed more than small ones, and the rule never produces a nonpositive size. It is not mean-preserving, however: for moderate $$X^\ast$$, the integer part loses about one half on average and the added one more than compensates, so the jittered size exceeds $$X^\ast$$ by roughly $$1/2$$ on average (by simulation, about $$0.58$$ for $$X^\ast = 3$$ and $$0.50$$ for $$X^\ast = 10$$). Rounding $$X^\ast + Z\sqrt{X^\ast}$$ to the nearest integer instead of applying $$1 + \operatorname{int}(\cdot)$$ removes the shift for large sizes (it is about $$0.01$$ at $$X^\ast = 10$$) but not for small ones, where replacing nonpositive values by $$X^\ast$$ still raises the mean (by about $$0.25$$ at $$X^\ast = 3$$). The code below follows the published rule.
+
+## What the Markov chain captures
+
+The effect of the chain on the spread of the lead-time demand can be computed exactly for the number of demand occurrences $$N_L = \sum_{h=1}^L I_{n+h}$$. For a two-state chain with $$0 < p_{01} + p_{10} < 2$$, the stationary probability of demand is $$\pi = p_{01}/(p_{01} + p_{10})$$, and the chain has second eigenvalue $$\kappa = 1 - p_{01} - p_{10} = p_{11} - p_{01}$$. In stationarity, $$\P(I_{t+h} = 1 \mid I_t = 1) = \pi + (1-\pi)\kappa^h$$, which gives the autocovariance $$\Cov(I_t, I_{t+h}) = \pi(1-\pi)\kappa^h$$, and therefore
+
+$$
+\Var(N_L) = L\pi(1-\pi)\Bigl\{1 + 2\sum_{h=1}^{L-1}\Bigl(1 - \frac hL\Bigr)\kappa^h\Bigr\}.
+$$
+
+Independent resampling corresponds to $$\kappa = 0$$. When occurrences cluster ($$\kappa > 0$$), the factor in braces exceeds one and the independent bootstrap understates the variance; when they repel ($$\kappa < 0$$), it overstates it. In the simulation below, $$p_{01} = 0.1$$ and $$p_{11} = 0.6$$, so $$\pi = 0.2$$, $$\kappa = 0.5$$, and for $$L = 12$$ the factor is $$2.67$$: clustering multiplies the variance of the number of demand periods by more than two and a half.
 
 ## Implementation
-We will use the package [Markovchain](https://cran.r-project.org/web/packages/markovchain/vignettes/an_introduction_to_markovchain_package.pdf) by Spedicato (2022) to estimate the transition probabilities using MLE method. Then, we will follow the step from Willemain's method to forecast the future demand based on resampling and **jittering**. The implementation is given in R language and I have prepared [a sample of data](https://github.com/CallmeQuant/Boostrapping-Markov-Chain/blob/main/boostrap_dat.RData) in the **.Rdata** format which is extracted from the [M5 Forecasting data set](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data) on Kaggle.
+
+The following base R functions implement the method. The data are a vector `y` of nonnegative integer demands; the output is a $$B \times h$$ matrix of simulated demand paths.
+
 ```r
-library(dplyr)
-# Loading RData file 
-load(file = "boostrap_dat.RData")
-# Discrete Time Markov Chain 
-observed_df <- data_final %>%
-  filter(id == "HOBBIES_1_192_WI_2"  & dates < "2016-04-18") %>%
-  mutate(State = case_when(sales == 0 ~ "Zero",
-                           sales > 0 ~ "Positive")) %>%
-  select(sales, State)
-# Estimating the  Markov Chain 
-state <- observed_df %>% pull(State) %>%
-  as.character()
- 
-library(markovchain)
-mc <- markovchainFit(state, method = "laplace")$estimate
-# Examine the property of Markov Chain 
-verifyMarkovProperty(state)
-assessStationarity(state, 10)
-# Predict 7 days ahead 
-pred <- predict(object = mc, newdata = "Zero", n.ahead = 7)
-# Extracting df with positive sales only
-positive_df <- data_final %>%
-  filter(id == "HOBBIES_1_192_WI_2" & dates < "2016-04-18") %>%
-  filter(sales > 0)
-# Creating a sample with historical positive sales 
-sample_positive_sale <- positive_df %>% pull(sales) %>%
-  unique()
-# Retrieving last observation
-lastobs <- data_final %>%
-  filter(id == "HOBBIES_1_192_WI_2" & dates == "2016-04-17") %>% pull(sales)
-lastobs <- if_else(lastobs == 0, "Zero", "Positive")
-mc.sim <- function(trans_mat, num.iters = 1000, n_ahead = 7, method = c("modified","simple")){
-  type = method[1]
-  states <- numeric(n_ahead) # Not Including the last observed demand
-  states[1] <- lastobs
-  sample_positive_sale <- positive_df %>% pull(sales) %>%
-  unique()
-  result <- matrix(0, nrow = num.iters, ncol = n_ahead)
-  for (i in 1:num.iters){
-    fc_seq <- predict(object = trans_mat, newdata = lastobs, n.ahead = 7)
-    # if (lastobs == "Positive"){
-    #   fc_seq[i] <- ifelse(runif(1) < trans_mat[1], )
-    # }
-    for (j in 1:n_ahead){
-      if (fc_seq[j] == "Zero") {fc_seq[j] = as.numeric(0)}
-      if (fc_seq[j] == "Positive"){
-        x = sample(sample_positive_sale, 1, replace= TRUE)
-        if (type == "Simple"){
-          fc_seq[j] = 1 + as.integer(x + sqrt(x) * rnorm(1))
-          if (fc_seq[j] < 0) {fc_seq[j] = x}
-        else {
-          fc_seq[j] = as.integer(0.5 + x + sqrt(x) * rnorm(1))
-          if (fc_seq[j] < 0) {fc_seq[j] = 1}
-        }
-        }
+fit_occurrence_chain <- function(y) {
+  s <- as.integer(y > 0)                 # 0 = no demand, 1 = demand
+  n <- table(factor(head(s, -1), levels = 0:1),
+             factor(tail(s, -1), levels = 0:1))   # counts n_ij
+  if (any(rowSums(n) == 0)) stop("a state is never left")
+  unclass(n / rowSums(n))                # MLE: row-normalized counts
+}
+
+wss_bootstrap <- function(y, h, B = 5000) {
+  P <- fit_occurrence_chain(y)
+  sizes <- y[y > 0]                      # positive demands, repeats kept
+  out <- matrix(0, B, h)
+  for (b in seq_len(B)) {
+    state <- as.integer(y[length(y)] > 0)  # last observed state
+    for (t in seq_len(h)) {
+      state <- rbinom(1, 1, P[state + 1, 2])
+      if (state == 1) {
+        x <- sizes[sample.int(length(sizes), 1)]
+        xj <- 1 + trunc(x + sqrt(x) * rnorm(1))   # jittering
+        out[b, t] <- if (xj > 0) xj else x
       }
     }
-    result[i, ] <- fc_seq
   }
-  result <- apply(result, 2, as.numeric)
-  result_bs <- colMeans(result)
-  df <- tibble(Forecast = result_bs)
-  return(df)
+  out
 }
-# Given at 2016-04-17, we have a postive sales => Simulate for 7 day ahead
-result <- mc.sim(mc, num.iters = 1000, n_ahead = 7, method = "modified") %>%
-  bind_cols(data_final %>%
-  filter(id == "HOBBIES_1_192_WI_2" & dates > "2016-04-17") %>% select(sales))
-ZAPE <- function(actual, pred){
-  loss <- 0
-  y <- actual
-  yhat <- pred
-  for (i in 1:length(y)){
-    if (y[i] == 0){
-      loss <- loss + yhat[i]
-    }
-    else{
-      loss <- loss + abs((y[i] - yhat[i])/y[i])
-    }
-  }
-  return((loss / length(y)) * 100)
-}
-print(result)
-ZAPE(result$sales, result$Forecast)
+
+paths <- wss_bootstrap(y, h = 12, B = 5000)
+lead_time <- rowSums(paths)
+quantile(lead_time, c(0.50, 0.90, 0.95))   # candidate reorder points
 ```
 
-As we could see from the result below, the method works really well under the circumstance of intermittency since the probability of transition from demand to zero demand and zero-demand to itself is really high (nearly $1$). Hence, given that transition matrix, if the last day we observe a non-occurence demand event, it is highly possible that the next day would be the same and vice versa, if we observe a demand on the last day, we will more likely to end up being zero sale on the next day.
+Two details matter in R. Sizes are drawn with `sample.int` on the index, because `sample(x, 1)` with a vector `x` of length one samples from `1:x` instead. And the sizes are resampled with their multiplicities; removing duplicates with `unique` would give every distinct size the same probability and distort the size distribution. The transition probabilities can equally be estimated with `markovchainFit` from the `markovchain` package, whose default method computes the same maximum likelihood estimate. Its `predict` method, however, returns the most probable sequence of states, a deterministic path, and cannot replace the simulation in step 2.
 
-## Appendix: Derivation of MLE of Markov Chain 
+In an earlier version of this note I applied the method to the daily sales of one item from the M5 forecasting competition data. Here I use a simulated series instead, so that the true lead-time distribution is available for comparison.
 
-This section would be additional for anyone interested in formal derivation of the Markov chain MLE estimation. Here we will follow the proof given in the note of [Cosma Shalizi](https://www.stat.cmu.edu/~cshalizi/) (one of the my most favorite statisticians). This proof assume that you are familiar with basic structure of Markov Chain and its properties. 
+## A simulation
 
-Supposed that we have observed a sample from the chain, the realization of the random variable $X_{1}^{n}$, which is denoted by $x_{1}^{n} \neq x_1, x_2, \dots, x_{n}$. Then we would like to obtain the probability that we will observe such data points, or the joint probability of the sequence $x_{1}^{n}$
+The history consists of $$n = 730$$ periods (two years of daily data) from the model above: occurrences follow the Markov chain with $$p_{01} = 0.1$$ and $$p_{11} = 0.6$$, started from its stationary distribution, and each positive demand is $$1 + \mathrm{Poisson}(3)$$. The last observed period has no demand. The true distribution of the total demand over the next $$L = 12$$ periods given this last state is computed by simulating the true model; the Markov bootstrap and the ordinary bootstrap are computed from the history alone, each with $$B = 20{,}000$$ replicates.
 
-$$
-\begin{align}
-P\left(X_{1}^{n} = x_{1}^{n}\right) &= P\left(X_1 = x_1, X_2 = x_2, \dots,X_n = x_n\right) \\
-& = P\left(X_1 = x_1\right) \prod_{t  = 2}^{n} P\left(X_t = x_t \mid X_{1}^{t-1} = x_{1}^{t-1}\right) \\
-& = P\left(X_1 = x_1\right) \prod_{t  = 2}^{n} P\left(X_{t} = x_{t} \mid X_{t-1} = x_{t-1}\right)
-\end{align}
-$$
+<figure>
+  <img src="/assets/figures/boostrapping-forecasting/lead-time-demand.svg" alt="Simulated intermittent demand series and distribution functions of lead-time demand under the true model, the Markov bootstrap and the i.i.d. bootstrap">
+  <figcaption>Figure 1. (a) The last 120 of 730 simulated periods; occurrences follow a two-state Markov chain with $p_{01} = 0.1$, $p_{11} = 0.6$, and positive demands are $1 + \mathrm{Poisson}(3)$. (b) Distribution functions of the total demand over the next $L = 12$ periods: the true conditional distribution given the last state, the Markov bootstrap with jittering, and the ordinary bootstrap that resamples periods independently. The dotted line marks the 0.95 level.</figcaption>
+</figure>
 
-The second expression is the conditional probability of the process being at state $x_t$ given all past observations. On the other hand, the third expression is derived based on one of the most notable properties of a discrete time Markov chain is the first order Markov assumption. In other words, it is assumed that the model hold the *Markov property*:
+The ordinary bootstrap gets the centre of the distribution roughly right (mean $$9.1$$ against a true $$8.7$$), but its spread is far too small: standard deviation $$6.0$$ against $$9.1$$, a probability of zero demand of $$0.07$$ against $$0.29$$, and a 0.95 quantile of $$20$$ against $$27$$. A reorder point set from it would run out of stock much more often than the nominal 5% of cycles. The Markov bootstrap reproduces the shape, including the atom at zero ($$0.32$$), and its 0.95 quantile of $$31$$ errs on the conservative side. Its mean of $$9.5$$ is somewhat too high, partly because of sampling error in the estimated transition probabilities and partly because of the upward shift of the jittering rule discussed above.
 
-$$
-P\left(X_{t} = j \mid X_{t-1} = i, X_{t-2} = i_{t-1}, \ldots, X_1 = i_1\right) = P\left(X_{t} = j \mid X_{t-1} = i\right)
-$$
-	
-As our target is to determine the MLE estimation for our transition probabilities, then we rewrite the above expression in terms of $p_{ij}$ to arrive at the likelihood function for the 
+## Appendix: maximum likelihood for a Markov chain
+
+Let $$X_1, \dots, X_n$$ be a Markov chain on the finite state space $$S = \{1, \dots, m\}$$ with transition matrix $$P = (p_{ij})$$, whose rows are probability vectors, and let $$x_1, \dots, x_n$$ be the observed path. By the definition of conditional probability and the Markov property, $$\P(X_t = x_t \mid X_1 = x_1, \dots, X_{t-1} = x_{t-1}) = p_{x_{t-1} x_t}$$, so
 
 $$
-L(p) = P(X_1 = x_1) \prod_{t  = 2}^{n} p_{x_{t-1} x_{t}}
+\P(X_1 = x_1, \dots, X_n = x_n) = \P(X_1 = x_1) \prod_{t=2}^n p_{x_{t-1} x_t}.
 $$
 
-Assumed that $n_{ij}$ be the number of times observed state transits from $i$ to $j$ in our sample $X_{1}^{n}$, then we rewrite the \ref{eq:likelihood} in terms of $n_{ij}$.
+We treat the initial distribution as unrelated to $$P$$ and work with the likelihood conditional on $$X_1 = x_1$$. Let $$n_{ij}$$ be the number of indices $$t \in \{2, \dots, n\}$$ with $$x_{t-1} = i$$ and $$x_t = j$$, and $$n_{i\cdot} = \sum_j n_{ij}$$ the number of transitions out of $$i$$, that is, the number of visits to $$i$$ among $$x_1, \dots, x_{n-1}$$. Grouping equal factors,
 
 $$
-L(p) = P(X_1 = x_1) \prod_{i=1}^{h} \prod_{j=1}^{h} p_{ij}^{n_{ij}}
+\ell(P) = \sum_{t=2}^n \log p_{x_{t-1} x_t} = \sum_{i=1}^m \sum_{j=1}^m n_{ij} \log p_{ij},
 $$
 
-Maximize the above expression \textit{w.r.t} the $p_{ij}$ by transforming it into logarithms (since it would be easier to deal with sums rather than product), taking derivatives, and setting it equal to $0$. However, it would be crucial to consider one special property of the Markov chain: it is stochastic row unitary. That is,
+with the convention $$0 \log 0 = 0$$.
 
-$$ 
-\begin{align}
-p \cdot \boldsymbol{1}^\intercal & = \mathbf{1}^\intercal \\
-& \text{or} \\
-\sum_{j} p_{ij} & = 1, \quad \text{ for each } i
-\end{align}
-$$
-
-where $\mathbf{1}^\intercal$ denotes the row vector with its entries equal to one.
-	
-It is clear that we have an equality constraint in our formulation and a formal way to tackle this problem would be reforming it to a standard optimization problem with Lagrange multipliers. However, in our case, there exists a method which is more effortless to handle such issue: Eliminating parameters. 
-
-The first thing to do is taking the logs of the likelihood function
+<div class="result" markdown="1">
+**Proposition 1.** Every maximizer of $$\ell$$ over the set of transition matrices satisfies
 
 $$
-\mathcal{L}(p) =\log\left(P(X_1 = x_1)\right) + \sum_{i,j} n_{ij} \log p_{ij}
+\hat p_{ij} = \frac{n_{ij}}{n_{i\cdot}} \qquad \text{for every } i \text{ with } n_{i\cdot} > 0 \text{ and every } j .
 $$
 
-then, randomly choose one of the transition probabilities to express the others. For easy manipulation, we would collect the probability of transiting to state $1$. Thus, for each $i$, $p_{i1} = 1 - \sum_{j=2}^{m} p_{ij}$. Subsequently, differentiating the log-likelihood with respect to $p_{ij}$ while ignoring any partial derivatives relating to $\frac{\partial}{\partial P_{i1}}$
+Rows with $$n_{i\cdot} = 0$$ do not enter $$\ell$$ and are not determined by the data.
+
+</div>
+
+<div class="proof" markdown="1">
+*Proof.* The log-likelihood is a sum of terms $$\ell_i(p_{i\cdot}) = \sum_j n_{ij}\log p_{ij}$$, each depending only on row $$i$$, and the constraints act row by row, so the rows can be maximized separately. Fix $$i$$ with $$n_{i\cdot} > 0$$ and write $$\hat p_{ij} = n_{ij}/n_{i\cdot}$$. For any probability vector $$(p_{i1}, \dots, p_{im})$$ with $$\ell_i > -\infty$$, which requires $$p_{ij} > 0$$ whenever $$n_{ij} > 0$$,
 
 $$
-\frac{\partial \mathcal{L}}{\partial p_{ij}} = \frac{n_{ij}}{p_{ij}} - \frac{n_{i1}}{p_{i1}} 
+\ell_i(\hat p_{i\cdot}) - \ell_i(p_{i\cdot}) = n_{i\cdot} \sum_{j : n_{ij} > 0} \hat p_{ij} \log \frac{\hat p_{ij}}{p_{ij}} = n_{i\cdot}\, \KL(\hat p_{i\cdot} \,\Vert\, p_{i\cdot}) \ge 0 ,
 $$
 
-Letting this equal to zero, then we have the following relations,
+where the sum is the Kullback–Leibler divergence between the two probability vectors (terms with $$\hat p_{ij} = 0$$ contribute nothing). By Gibbs' inequality the divergence vanishes only if $$p_{i\cdot} = \hat p_{i\cdot}$$, so $$\hat p_{i\cdot}$$ is the unique maximizer of $$\ell_i$$.
+</div>
 
-$$
-\begin{align}
-\frac{n_{ij}}{\hat p_{ij}} &= \frac{n_{i1}}{\hat p_{i1}} \\
-& \Updownarrow \\
-\frac{n_{ij}}{n_{i1}} &= \frac{\hat p_{ij}}{\hat p_{i1}}
-\end{align}
-$$
+The same answer comes out of Lagrange multipliers, or of eliminating one probability per row through $$p_{i1} = 1 - \sum_{j \ge 2} p_{ij}$$ and setting the partial derivatives $$n_{ij}/p_{ij} - n_{i1}/p_{i1}$$ to zero, which shows that $$n_{ij}/p_{ij}$$ is constant in $$j$$ and hence $$p_{ij} \propto n_{ij}$$. Both routes find a stationary point and need concavity or a boundary check to conclude; the divergence argument handles zero counts and gives uniqueness at once.
 
-The above relations hold for all $j \neq 1$; thereby, we could conclude that 
+For a row that is never left, typically a state that occurs only at the last time point, any convention is consistent with the data, such as an absorbing row ($$\hat p_{ii} = 1$$) or a uniform one. In short series a more useful remedy is smoothing: adding a pseudo-count $$a > 0$$ to every $$n_{ij}$$ gives $$(n_{ij} + a)/(n_{i\cdot} + ma)$$, the posterior mean under independent Dirichlet$$(a, \dots, a)$$ priors on the rows, which is never zero.
 
-$$
-\begin{align}
-\hat p_{ij} &= \frac{n_{ij}}{\frac{n_{i1}}{\hat p_{i1}}} \\
-& = \frac{n_{ij}}{n_{i}} \\
-& = \frac{n_{ij}}{\sum_{j=1}^{m} n_{ij}}
-\end{align}
-$$
+If the chain is irreducible, the ergodic theorem for Markov chains gives $$n_{ij}/n \to \pi_i p_{ij}$$ and $$n_{i\cdot}/n \to \pi_i$$ almost surely, where $$\pi$$ is the stationary distribution and $$\pi_i > 0$$ for every $$i$$. Hence $$\hat p_{ij} \to p_{ij}$$ almost surely as $$n \to \infty$$, whatever the initial state. Asymptotic normality of the estimated rows, with multinomial covariance and independence across rows, goes back to Anderson and Goodman, "Statistical inference about Markov chains" (*Annals of Mathematical Statistics*, 1957).
 
-where the last relation could be deduced as follows: $n_{i1}$ represent the number of observed consecutive transitions from state $i$ to state $1$ in random variable $X_{n}^{1}$ or expressing in terms of probability  $n_{i1} \propto P(X_{t} = i, X_{t+1} = 1)$, while $\hat p_{i}$ indicates the chance that we move to other states starting from state $1$. Hence, applying the Bayes'rule in terms of proportional expression, then the fraction between the former and latter would result in $P(X_{t} = i)$, implying the number of times that state $i$ is recorded, which is proportional to $n_{i}$ or $\sum_{j=1}^{m} n_{ij}$. It is noteworthy that if $n_{i} = 0$, or the state $i$ is not appeared in the chain except for the last position, then we would formally set all probabilities of the transition from state $i$ to any state $j$ ($j \neq i$) to be zero, $\hat p_{ij} = 0$. Thus, it turns out that $\hat p_{ii} = 1$.
+## References
 
-# References
-1. Willemain, Thomas \& Smart, Charles & Schwarz, Henry. (2004). A new approach to forecasting intermittent demand for service parts inventories. International Journal of Forecasting. 20. 375-387. 10.1016/S0169-2070(03)00013-X. 
-
-2. Spedicato, Giorgio & Signorelli, Mirko. (2014). The markovchain Package: A Package for Easily Handling Discrete Markov Chains in R. 
-
-3. https://www.stat.cmu.edu/~cshalizi/462/lectures/06/markov-mle.pdf
+- Croston, J. D. (1972). Forecasting and stock control for intermittent demands. *Operational Research Quarterly*, 23, 289–303.
+- Efron, B. (1979). Bootstrap methods: another look at the jackknife. *Annals of Statistics*, 7, 1–26.
+- Willemain, T. R., Smart, C. N. and Schwarz, H. F. (2004). A new approach to forecasting intermittent demand for service parts inventories. *International Journal of Forecasting*, 20, 375–387.
+- Shalizi, C. R. Lecture notes on maximum likelihood estimation for Markov chains, Carnegie Mellon University, course 36-462, on which the appendix was originally based.

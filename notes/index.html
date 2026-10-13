@@ -1,0 +1,27 @@
+---
+layout: page
+title: Notes
+heading: Notes
+permalink: /notes/
+---
+<p class="lede">Expository notes on probability, statistical theory, and computation, written mostly to understand things properly. Corrections are welcome.</p>
+<nav class="topic-index" aria-label="Topics">
+  {% for t in site.data.topics %}{% assign n = site.posts | where: "topic", t | size %}{% if n > 0 %}<a href="#{{ t | slugify }}">{{ t }}</a>{% endif %}{% endfor %}
+</nav>
+{% for t in site.data.topics %}
+{% assign posts = site.posts | where: "topic", t %}
+{% if posts.size > 0 %}
+<section class="year" id="{{ t | slugify }}">
+  <h2>{{ t }}</h2>
+  <ul class="note-list">
+    {% for post in posts %}
+    <li>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%b %Y' }}</time>
+      {% assign s = post.summary | default: post.blurb %}{% if s and s != "" %}<p class="note-summary">{{ s | markdownify | remove: '<p>' | remove: '</p>' | strip }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endfor %}

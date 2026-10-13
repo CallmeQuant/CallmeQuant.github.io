@@ -1,29 +1,43 @@
-# Site Build Settings
+title: Binh Ho
+description: >-
+  PhD student in Mathematical Statistics at the University of Maryland,
+  College Park. Notes on probability, statistical theory, and computation.
+url: https://callmequant.github.io
+baseurl: ""
+lang: en
 
-# Jekyll-paginate-v2 configuration
-#  pagination:
-#   enabled: true
-#   per_page: 5
-#   permalink: '/page/:num/'
-#   title: ':title - page :num of :max'
-#   limit: 0
-#   sort_field: 'date'
-#   sort_reverse: true
+author:
+  name: Binh Ho
+  email: binhho660@gmail.com
+  github: CallmeQuant
+  linkedin: binh-ho-899390193
 
-# jekyll-paginate configuration
-paginate:            5
+markdown: kramdown
+kramdown:
+  input: GFM
+  math_engine: mathjax
+  hard_wrap: false
+  auto_ids: true
+  syntax_highlighter: rouge
 
-# Build settings
-markdown:            kramdown
-highlighter:         rouge
-permalink:           none
-plugins:             [jekyll-paginate, jekyll-sitemap, jekyll-feed, jekyll-seo-tag]
+permalink: /notes/:title/
 
-# Customise atom feed settings (this is where Jekyll-Feed gets configuration information)
-title:		           'Binh Ho'
-description:	       ''
-author:              'Binh Ho'
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
 
-# RSS 2.0 can be used instead of Atom by uncommenting following two lines
-#feed:
-#  path: rss-feed.xml
+feed:
+  path: feed.xml
+
+defaults:
+  - scope: { path: "", type: posts }
+    values: { layout: post }
+
+exclude:
+  - figures
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .idea

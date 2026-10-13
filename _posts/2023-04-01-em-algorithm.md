@@ -1,122 +1,170 @@
 ---
-layout: post
-title: "Expectation-Maximization"
-author: "Binh Ho"
-categories: Statistics
-blurb: "Expectation maximization is extremely useful when we have to deal with latent variable models (for example, number of mixture components in the mixture model)."
-img: ""
-tags: []
-<!-- image: -->
+title: "The expectation–maximization algorithm"
+date: 2023-04-01
+topic: Computation
+summary: "EM maximizes a likelihood with missing or latent data by alternating between computing the expected complete-data log-likelihood and maximizing it. A derivation through a lower bound, the monotonicity proof, what is and is not known about convergence, and a worked Poisson mixture."
 ---
 
+Many statistical models are easiest to write down with variables that are not observed: the component labels in a mixture model, the hidden states of a hidden Markov model, the missing entries of an incomplete data set. If those variables were observed, the likelihood would often be simple to maximize. The expectation–maximization (EM) algorithm of Dempster, Laird and Rubin (1977) exploits this. It maximizes the likelihood of the observed data by repeatedly maximizing the *expected* complete-data log-likelihood, where the expectation is over the unobserved variables given the data and the current parameter value.
 
-Currently, I am interested in doing some researchs on Poisson mixture model and its application on
-modeling count data and it's a good time to revise the Expectation-Maximization (EM) algorithm. This optimization technique is extremely useful when we have to deal with latent variable models (for example, number of mixture components in the mixture model). The underlying idea is that we will maximize the complete log 
-likelihood instead of the usual log likelihood. Furthermore, EM algorithm alleviate the computational difficulty related to this complete-data log likelihood by iteratively construct and optimize a tight lower bound. Before delving into details, it's worth noting that EM algorithm has a close connection with variational 
-inference and it lays a foundation on Variational Inference (VI); thereby, I also write a brief [introduction](https://callmequant.github.io/statistics/variational-inference.html) on Variational Inference for anyone interested.
+I was led back to EM while working on Poisson mixtures for count data, which also serve as the running example below.
 
-## Introduction
-*Expectation Maximization* algorithm, or EM for short, is a common approach to tackle the *maximum likelihood estimations* (MLE) for any probabilistic models
-containing latent variables. Consider a probabilistic model settings in which the observed variables are denoted by $X$ with observed values $\lbrace x_1, \dots, x_N \rbrace$ 
-and all latent variables by $Z$ with $\lbrace z_1, z_2, \dots, z_N \rbrace$. The parameters of the model are succintly denoted by $\theta$. To perform maximum likelihood inference, we need to derive the (log) likelihood $\log p(X \lvert \theta)$. However, since our data generating process comprises some latent variables $Z$, we have to include them in our log likelihood function (although we have not truly observed them). It can be done through marginalizing these variables out
+## Setting
+
+Let $$x$$ be the observed data, $$z$$ the latent variables, and $$\theta \in \Theta$$ the parameter. The model specifies a complete-data density $$p(x, z \mid \theta)$$. To keep the notation light, $$z$$ is taken to be discrete; for continuous $$z$$, sums become integrals. The quantity we want to maximize is the observed-data log-likelihood
 
 $$
-\log p(X \mid \theta) = \sum_{Z} \log p(X, Z \lvert \theta). \tag{1}
+\ell(\theta) = \log p(x \mid \theta) = \log \sum_{z} p(x, z \mid \theta).
 $$
 
-The issue related to Eq. (1) is the intractability as the number of values that our hidden variables can take increases. For example, suppose the *Gaussian Mixture Model* (GMM) with $N$ observations whose the latent variables - the number of clusters can take on one of values from $M$ clusers. This results in $M^N$ terms in Eq. (1). 
-
-And here comes the boom! Expectation-Maximization or EM ([Dempster et al., 1977](Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977). Maximum likelihood from incomplete data via the EM algorithm. Journal of the Royal Statistical Society. Series B (Methodological), 1–38.)) delivers a appropriate solution to address this problem. The underlying assumption is that the direct optimization of the log likelihood $\log p(X \lvert  \theta)$ is more challenging than maximizing the *complete-data log likelihood* $\log p(X, Z \lvert \theta)$ in some statistical problems. Additionally, as we have discussed earlier, the *complete-data log likelihood* is also intractable; thereby, EM constructs a lower bound on that likelihood function and iterativel optimize that lower bound. We will see later the EM algorithm always converges to a local maximum of $p(X \lvert \theta)$.
-
-## General EM Algorithm
-As we mention above, EM uses a lower bound as its objective function in its optimization problem. The derivation of the lower bound is as follows:
-+ By introducing a latent variable $Z$, we may define the log marginal likelihood as 
+The logarithm sits outside the sum, and this is where the difficulty lies. Consider a mixture of $$K$$ densities $$f(\cdot \mid \lambda_k)$$ with weights $$\pi_k$$, observed through an i.i.d. sample $$x_1, \dots, x_n$$, and let $$z_i \in \{1, \dots, K\}$$ be the label of the component that generated $$x_i$$. Because the pairs $$(x_i, z_i)$$ are independent, the sum over the $$K^n$$ label configurations factorizes and
 
 $$
-\log p(X \lvert \theta) =
-\log \sum_{Z} p(X, Z \lvert \theta).
-\tag{2}
+\ell(\theta) = \sum_{i=1}^n \log \sum_{k=1}^K \pi_k f(x_i \mid \lambda_k),
 $$
 
-+ We notice that the summation inside the logarithm makes it extremely difficult to optimize such objective function. Hence, we need to get rid of that summation by using the 1-trick. To put it simply, we introduce a unrestrcited distribution  $q(Z)$ over the latent variable, simultaneously multiply and divide the term inside the summation of Eq. (2) by this distribution to obtain the *expectation* form 
+which costs only $$nK$$ terms to evaluate. The problem is not evaluation but maximization: the log of a sum couples all the parameters, and setting the gradient to zero gives equations with no closed-form solution. The complete-data log-likelihood, in contrast,
 
 $$
-\begin{align*}
-\log p(X \lvert \theta) &=
-\log \sum_{Z} q(Z) \frac{p(X, Z \lvert \theta)}{q(Z)} \\
-&= \log \mathbb{E}_{q(Z)} \frac{p(X, Z \lvert \theta)}{q(Z)}.
-\tag{3}
-\end{align*}
+\log p(x, z \mid \theta) = \sum_{i=1}^n \sum_{k=1}^K \mathbf 1\{z_i = k\} \bigl\{\log \pi_k + \log f(x_i \mid \lambda_k)\bigr\},
 $$
 
-+ We see that if we denote $f(x) = \log(x)$, then $f$ is a concave function and we can evoke a inequality by using the Jensen's inequality for a **concave** function $f$ (i.e. $f'' < 0$ for the domain of $f$) and a random variable $X$:
- 
-$$f(\mathbb{E}[X]) \geq \mathbb{E}[f(X)].$$
+separates into a term for the weights and one term for each component, and for many families $$f$$ each piece is maximized in closed form. EM transfers this simplicity to the observed-data problem.
 
-Then,
+## A lower bound on the log-likelihood
 
-$$
-\begin{align*}
-\log p(X \lvert \theta) &= \log \Bigg( \mathbb{E}_{q(Z)} \frac{p(X, Z \lvert \theta)}{q(Z)} \Bigg) \\
-& \geq \mathbb{E}_{q(Z)} \Bigg[ \log \frac{p(X, Z \lvert \theta)}{q(Z)} \Bigg] \\
-&= \mathcal{L}(\theta, q). \tag{4}
-\end{align*}
-$$
-
-The lower bound is a function of our parameter $\theta$ and the distribution $q$. Using the linearity of expection and property of logarithmic function, we can factorize as below
-
-$$\log p(X \lvert \theta) \geq \underbrace{\mathbb{E}_{q(Z)} [\log p(X, Z \lvert \theta)]}_{\ast} \underbrace{- \mathbb{E}_{q(Z)} [\log q(Z)]}_{\ast \ast}. \tag{5}$$
-
-where $(\ast)$ is the expected complete-data log likelihood and $(\ast \ast)$ is the *entropy* of $q$. The question arises is that how we can choose the density $q(Z)$ such that we have a *tight* lower bound? In a sense, we can inspect the difference between our log marginal likelihood and the lower bound to explore such problem 
+Let $$q$$ be any probability mass function on the values of $$z$$, and define
 
 $$
-\begin{align*}
-\log p(X \lvert \theta) - \mathcal{L}(\theta, q) &= 
-\log p(X \lvert \theta) - \mathbb{E}_{q(Z)} \log \frac{p(X, Z \lvert \theta)}{q(Z)} \\ 
-&=\mathbb{E}_{q(T)} \log \frac{p(X \lvert \theta) q(Z)}{p(X, Z \lvert \theta)} \\ 
-&= \mathbb{E}_{q(Z)} \log \frac{q(Z)}{p(Z \lvert X, \theta)} \\ 
-&= \mathrm{KL}(q(Z) \lvert \lvert p(Z \lvert X, \theta)).
-\tag{6}
-\end{align*}
+F(q, \theta) = \sum_z q(z) \log \frac{p(x, z \mid \theta)}{q(z)} = \E_q\bigl[\log p(x, Z \mid \theta)\bigr] + H(q),
 $$
 
-Surprisingly, the difference between $\log p(X \lvert \theta)$ and $\mathcal{L}(\theta, q)$ is the Kullback-Leibler (KL) divergence between the density $q(Z)$ and the true posterior over the latent variables. Since the KL divergence is always non-negative, setting the $q(Z)$ ideally to be $p(Z \lvert X, \theta)$ will make this KL divergence equals to zero and Eq. (5) will be an equality
-
-$$\log p(X \lvert \theta) = \mathbb{E}_{p(Z \lvert X, \theta)} [\log p(X, Z \lvert \theta)] - \mathbb{E}_{p(Z \lvert X, \theta)} [\log p(Z \lvert X, \theta)].$$
-
-At this step, we have all the ingredients for the construction of EM algorithm. , Keep in mind that since we can not use the complete-data log likelihood, we consider the expected value under the posterior of the latent variables which we can access from our knowledge about these hidden variables. Furthermore, we will introduce some indices to denote the evolution of the algorithm due to its iterative behaviour.
-
-Assume that the current value for the parameter is $\theta^{t}$. Then, the lower bound is maximized with respect to $q(Z)$ while holding $\theta^{t}$ fixed. The maximum value occurs at $q(Z) = p(Z \lvert X, \theta)$, which causes the KL divergence to be vanished and the lower bound is indeed indetical to the log likelihood 
+where $$H(q) = -\sum_z q(z) \log q(z)$$ is the entropy of $$q$$. Writing $$p(x, z \mid \theta) = p(z \mid x, \theta)\, p(x \mid \theta)$$ gives, whenever $$p(x \mid \theta) > 0$$ and $$F(q, \theta)$$ is finite,
 
 $$
-\begin{align*}
-\log p(X \lvert \theta) &= \mathbb{E}_{p(Z \lvert X, \theta^{t})} [\log p(X, Z \lvert \theta)] - \mathbb{E}_{p(Z \lvert X, \theta^{t})} [\log p(Z \lvert X, \theta)] \\
-&= Q(\theta, \theta^{t}) + H(\theta, \theta^{t}).\\
-\end{align*}
+\ell(\theta) = F(q, \theta) + \KL\bigl(q \,\Vert\, p(\cdot \mid x, \theta)\bigr).
 $$
 
-where $Q(.)$ is the expected complete-data log likelihood under the optimal $q(Z) = p(Z \lvert X, \theta^{t})$ and $H(.)$ is simply the negative entropy of the $q$ distribution and hence independent of $\theta$. To clarify, the expression indicates the expectation of $\theta$ with respect to some other $\theta^{t}$. This is the E step in EM algorithm.
+Since the Kullback–Leibler divergence is nonnegative and vanishes only when its arguments coincide, $$F(q, \theta) \le \ell(\theta)$$ for all $$q$$, with equality if and only if $$q = p(\cdot \mid x, \theta)$$. This is the same identity that underlies variational inference, with the evidence replaced by the likelihood at a fixed $$\theta$$; the proof is given in the note on [variational inference](/notes/variational-inference/). The functional $$F$$ is a lower bound on $$\ell$$ that touches it when $$q$$ is the conditional distribution of the latent variables.
 
-There is one more thing I want to elaborate on the E step. How can we guarantee that maximizing the lower bound give rise to the same amount compared to maximizing the log likelihood. I follow the common reasoning by many people when discussing this problem. The KL divergence can be decomposed with regard to the entropy 
-<!-- (there is currently a post on [Jensen's inequality, Kullback-Leibler divergence and Entropy](https://callmequant.github.io/study/note-on-KL/) that I am still too busy to working on. Hopefully I have adequate time for it in the near future). -->
+## The algorithm
 
-Given the construction of the **exptectation**  of the completed log likelihood, we will maximize this quantity in the M step. Thus EM iteratively establishes the desired tight lower bound of the log likelihood $\log p(x \lvert \theta)$, and optimizes that bound. Furthermore, it has been proven by Wu et al. in 1983 that this iterative scheme converges to the target log likelihood. 
+Starting from $$\theta_0$$, EM alternates two steps.
 
-To recap, the two steps included in EM algorithm are
+- **E-step.** Compute the conditional distribution $$p(z \mid x, \theta_t)$$ and the function
+  
+  $$
+  Q(\theta \mid \theta_t) = \E\bigl[\log p(x, Z \mid \theta) \,\big\vert\, x, \theta_t\bigr] = \sum_z p(z \mid x, \theta_t) \log p(x, z \mid \theta).
+  $$
+  
+- **M-step.** Set $$\theta_{t+1} \in \argmax_{\theta \in \Theta} Q(\theta \mid \theta_t)$$.
+
+In terms of $$F$$, the E-step maximizes $$F(q, \theta_t)$$ over $$q$$, which gives $$q_{t+1} = p(\cdot \mid x, \theta_t)$$ and makes the bound tight at $$\theta_t$$. The M-step maximizes $$F(q_{t+1}, \theta)$$ over $$\theta$$, and since $$F(q_{t+1}, \theta) = Q(\theta \mid \theta_t) + H(q_{t+1})$$ with an entropy term that does not depend on $$\theta$$, this is the same as maximizing $$Q(\cdot \mid \theta_t)$$. EM is coordinate ascent on $$F$$.
+
+<div class="result" markdown="1">
+**Theorem 1 (monotonicity).** If $$\ell(\theta_t)$$ is finite and $$Q(\theta_{t+1} \mid \theta_t) \ge Q(\theta_t \mid \theta_t)$$, then $$\ell(\theta_{t+1}) \ge \ell(\theta_t)$$.
+</div>
+
+<div class="proof" markdown="1">
+*Proof.* Let $$q_{t+1} = p(\cdot \mid x, \theta_t)$$. The bound is tight at $$\theta_t$$, it lies below $$\ell$$ everywhere, and $$F(q_{t+1}, \theta) - F(q_{t+1}, \theta_t) = Q(\theta \mid \theta_t) - Q(\theta_t \mid \theta_t)$$. Hence
 
 $$
-\begin{align*}
-\text{E-step}: Q(\theta \lvert \theta^{t}) &= \mathbb{E}_{p(z \lvert x, \theta^{t})} [\log p(x, z \lvert \theta)] \\
-\text{M-step}: \theta^{t+1} &= \mathop{\mathrm{argmax}} Q(\theta \lvert \theta^{t})
-\end{align*}
+\ell(\theta_{t+1}) \ge F(q_{t+1}, \theta_{t+1}) = F(q_{t+1}, \theta_t) + Q(\theta_{t+1} \mid \theta_t) - Q(\theta_t \mid \theta_t) \ge F(q_{t+1}, \theta_t) = \ell(\theta_t).
 $$
 
+</div>
 
+The theorem only uses that the M-step does not decrease $$Q$$, so it covers generalized EM algorithms, which replace the full maximization by any improvement, for instance a single Newton step or a cycle of conditional maximizations.
 
+The same argument is often written with the decomposition
 
+$$
+\ell(\theta) = Q(\theta \mid \theta_t) + R(\theta \mid \theta_t),
+\qquad
+R(\theta \mid \theta_t) = -\E\bigl[\log p(Z \mid x, \theta) \,\big\vert\, x, \theta_t\bigr],
+$$
 
+obtained by taking the conditional expectation of $$\log p(x \mid \theta) = \log p(x, Z \mid \theta) - \log p(Z \mid x, \theta)$$. The term $$R(\theta \mid \theta_t)$$ is the cross-entropy of $$p(\cdot \mid x, \theta)$$ relative to $$p(\cdot \mid x, \theta_t)$$. It does depend on $$\theta$$, but by Gibbs' inequality it is minimized over $$\theta$$ at $$\theta = \theta_t$$, so any increase in $$Q$$ is an increase in $$\ell$$ at least as large. This decomposition also gives a useful identity. If $$\theta_t$$ is an interior point and both $$Q(\cdot \mid \theta_t)$$ and $$R(\cdot \mid \theta_t)$$ are differentiable there, the minimum of $$R(\cdot \mid \theta_t)$$ at $$\theta_t$$ forces its gradient to vanish, and
 
+$$
+\nabla \ell(\theta_t) = \nabla_\theta Q(\theta \mid \theta_t)\big\vert_{\theta = \theta_t}.
+$$
 
+The score of the observed data equals the expected complete-data score. In particular, an interior fixed point of EM, one with $$\theta_t \in \argmax_\theta Q(\theta \mid \theta_t)$$, is a stationary point of $$\ell$$.
 
+## Convergence
 
+Monotonicity alone gives that $$\ell(\theta_t)$$ converges whenever $$\ell$$ is bounded above on the iterates, which holds for instance for any model with a discrete observation space, where $$\ell \le 0$$. Convergence of the parameter sequence itself is more delicate. Wu (1983) gave conditions, including continuity of $$Q(\theta \mid \phi)$$ in both arguments and compactness of the set $$\{\theta : \ell(\theta) \ge \ell(\theta_0)\}$$, under which every limit point of the EM sequence is a stationary point of $$\ell$$; with additional conditions, such as isolated stationary points, the sequence converges. Three caveats follow from the word "stationary".
 
+- The limit can be a local maximum rather than the global one, which is why EM is usually run from several starting points.
+- The limit can be a saddle point. The example below contains one that EM reaches from a whole family of starting values.
+- Where the likelihood is unbounded, as for Gaussian mixtures with unequal variances when one component collapses onto a single observation, EM can be drawn towards a degenerate solution, and the maximum likelihood estimator itself must be defined with care.
+
+Near a local maximum where the observed information is positive definite, EM converges linearly. The rate is the largest eigenvalue of the fraction of missing information, the matrix $$I_c^{-1} I_m$$ evaluated at the limit, in which $$I_c$$ is the complete-data information averaged over the conditional distribution of $$z$$ given $$x$$, $$I_o$$ is the observed-data information, and $$I_m = I_c - I_o$$ is the information lost because $$z$$ is unobserved. When the components of a mixture overlap heavily, most of the information about the labels is missing and EM is slow.
+
+## Example: a Poisson mixture
+
+Let $$x_1, \dots, x_n$$ be i.i.d. counts from the mixture $$\sum_{k=1}^K \pi_k\, \mathrm{Pois}(\lambda_k)$$, with weights $$\pi_k > 0$$ summing to one and rates $$\lambda_k > 0$$. The model is identifiable up to relabelling of the components when the $$\lambda_k$$ are distinct: the probability generating function of the mixture is $$s \mapsto \sum_k \pi_k e^{\lambda_k (s-1)}$$, and exponential functions with distinct rates are linearly independent, so the function determines the pairs $$(\pi_k, \lambda_k)$$. With latent labels $$z_i$$, the complete-data log-likelihood is
+
+$$
+\log p(x, z \mid \theta) = \sum_{i=1}^n \sum_{k=1}^K \mathbf 1\{z_i = k\} \bigl\{\log \pi_k + x_i \log \lambda_k - \lambda_k - \log x_i!\bigr\}.
+$$
+
+**E-step.** Given $$\theta_t$$, the labels are conditionally independent with
+
+$$
+r_{ik} = \P(z_i = k \mid x_i, \theta_t) = \frac{\pi_k^{(t)} \lambda_k^{(t)\, x_i} e^{-\lambda_k^{(t)}}}{\sum_{l=1}^K \pi_l^{(t)} \lambda_l^{(t)\, x_i} e^{-\lambda_l^{(t)}}},
+$$
+
+the *responsibility* of component $$k$$ for observation $$i$$; the factor $$1/x_i!$$ cancels. Since the complete-data log-likelihood is linear in the indicators, the E-step only replaces $$\mathbf 1\{z_i = k\}$$ by $$r_{ik}$$:
+
+$$
+Q(\theta \mid \theta_t) = \sum_{k=1}^K N_k \log \pi_k + \sum_{k=1}^K \Bigl(\log\lambda_k \sum_{i=1}^n r_{ik} x_i - N_k \lambda_k\Bigr) + \text{const},
+\qquad N_k = \sum_{i=1}^n r_{ik}.
+$$
+
+**M-step.** The weights and the rates appear in separate terms. For the weights, $$\sum_k N_k \log \pi_k = n \sum_k (N_k/n)\log \pi_k$$, and Gibbs' inequality shows that this is maximized over the probability simplex by $$\pi_k = N_k/n$$. For each rate, the function $$\lambda \mapsto \log\lambda \sum_i r_{ik} x_i - N_k\lambda$$ is strictly concave on $$(0, \infty)$$, with derivative zero at
+
+$$
+\lambda_k^{(t+1)} = \frac{\sum_{i=1}^n r_{ik} x_i}{\sum_{i=1}^n r_{ik}},
+$$
+
+provided $$\sum_i r_{ik} x_i > 0$$. The new rate is a weighted sample mean, with each count weighted by the probability that it belongs to component $$k$$: the same formula as with known labels, with indicators replaced by probabilities.
+
+```python
+import numpy as np
+from scipy.special import logsumexp
+from scipy.stats import poisson
+
+def em_poisson_mixture(x, pi, lam, iters=500, tol=1e-10):
+    x, pi, lam = np.asarray(x), np.asarray(pi, float), np.asarray(lam, float)
+    ll_old = -np.inf
+    for _ in range(iters):
+        logw = np.log(pi) + poisson.logpmf(x[:, None], lam)  # n x K
+        lse = logsumexp(logw, axis=1, keepdims=True)
+        ll = lse.sum()                     # log-likelihood
+        if ll - ll_old < tol:
+            break
+        ll_old = ll
+        r = np.exp(logw - lse)             # E-step
+        Nk = r.sum(axis=0)                 # M-step
+        pi, lam = Nk / x.size, (r * x[:, None]).sum(axis=0) / Nk
+    return pi, lam, ll
+```
+
+Working on the log scale avoids underflow of $$\lambda^{x} e^{-\lambda}$$ for large counts, and the log-likelihood comes for free from the normalizing constants of the E-step.
+
+The figure shows a simulated sample of $$n = 500$$ counts from $$0.6\,\mathrm{Pois}(2) + 0.4\,\mathrm{Pois}(9)$$. EM gives $$\hat\pi = (0.596, 0.404)$$ and $$\hat\lambda = (1.90, 9.07)$$. Starts A and B reach the same maximum and the log-likelihood gap decreases geometrically, as the linear rate predicts. Start C has equal rates. Then all responsibilities equal the current weights, both rates are updated to the sample mean $$\bar x = 4.79$$, and the iteration stays there forever: the parameter at which the mixture collapses to a single Poisson distribution is a fixed point of EM and a stationary point of $$\ell$$, but not a maximum. It is a saddle point. Moving both rates together away from $$\bar x$$ lowers $$\ell$$, since $$\bar x$$ maximizes the one-component Poisson likelihood. Splitting them symmetrically, $$\lambda = (\bar x - \delta, \bar x + \delta)$$ with the weights $$(0.5, 0.5)$$ of start C, raises it: a second-order expansion in $$\delta$$ gives $$\ell(\delta) - \ell(0) = \tfrac12 \delta^2 \sum_i \{(x_i - \bar x)^2 - x_i\}/\bar x^2 + O(\delta^4)$$, which is positive for small $$\delta$$ because the sample variance of the counts exceeds their mean. Any start with equal rates ends at such a point, whatever the weights, and the remedy is to break the symmetry.
+
+<figure>
+  <img src="/assets/figures/em-algorithm/poisson-mixture-em.svg" alt="Histogram of simulated counts with fitted Poisson mixture, and log-likelihood gap along EM iterations">
+  <figcaption>Figure 1. EM for a two-component Poisson mixture. (a) Relative frequencies of $n = 500$ simulated counts, the fitted mixture and its weighted components. (b) $\ell(\hat\theta) - \ell(\theta_t)$ on a log scale for three starting values: A, $\pi = (0.5, 0.5)$, $\lambda = (1, 3)$; B, $\pi = (0.9, 0.1)$, $\lambda = (5, 6)$; C, $\pi = (0.5, 0.5)$, $\lambda = (4, 4)$. From C the iteration is stuck at the one-component fit, a saddle point of the likelihood.</figcaption>
+</figure>
+
+Because the Poisson probability mass function is at most one, $$\ell \le 0$$ for every parameter value, so the likelihood is bounded and the degeneracies of Gaussian mixtures cannot occur. A rate can still go to zero if a component ends up responsible only for zero counts, which corresponds to a point mass at zero, and a weight can go to zero if a component loses all its responsibility.
+
+## Remarks
+
+When the E-step is intractable, it can be replaced by a Monte Carlo average (Monte Carlo EM, stochastic EM) or by a restricted approximation of $$p(z \mid x, \theta)$$, which turns EM into variational EM. When the M-step is intractable, it can be split into conditional maximizations (ECM). A Gaussian mixture example is worked out in [a separate note](/notes/em-application1/).
+
+The original reference is Dempster, Laird and Rubin, "Maximum likelihood from incomplete data via the EM algorithm" (*Journal of the Royal Statistical Society, Series B*, 1977). The convergence theory is due to Wu, "On the convergence properties of the EM algorithm" (*Annals of Statistics*, 1983). McLachlan and Krishnan, *The EM Algorithm and Extensions*, is a comprehensive treatment.

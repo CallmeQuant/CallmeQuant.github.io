@@ -1,0 +1,17 @@
+# Most recent first. "me" is matched against the author list to set my name in bold.
+- title: "Bayesian parameter balancing enables robust and consistent estimation of kinetic parameter uncertainty"
+  authors: ["T. T. Nguyen", "B. H. Ho", "M. Pan", "J. A. Flegg", "M. J. McDonald", "C. Drovandi"]
+  venue: "bioRxiv preprint"
+  year: 2026
+  status: preprint
+  links:
+    - { label: "bioRxiv", url: "https://doi.org/10.1101/2026.05.18.726043" }
+
+- title: "A unified framework for variable selection in model-based clustering with missing not at random"
+  authors: ["B. H. Ho", "L. N. Chi", "T. T. Nguyen", "B. T. Nguyen", "V. H. Hoang", "C. Drovandi"]
+  venue: "Advances in Neural Information Processing Systems (NeurIPS)"
+  year: 2025
+  status: published
+  links:
+    - { label: "Proceedings", url: "https://proceedings.neurips.cc/paper_files/paper/2025/hash/9ae5f7013e3177ae3690f850d09d70f8-Abstract-Conference.html" }
+    - { label: "arXiv", url: "https://arxiv.org/abs/2505.19093" }

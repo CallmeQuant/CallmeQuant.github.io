@@ -1,459 +1,191 @@
 ---
-layout: post
-title: "Moment generating function based bounds"
-author: "Binh Ho"
-categories: Statistics
-blurb: "In the realm of probability and statistics, controlling uncertainty is paramount. How likely is a random variable to deviate significantly from its expected value? What tools do we have to quantify this risk? In this post, we explore moment-based and moment generating function (MGF)-based concentration inequalities — powerful techniques to bound tail probabilities."
-img: ""
-tags: []
-<!-- image: -->
+title: "Tail bounds from moments and moment generating functions"
+date: 2025-01-28
+topic: Probability
+summary: "Markov, Chebyshev and higher-moment bounds, the Chernoff method, Hoeffding's lemma and inequality, Bernstein's inequality, and the sub-Gaussian and sub-exponential classes, with complete proofs and a comparison on binomial tails."
 ---
 
-$$\newcommand{\abs}[1]{\lvert#1\rvert}$$
-$$\newcommand{\norm}[1]{\lVert#1\rVert}$$
-$$\newcommand{\innerproduct}[2]{\langle#1, #2\rangle}$$
-$$\newcommand{\Tr}[1]{\operatorname{Tr}\mleft(#1\mright)}$$
-$$\DeclareMathOperator*{\argmin}{argmin}$$
-$$\DeclareMathOperator*{\argmax}{argmax}$$
-$$\DeclareMathOperator{\diag}{diag}$$
-$$\newcommand{\converge}[1]{\xrightarrow{\makebox[2em][c]{$$\scriptstyle#1$$}}}$$
-$$\newcommand{\quotes}[1]{``#1''}$$
-$$\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}$$
-$$\newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}$$
-$$\newcommand{\E}{\mathbb{E}}$$
-$$\newcommand{\Var}{\mathrm{Var}}$$
-$$\newcommand{\Cov}{\mathrm{Cov}}$$
-$$\renewcommand{\N}{\mathbb{N}}$$
-$$\renewcommand{\Z}{\mathbb{Z}}$$
-$$\renewcommand{\R}{\mathbb{R}}$$
-$$\newcommand{\Q}{\mathbb{Q}}$$
-$$\newcommand{\C}{\mathbb{C}}$$
-$$\newcommand{\bbP}{\mathbb{P}}$$
-$$\newcommand{\rmF}{\mathrm{F}}$$
-$$\newcommand{\iid}{\mathrm{iid}}$$
-$$\newcommand{\distas}[1]{\overset{#1}{\sim}}$$
-$$\newcommand{\cA}{\mathcal{A}}$$
-$$\newcommand{\cB}{\mathcal{B}}$$
-$$\newcommand{\cC}{\mathcal{C}}$$
-$$\newcommand{\cD}{\mathcal{D}}$$
-$$\newcommand{\cE}{\mathcal{E}}$$
-$$\newcommand{\cF}{\mathcal{F}}$$
-$$\newcommand{\cG}{\mathcal{G}}$$
-$$\newcommand{\cH}{\mathcal{H}}$$
-$$\newcommand{\cI}{\mathcal{I}}$$
-$$\newcommand{\cJ}{\mathcal{J}}$$
-$$\newcommand{\cL}{\mathcal{L}}$$
-$$\newcommand{\cM}{\mathcal{M}}$$
-$$\newcommand{\cP}{\mathcal{P}}$$
-$$\newcommand{\cO}{\mathcal{O}}$$
-$$\newcommand{\cQ}{\mathcal{Q}}$$
-$$\newcommand{\cU}{\mathcal{U}}$$
-$$\newcommand{\cV}{\mathcal{V}}$$
-$$\newcommand{\cN}{\mathcal{N}}$$
-$$\newcommand{\cT}{\mathcal{T}}$$
-$$\newcommand{\cX}{\mathcal{X}}$$
-$$\newcommand{\cY}{\mathcal{Y}}$$
-$$\newcommand{\cZ}{\mathcal{Z}}$$
-$$\newcommand{\cS}{\mathcal{S}}$$
-$$\newcommand{\shorteqnote}[1]{ & \textcolor{blue}{\text{\small #1}}}$$
-$$\newcommand{\qimplies}{\quad\Longrightarrow\quad}$$
-$$\newcommand{\defeq}{\stackrel{\triangle}{=}}$$
-$$\newcommand{\longdefeq}{\stackrel{\text{def}}{=}}$$
-$$\newcommand{\equivto}{\iff}$$
+A tail bound answers the question: how likely is a random variable to be far from its mean? Such bounds are the working tools of non-asymptotic statistics. They give the accuracy of an estimator at a fixed sample size, the generalization error of a learning rule, and the sample size needed for a randomized algorithm. There are two basic routes. **Moment methods** apply Markov's inequality to a power of $$\abs{X - \E X}$$ and yield bounds that decay polynomially. **Moment generating function (MGF) methods** apply it to an exponential and yield exponential decay, provided the MGF is finite. Both routes are developed below, together with proofs of the standard inequalities for sums of independent variables and a comparison on binomial tails (Figure 1).
 
-<style>
-.column {
-  float: left;
-  width: 30%;
-  padding: 5px;
-}
+## Moment methods
 
-/* Clear floats after image containers */
-.row::after {
-  content: "";
-  clear: both;
-  display: table;
-}
-</style>
+<div class="result" markdown="1">
+**Proposition 1 (Markov's inequality).** If $$X \ge 0$$ and $$t > 0$$, then $$\P(X \ge t) \le \E X/t$$.
+</div>
 
-## Introduction
+<div class="proof" markdown="1">
+*Proof.* Since $$X \ge 0$$, $$X \ge X\mathbf 1\{X \ge t\} \ge t\,\mathbf 1\{X \ge t\}$$ pointwise. Taking expectations gives $$\E X \ge t\,\P(X \ge t)$$.
+</div>
 
-Concentration inequalities address a fundamental probabilistic question: Given a random variable $X$, what is the probability that $X$ deviates from its mean by more than a specified amount? These results are crucial in statistics, machine learning, and theoretical computer science, facilitating the analysis of estimator reliability, the generalization properties of learning algorithms, and phase transitions in high-dimensional settings.
+Markov's inequality uses only nonnegativity and the mean, and it is sharp in that generality: for $$0 < m \le t$$, the variable equal to $$t$$ with probability $$m/t$$ and to $$0$$ otherwise has mean $$m$$ and attains equality. Applying it to functions of $$X$$ gives sharper bounds when more is known.
 
-Two main strategies typically underlie such inequalities: 
-
-(1) **Moment methods**, which use information about the moments (mean, variance, etc.) of $X$ to establish polynomial-type bounds on tail probabilities
-
-(2) **MGF methods**, which exploit the exponential generating function $\mathbb{E}[e^{tX}]$ to produce exponential-type decay rates. We begin with moment-based bounds, gradually incorporating higher moments, and then introduce MGF-based techniques that yield tighter, often exponentially decaying, bounds.
-
----
-
-## Moment Methods
-
-### 1. Markov’s Inequality (First Moment)
-
-The simplest, though often weakest, inequality requires only the first moment.
-
-**Theorem (Markov).**  
-For a nonnegative random variable $X \ge 0$ and any $t > 0$,  
+<div class="result" markdown="1">
+**Corollary 2.** Let $$\mu = \E X$$. If $$\sigma^2 = \Var X < \infty$$, then for $$t > 0$$
 
 $$
-\mathbb{P}(X \ge t) \le \frac{\mathbb{E}[X]}{t}.
+\P(\abs{X - \mu} \ge t) \le \frac{\sigma^2}{t^2} \qquad \text{(Chebyshev)},
 $$
 
-**Proof:**  
-
-Since $X \ge 0$,
+and more generally, for any $$p > 0$$ with $$\E\abs{X - \mu}^p < \infty$$,
 
 $$
-\mathbb{E}[X] \ge \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] \ge t \,\mathbb{P}(X \ge t).
+\P(\abs{X - \mu} \ge t) \le \frac{\E\abs{X - \mu}^p}{t^p}.
 $$
 
-Another way to see this is to use the law of total expectation:
+</div>
+
+<div class="proof" markdown="1">
+*Proof.* The events $$\{\abs{X - \mu} \ge t\}$$ and $$\{\abs{X - \mu}^p \ge t^p\}$$ coincide because $$u \mapsto u^p$$ is increasing on $$[0, \infty)$$. Apply Markov's inequality to $$\abs{X - \mu}^p$$; the case $$p = 2$$ is Chebyshev's inequality.
+</div>
+
+The rate $$t^{-p}$$ is the best that a $$p$$-th moment alone can give, and higher moments give faster polynomial decay. For variables with light tails, such as Gaussian or bounded variables, all moments are finite and the tail is in fact exponentially small, which no single moment bound can capture.
+
+## The Chernoff method
+
+Let $$X$$ have mean $$\mu$$ and suppose the centred MGF is finite near zero on the right: $$\psi(\lambda) = \log\E e^{\lambda(X - \mu)} < \infty$$ for $$0 \le \lambda < b$$, for some $$b \in (0, \infty]$$.
+
+<div class="result" markdown="1">
+**Proposition 3 (Chernoff bound).** For every $$t \ge 0$$,
 
 $$
-\mathbb{E}[X] = \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] + \mathbb{E}[X \mathbf{1}_{\{X < t\}}] \ge \mathbb{E}[X \mathbf{1}_{\{X \ge t\}}] \ge t,
+\P(X - \mu \ge t) \le \exp\Bigl(-\sup_{0 \le \lambda < b}\bigl\{\lambda t - \psi(\lambda)\bigr\}\Bigr).
 $$
 
-Rearranging immediately yields
+</div>
+
+<div class="proof" markdown="1">
+*Proof.* For $$0 < \lambda < b$$, the map $$u \mapsto e^{\lambda u}$$ is increasing, so Markov's inequality applied to $$e^{\lambda(X - \mu)}$$ gives $$\P(X - \mu \ge t) \le e^{-\lambda t}\E e^{\lambda(X - \mu)} = e^{-(\lambda t - \psi(\lambda))}$$. At $$\lambda = 0$$ the bound is $$1$$. Optimize over $$\lambda$$.
+</div>
+
+The function $$\psi$$ is convex, so $$\lambda \mapsto \lambda t - \psi(\lambda)$$ is concave and the optimal $$\lambda$$ is found by solving $$\psi'(\lambda) = t$$ when the solution lies in $$[0, b)$$. The supremum is the Legendre transform of $$\psi$$, the rate function of large deviations theory. Lower tails are handled by applying the bound to $$-X$$.
+
+The method is most useful for sums. If $$X_1, \dots, X_n$$ are independent, then $$\E e^{\lambda\sum_i(X_i - \mu_i)} = \prod_i\E e^{\lambda(X_i - \mu_i)}$$, so the exponent of the sum is the sum of the exponents. For i.i.d. $$X_i \sim \mathcal{N}(\mu, \sigma^2)$$, $$\psi(\lambda) = \sigma^2\lambda^2/2$$ for each term, and for the sample mean $$\bar X_n$$,
 
 $$
-\mathbb{P}(X \ge t) \le \frac{\mathbb{E}[X]}{t}.
+\P(\bar X_n - \mu \ge t) = \P\Bigl(\sum_{i=1}^n(X_i - \mu) \ge nt\Bigr) \le \inf_{\lambda \ge 0}\exp\Bigl(-\lambda nt + \frac{n\sigma^2\lambda^2}{2}\Bigr) = \exp\Bigl(-\frac{nt^2}{2\sigma^2}\Bigr),
 $$
 
-Markov’s inequality is extremely general—requiring only nonnegativity and a finite mean—but can be very loose unless the distribution of $X$ is heavily concentrated near zero. It remains useful as a quick upper bound on tail probabilities when no further information (like variance or boundedness) is available.
+the infimum being attained at $$\lambda = t/\sigma^2$$. Since $$\bar X_n \sim \mathcal{N}(\mu, \sigma^2/n)$$, the exponent is exactly that of the true tail.
 
----
-
-### 2. Chebyshev’s Inequality (Second Moment)
-
-By applying Markov’s inequality to the squared deviation $(X - \mu)^2$, one obtains a bound involving the variance.
-
-**Theorem (Chebyshev).**  
-For a random variable $X$ with mean $\mu$ and variance $\sigma^2$,
+**Moments versus the MGF.** For a nonnegative variable the optimized moment bound is never worse than the Chernoff bound. Let $$X \ge 0$$ and $$\delta > 0$$. By Tonelli's theorem, for $$\lambda > 0$$,
 
 $$
-\mathbb{P}(\lvert X - \mu\rvert \ge t) \le \frac{\sigma^2}{t^2}.
+\E e^{\lambda X} = \sum_{k=0}^\infty\frac{\lambda^k\E X^k}{k!} = \sum_{k=0}^\infty\frac{(\lambda\delta)^k}{k!}\cdot\frac{\E X^k}{\delta^k} \ge e^{\lambda\delta}\,\inf_{k \ge 0}\frac{\E X^k}{\delta^k},
 $$
 
-**Proof:**  
-One sets $Y = (X - \mu)^2$ and applies Markov’s inequality. Since $Y \ge 0$ and $\mathbb{E}[Y] = \sigma^2$, it follows that $\mathbb{P}(Y \ge t^2) \le \sigma^2/t^2$. Because the event $\{\lvert X - \mu\rvert \ge t\}$ is the same as $\{(X - \mu)^2 \ge t^2\} = \{Y \ge t^2\}$, the desired inequality holds immediately.
+so $$\inf_{k \ge 0}\E X^k/\delta^k \le \inf_{\lambda > 0}e^{-\lambda\delta}\E e^{\lambda X}$$. The Chernoff bound is nevertheless the more useful one in practice, because MGFs factorize over independent sums while moments do not.
 
-Chebyshev’s inequality refines Markov’s by leveraging the second moment. It can still be relatively loose for distributions with light tails (e.g., Gaussian), yet it is often the foundational tool in constructing basic confidence intervals in classical statistics.
+## Hoeffding's lemma and inequality
 
----
+For bounded variables the MGF can be controlled without computing it.
 
-### 3. Higher-Order Moment Bounds
-
-A natural generalization of Chebyshev’s approach is to use the $k$-th central moment $\mathbb{E}[\lvert X - \mu\rvert^k]$.
-
-**Theorem ($k$-th Moment Bound).**  
-For any $k > 0$,  
+<div class="result" markdown="1">
+**Lemma 4 (Hoeffding's lemma).** If $$a \le X \le b$$ almost surely and $$\E X = 0$$, then for every $$\lambda \in \R$$
 
 $$
-\mathbb{P}\bigl(\lvert X - \mu\rvert \ge t\bigr) \le \frac{\mathbb{E}[\lvert X - \mu\rvert^k]}{t^k}.
+\E e^{\lambda X} \le \exp\Bigl(\frac{\lambda^2(b - a)^2}{8}\Bigr).
 $$
 
-**Proof:**  
-Defining $Y = \lvert X - \mu\rvert^k$, we note that $Y \ge 0$ and that $\{\lvert X - \mu\rvert \ge t\}$ is equivalent to $\{Y \ge t^k\}$. Applying Markov’s inequality to $Y$ gives $\mathbb{P}(Y \ge t^k) \le \mathbb{E}[Y]/t^k$, which is the stated result.
+</div>
 
-These polynomial tail bounds reflect how higher moments constrain the distribution of $X$. However, they still yield power-law (rather than exponential) tail decay. For tighter bounds—especially when $X$ exhibits exponential-type tails—we move to MGF-based techniques.
-
----
-
-## MGF Methods
-
-### 1. Chernoff Bound
-
-The Chernoff bound is a central technique in deriving exponential tail bounds, optimizing an exponential transform of $X$.
-
-**Theorem (Chernoff).**  
-For any random variable $X$ obtaining moment generating function in a neighborhood of zero. In other words, $\mathbb{E}[e^{\lambda(X-\mu)}]$ exists for any $\lambda \leq \abs{b}$. Then for any $\lambda \in  [0,b]$, we apply the Markov's inequality to $Y=e^{\lambda(X -\mu)}$,   
+<div class="proof" markdown="1">
+*Proof.* Let $$F(\lambda) = \log\E e^{\lambda X}$$, which is finite for all $$\lambda$$ because $$X$$ is bounded. Since $$\abs{X^je^{\lambda X}} \le \max(\abs a, \abs b)^j e^{\abs\lambda\max(\abs a, \abs b)}$$, dominated convergence allows differentiation under the expectation, and
 
 $$
-\mathbb{P}(X - \mu \ge t) = \mathbb{P}(Y \ge e^{\lambda t}) \le \exp(-\lambda t)\,\mathbb{E}[e^{\lambda (X - \mu)}].
+F'(\lambda) = \frac{\E[Xe^{\lambda X}]}{\E e^{\lambda X}}, \qquad F''(\lambda) = \frac{\E[X^2e^{\lambda X}]}{\E e^{\lambda X}} - \Bigl(\frac{\E[Xe^{\lambda X}]}{\E e^{\lambda X}}\Bigr)^2 .
 $$
 
-To deal with optimization, we take log both sides (still ensure the optimum since log is monotonic), we solve to obtain the optimal choice for $\lambda$ 
-
-$$\lambda^* = \underset{\lambda \in [0, b]}{\inf} \left \{ \log\E[e^{\lambda(X-\mu)}] - \lambda t \right \}.$$ 
-
-With $\lambda^*$, we get the tightest result yielding the Chernoff bound. Below, we present the Chernoff bound for Gaussians
-
-**Theorem (Chernoff Bound for Gaussians).**
-
-Let $X_1, X_2, \dots, X_n$ be independent random variables where each $X_i$ is normally distributed with mean $\mu$ and variance $\sigma^2$, i.e., $X_i \sim \mathcal{N}(\mu, \sigma^2)$. Define $X = \sum_{i=1}^{n} X_i$. Then, for any $t > 0$,
+Thus $$F''(\lambda)$$ is the variance of $$X$$ under the tilted probability measure $$\P_\lambda$$ with density $$e^{\lambda X}/\E e^{\lambda X}$$ with respect to $$\P$$. Under $$\P_\lambda$$, $$X$$ still takes values in $$[a, b]$$, and any random variable $$Y$$ with values in $$[a, b]$$ satisfies
 
 $$
-\mathbb{P}\left( \frac{X}{n} - \mu \geq t \right) \leq \exp\left( -\frac{n t^2}{2 \sigma^2} \right).
+\Var(Y) \le \E\Bigl(Y - \frac{a + b}{2}\Bigr)^2 \le \Bigl(\frac{b - a}{2}\Bigr)^2,
 $$
 
-**Proof:**
+because the mean minimizes $$c \mapsto \E(Y - c)^2$$. Hence $$F'' \le (b - a)^2/4$$ everywhere. Since $$F(0) = 0$$ and $$F'(0) = \E X = 0$$, Taylor's theorem with the Lagrange remainder gives $$F(\lambda) = \tfrac12 F''(\xi)\lambda^2 \le \lambda^2(b - a)^2/8$$ for some $$\xi$$ between $$0$$ and $$\lambda$$.
+</div>
 
-Since each $X_i$ is normally distributed, its moment generating function (MGF) is
+A sharper but less convenient bound comes from convexity. On $$[a, b]$$ the function $$x \mapsto e^{\lambda x}$$ lies below its chord, $$e^{\lambda x} \le \frac{b - x}{b - a}e^{\lambda a} + \frac{x - a}{b - a}e^{\lambda b}$$, and taking expectations with $$\E X = 0$$ gives $$\E e^{\lambda X} \le (be^{\lambda a} - ae^{\lambda b})/(b - a)$$. Equality holds for the two-point distribution on $$\{a, b\}$$ with mean zero, so among mean-zero variables on $$[a, b]$$ this two-point law has the largest MGF. Lemma 4 is a clean upper bound for this extremal case.
 
-$$
-\mathbb{E}\left[e^{\lambda X_i}\right] = \exp\left(\mu \lambda + \frac{\sigma^2 \lambda^2}{2}\right)
-$$
-
-for all $\lambda \in \mathbb{R}$. Centering the variables by subtracting the mean $\mu$, we obtain
+<div class="result" markdown="1">
+**Theorem 5 (Hoeffding's inequality).** Let $$X_1, \dots, X_n$$ be independent with $$a_i \le X_i \le b_i$$ almost surely, and $$S = \sum_{i=1}^n(X_i - \E X_i)$$. For every $$t > 0$$,
 
 $$
-\mathbb{E}\left[e^{\lambda (X_i - \mu)}\right] = \exp\left(\frac{\sigma^2 \lambda^2}{2}\right).
+\P(S \ge t) \le \exp\Bigl(-\frac{2t^2}{\sum_{i=1}^n(b_i - a_i)^2}\Bigr).
 $$
 
-Since the $X_i$ are independent, the MGF of their sum $X - n\mu$ is the product of their individual MGFs:
+</div>
+
+<div class="proof" markdown="1">
+*Proof.* Each $$X_i - \E X_i$$ has mean zero and takes values in an interval of length $$b_i - a_i$$, so by independence and Lemma 4, $$\E e^{\lambda S} \le \exp(\lambda^2 D/8)$$ with $$D = \sum_i(b_i - a_i)^2$$. Proposition 3 gives $$\P(S \ge t) \le \exp(-\lambda t + \lambda^2D/8)$$ for every $$\lambda > 0$$, and the choice $$\lambda = 4t/D$$ makes the exponent $$-4t^2/D + 2t^2/D = -2t^2/D$$.
+</div>
+
+The same bound holds for $$\P(S \le -t)$$, and for the mean of $$n$$ variables in $$[0, 1]$$ it reads $$\P(\abs{\bar X_n - \E\bar X_n} \ge t) \le 2e^{-2nt^2}$$.
+
+## Bernstein's inequality
+
+Hoeffding's inequality uses only the range of each variable. When the variance is much smaller than the squared range, as for indicators of rare events, it is far from sharp. Bernstein's inequality uses both.
+
+<div class="result" markdown="1">
+**Theorem 6 (Bernstein's inequality).** Let $$X_1, \dots, X_n$$ be independent with $$\E X_i = 0$$, $$\abs{X_i} \le M$$ almost surely and $$\Var X_i = \sigma_i^2$$, and let $$v = \sum_i\sigma_i^2 > 0$$. For every $$t > 0$$,
 
 $$
-\mathbb{E}\left[e^{\lambda (X - n\mu)}\right] = \prod_{i=1}^{n} \mathbb{E}\left[e^{\lambda (X_i - \mu)}\right] = \exp\left(\frac{n \sigma^2 \lambda^2}{2}\right).
+\P\Bigl(\sum_{i=1}^n X_i \ge t\Bigr) \le \exp\Bigl(-\frac{t^2}{2(v + Mt/3)}\Bigr).
 $$
 
-Applying the Chernoff bound, for any $\lambda \geq 0$,
+</div>
 
-$$
-\mathbb{P}(X - n\mu \geq nt) \leq e^{-\lambda n t} \mathbb{E}\left[e^{\lambda (X - n\mu)}\right].
-$$
-
-Substituting the MGF, we get
-
-$$
-\mathbb{P}\left(\frac{X}{n} - \mu \geq t\right) = \mathbb{P}(X - n\mu \geq nt) \leq \exp\left(-\lambda n t + \frac{n \sigma^2 \lambda^2}{2}\right).
-$$
-
-To obtain the tightest bound, we minimize the exponent with respect to $\lambda$. Consider the function
-
-$$
-f(\lambda) = -\lambda n t + \frac{n \sigma^2 \lambda^2}{2}.
-$$
-
-Taking the derivative with respect to $\lambda$ and setting it to zero,
-
-$$
-f'(\lambda) = -n t + n \sigma^2 \lambda = 0 \quad \Rightarrow \quad \lambda^* = \frac{t}{\sigma^2}.
-$$
-
-Substituting $\lambda^*$ back into the exponent,
-
-$$
-f(\lambda^*) = -\frac{n t^2}{\sigma^2} + \frac{n \sigma^2 \left(\frac{t}{\sigma^2}\right)^2}{2} = -\frac{n t^2}{2 \sigma^2}.
-$$
-
-Therefore, the probability is bounded by
-
-$$
-\mathbb{P}\left(\frac{X}{n} - \mu \geq t\right) \leq \exp\left(-\frac{n t^2}{2 \sigma^2}\right).
-$$
-
-Chernoff’s technique becomes especially potent when $X$ can be written as a sum of independent random variables. In that case, $\mathbb{E}[e^{tX}]$ factorizes neatly, often permitting explicit evaluation or tractable bounds on the exponential generating function.
-
-**Remark.**  The $k^{th}$ moment bound with an optimal choice of $k$ is
-never worse than the bound chernoff bound. To see this, we observe that with $X > 0$, using the Taylor expansion
+<div class="proof" markdown="1">
+*Proof.* Fix $$0 < \lambda < 3/M$$. For $$k \ge 2$$, $$\abs{\E X_i^k} \le \E[X_i^2\abs{X_i}^{k-2}] \le \sigma_i^2M^{k-2}$$, and $$k! \ge 2\cdot 3^{k-2}$$ (true for $$k = 2, 3$$, and the left side grows by a factor $$k \ge 3$$ at each further step). Expanding the exponential, which is legitimate because $$X_i$$ is bounded,
 
 $$
 \begin{aligned}
-\E[e^{\lambda X}]
-= \sum_{n=0}^\infty \frac{\lambda^n}{n!} \E[\abs{X}^n]
-& \ge {\sum_{n=0}^\infty \frac{(\lambda \delta)^n}{n!}} \inf_{k = 0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k] \\
-& \ge e^{\lambda \delta} \inf_{k=0,1,2,\ldots} \frac{1}{\delta^k} \E[\abs{X}^k].
-\end{aligned}
-$$
----
-
-### 2. Hoeffding’s Inequality
-
-For independent and bounded random variables, Hoeffding’s inequality leverages a direct MGF bound for each $X_i$ to yield a strong exponential decay in tail probabilities.
-
-**Theorem (Hoeffding).**
-
-If $X_1,\dots,X_n$ are independent random variables with each $X_i$ almost surely bounded in the interval $[a_i, b_i]$, then for any $t > 0$,
-
-$$
-\mathbb{P}\left(\sum_{i=1}^n \left(X_i - \mathbb{E}[X_i]\right) \ge t\right) \le \exp\left(-\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right).
-$$
-
-**Proof:**
-
-Let $S = \sum_{i=1}^n (X_i - \mathbb{E}[X_i])$. We aim to bound the probability $\mathbb{P}(S \ge t)$ for a given $t > 0$. To achieve this, we employ the Chernoff bound technique, which involves analyzing the moment generating function (MGF) of $S$.
-
-First, consider the MGF of each centered random variable $X_i - \mathbb{E}[X_i]$. Since $X_i$ is almost surely bounded in $[a_i, b_i]$, the centered variable $X_i - \mathbb{E}[X_i]$ is bounded in $[a_i - \mathbb{E}[X_i], b_i - \mathbb{E}[X_i]]$. Hoeffding's lemma provides a bound for the MGF of such bounded, zero-mean random variables. Specifically, for any $\lambda > 0$,
-
-$$
-\mathbb{E}\left[e^{\lambda (X_i - \mathbb{E}[X_i])}\right] \le \exp\left(\frac{\lambda^2 (b_i - a_i)^2}{8}\right).
-$$
-
-Since the random variables $X_1, \dots, X_n$ are independent, the MGF of their sum $S$ is the product of their individual MGFs. Therefore,
-
-$$
-\mathbb{E}\left[e^{\lambda S}\right] = \prod_{i=1}^n \mathbb{E}\left[e^{\lambda (X_i - \mathbb{E}[X_i])}\right] \le \prod_{i=1}^n \exp\left(\frac{\lambda^2 (b_i - a_i)^2}{8}\right) = \exp\left(\frac{\lambda^2}{8} \sum_{i=1}^n (b_i - a_i)^2\right).
-$$
-
-Applying Markov's inequality to the random variable $e^{\lambda S}$ for $\lambda > 0$, we obtain
-
-$$
-\mathbb{P}(S \ge t) = \mathbb{P}\left(e^{\lambda S} \ge e^{\lambda t}\right) \le \frac{\mathbb{E}\left[e^{\lambda S}\right]}{e^{\lambda t}} \le \exp\left(-\lambda t + \frac{\lambda^2}{8} \sum_{i=1}^n (b_i - a_i)^2\right).
-$$
-
-To obtain the tightest possible bound, we minimize the exponent $-\lambda t + \frac{\lambda^2}{8} \sum_{i=1}^n (b_i - a_i)^2$ with respect to $\lambda$. Taking the derivative with respect to $\lambda$ and setting it to zero yields
-
-$$
--\ t + \frac{\lambda}{4} \sum_{i=1}^n (b_i - a_i)^2 = 0 \quad \Rightarrow \quad \lambda^* = \frac{4t}{\sum_{i=1}^n (b_i - a_i)^2}.
-$$
-
-Substituting $\lambda^*$ back into the exponent, we have
-
-$$
--\lambda^* t + \frac{(\lambda^*)^2}{8} \sum_{i=1}^n (b_i - a_i)^2 = -\frac{4t^2}{\sum_{i=1}^n (b_i - a_i)^2} + \frac{16t^2}{8 \sum_{i=1}^n (b_i - a_i)^2} = -\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}.
-$$
-
-Therefore, the probability is bounded by
-
-$$
-\mathbb{P}(S \ge t) \le \exp\left(-\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right).
-$$
-  
-Hoeffding’s inequality is a cornerstone in the analysis of random samples with bounded support. It implies that sums of bounded independent random variables display exponential concentration around their mean, making it invaluable in algorithms and statistical learning theory, where boundedness assumptions often hold or are enforced (e.g., via truncation). 
-
-Below, I also present the proof of the Hoeffding's Lemma
-
-**Hoeffding's Lemma**
-
-Let $X$ be a real-valued random variable with $\mathbb{E}[X] = 0$ and almost surely bounded in the interval $[a, b]$. Then, for any $\lambda \in \mathbb{R}$,
-
-$$
-\mathbb{E}\left[e^{\lambda X}\right] \le \exp\left(\frac{\lambda^2 (b - a)^2}{8}\right).
-$$
-
-**Proof:**
-
-Since $X$ is almost surely bounded in the interval $[a, b]$ and has zero mean, we can leverage these properties to bound its moment generating function (MGF). 
-Consider the MGF of $X$, which is $\mathbb{E}\left[e^{\lambda X}\right]$. To find an upper bound for this expectation, we observe that the function $x\mapsto e^{\lambda x}$ is convex on $[a,b]$, 
-it must lie below the chord connecting the points $(a,e^{\lambda a})$ and $(b,e^{\lambda b})$. Thus,
-
-$$
-e^{\lambda x} \le \frac{b - x}{b - a}e^{\lambda a} \;+\; \frac{x - a}{b - a}e^{\lambda b}.
-$$
-
-Taking expectations of both sides and using $\mathbb{E}[X] = 0$ gives
-$$
-\mathbb{E}[e^{\lambda X}] \;\le\; \frac{be^{\lambda a} - ae^{\lambda b}}{b - a}.
-$$
-
-Another way to see tthat as follow. Since we seek an upper bound, we consider the worst-case scenario for the distribution of $X$ within its bounded support that maximizes the MGF.
-
-The maximum of $\mathbb{E}\left[e^{\lambda X}\right]$ under the constraints that $X \in [a, b]$ and $\mathbb{E}[X] = 0$ is achieved when $X$ takes the values at the endpoints of the interval with appropriate probabilities. Specifically, suppose $X_0$ is a *discrete* random variable taking the value $a$ with probability $p$ and $b$ with probability $1 - p$ with zero expectation. The zero mean condition $\mathbb{E}[X_0] = 0$ implies:
-
-$$
-p \cdot a + (1 - p) \cdot b = 0 \quad \Rightarrow \quad p = \frac{b}{b - a}.
-$$
-
-Substituting $p$ back, the MGF of this two-point distribution becomes:
-
-$$
-\mathbb{E}\left[e^{\lambda X_0}\right] = p e^{\lambda a} + (1 - p) e^{\lambda b} = \frac{b}{b - a} e^{\lambda a} + \frac{-a}{b - a} e^{\lambda b}.
-$$
-
-Hence, for any $x \in [a, b]$, the exponential function satisfies:
-
-$$
-\begin{aligned}
-\E[e^{\lambda x}] &\le \E[\frac{b - x_0}{b - a} e^{\lambda a} + \frac{x_0 - a}{b - a} e^{\lambda b}] \\
-&= \ddfrac{b e^{\lambda a} - a e^{\lambda b}}{b-a}
+\E e^{\lambda X_i} &= 1 + \sum_{k \ge 2}\frac{\lambda^k\E X_i^k}{k!} \le 1 + \frac{\lambda^2\sigma_i^2}{2}\sum_{k \ge 2}\Bigl(\frac{\lambda M}{3}\Bigr)^{k-2} \\
+&= 1 + \frac{\lambda^2\sigma_i^2}{2(1 - \lambda M/3)} \le \exp\Bigl(\frac{\lambda^2\sigma_i^2}{2(1 - \lambda M/3)}\Bigr).
 \end{aligned}
 $$
 
-Next, set $F(\lambda) = \log\mathbb{E}[e^{\lambda X}]$. Clearly, $F(0) = \log\mathbb{E}[1] = 0$. Its first derivative at $\lambda=0$ is
+Multiplying over $$i$$ and applying Proposition 3,
 
 $$
-F'(0) \;=\; \frac{d}{d\lambda}\bigl[\log\mathbb{E}[e^{\lambda X}]\bigr]\Big|_{\lambda=0} \;=\; \mathbb{E}[X] \;=\; 0,
+\P\Bigl(\sum_i X_i \ge t\Bigr) \le \exp\Bigl(-\lambda t + \frac{\lambda^2v}{2(1 - \lambda M/3)}\Bigr).
 $$
 
-and the second derivative at $\lambda=0$ is $\mathbb{E}[X^2]$:
+Take $$\lambda = t/(v + Mt/3)$$, which satisfies $$\lambda M/3 < 1$$. Then $$1 - \lambda M/3 = v/(v + Mt/3)$$, the second term equals $$t^2/(2(v + Mt/3))$$, the first equals $$-t^2/(v + Mt/3)$$, and their sum is the stated exponent.
+</div>
+
+The bound has two regimes. For $$t \lesssim v/M$$ the exponent is of order $$t^2/v$$, a Gaussian tail with the true variance; for $$t \gtrsim v/M$$ it is of order $$t/M$$, an exponential tail set by the range. Figure 1 compares the bounds for a binomial count $$S$$ with $$n = 200$$, where $$X_i = B_i - p$$ for i.i.d. Bernoulli($$p$$) variables, so that $$M = \max(p, 1 - p)$$ and $$v = np(1 - p)$$. For $$p = 1/2$$ the variance $$p(1-p) = 1/4$$ is as large as the range allows, Hoeffding's exponent $$t^2/(2v)$$ is close to the optimized Chernoff exponent, and Bernstein's bound is slightly weaker because of the extra term $$Mt/3$$ in its denominator. For $$p = 0.05$$ the variance per observation is more than five times smaller than this worst case, and Hoeffding's bound, which cannot see it, is worse than Bernstein's by almost four orders of magnitude at $$t = 20$$ and by more than six at $$t = 30$$.
+
+<figure>
+  <img src="/assets/figures/moment-bounds/binomial-tails.svg" alt="Two panels on a log scale comparing the exact binomial upper tail with Chebyshev, Hoeffding, Bernstein and optimized Chernoff bounds, for p = 0.5 and p = 0.05.">
+  <figcaption>Figure 1. Upper tails $\mathbb{P}(S - np \ge t)$ for $S \sim \mathrm{Binomial}(200, p)$ and the bounds of this note. Chernoff (optimized) is Proposition 3 with the exact binomial MGF, which gives $\exp(-n\,\mathrm{KL}(p + t/n \,\Vert\, p))$. Left: $p = 0.5$, where Hoeffding's bound is nearly as good as the optimized Chernoff bound. Right: $p = 0.05$, where Hoeffding's bound, which uses only the range, is far too large, while Bernstein's bound (range and variance) and the optimized Chernoff bound (the full MGF) are far closer to the true tail. Chebyshev's bound decays only like $t^{-2}$ in both panels.</figcaption>
+</figure>
+
+## Sub-Gaussian and sub-exponential variables
+
+The proofs above all have the same structure: an upper bound on $$\psi(\lambda)$$, followed by the Chernoff optimization. The two most common forms of the MGF bound define two classes of random variables.
+
+<div class="result" markdown="1">
+**Definition 7.** A random variable $$X$$ with mean $$\mu$$ is **sub-Gaussian** with parameter $$\sigma > 0$$ if $$\E e^{\lambda(X - \mu)} \le e^{\lambda^2\sigma^2/2}$$ for all $$\lambda \in \R$$. It is **sub-exponential** with parameters $$(\nu, \alpha)$$, $$\nu, \alpha > 0$$, if $$\E e^{\lambda(X - \mu)} \le e^{\lambda^2\nu^2/2}$$ for all $$\abs\lambda \le 1/\alpha$$.
+</div>
+
+Gaussian variables are sub-Gaussian with $$\sigma$$ equal to their standard deviation, and by Lemma 4 a variable with values in $$[a, b]$$ is sub-Gaussian with $$\sigma = (b - a)/2$$. Every sub-Gaussian variable is sub-exponential, but not conversely: the MGF of $$Z^2$$ for $$Z \sim \mathcal{N}(0, 1)$$ is infinite for $$\lambda \ge 1/2$$, yet $$Z^2$$ is sub-exponential with $$(\nu, \alpha) = (2, 4)$$. The proof of Bernstein's inequality shows that a variable with $$\abs{X - \mu} \le M$$ and variance $$\sigma^2$$ satisfies $$\psi(\lambda) \le \lambda^2\sigma^2$$ for $$\abs\lambda \le 3/(2M)$$, so it is sub-exponential with $$(\nu, \alpha) = (\sqrt2\,\sigma, 2M/3)$$, with $$\nu$$ governed by the variance and not by the range.
+
+<div class="result" markdown="1">
+**Proposition 8.** If $$X$$ is sub-Gaussian with parameter $$\sigma$$, then $$\P(\abs{X - \mu} \ge t) \le 2e^{-t^2/(2\sigma^2)}$$ for all $$t \ge 0$$. If $$X$$ is sub-exponential with parameters $$(\nu, \alpha)$$, then
 
 $$
-\begin{aligned}
-F''(0) \;&=\; \frac{d}{d\lambda} F'(\lambda) \Big|_{\lambda=0} \\
-&= \ddfrac{\E[X^2 e^{\lambda X}] - \E[X e^{\lambda X}] \E[X e^{\lambda X}]}{(\E[e^{\lambda X}])^2} \\
-& = \E[X^2] - \E[X]^2 = \E[X^2]
-\end{aligned}
+\P(\abs{X - \mu} \ge t) \le \begin{cases} 2e^{-t^2/(2\nu^2)}, & 0 \le t \le \nu^2/\alpha, \\ 2e^{-t/(2\alpha)}, & t > \nu^2/\alpha, \end{cases}
 $$
 
-Since $X\in[a,b]$ and $\mathbb{E}[X]=0$, one has 
+that is, $$\P(\abs{X - \mu} \ge t) \le 2\exp\bigl(-\min\{t^2/(2\nu^2),\, t/(2\alpha)\}\bigr)$$.
+</div>
 
-$$
-\begin{aligned}
-\Var[X] = \mathbb{E}[X^2] &\le \E[X_0^2] \\
-&= \ddfrac{ba^2 - ab^2}{b-a} = -ab
-& \le \tfrac{(b-a)^2}{4} 
-\end{aligned}
-$$
+<div class="proof" markdown="1">
+*Proof.* In both cases Proposition 3 gives $$\P(X - \mu \ge t) \le \exp(-\lambda t + \lambda^2\nu^2/2)$$ for admissible $$\lambda \ge 0$$, with $$\nu = \sigma$$ in the sub-Gaussian case. The unconstrained minimizer is $$\lambda = t/\nu^2$$, which gives $$e^{-t^2/(2\nu^2)}$$; it is always admissible in the sub-Gaussian case, and in the sub-exponential case when $$t \le \nu^2/\alpha$$. If $$t > \nu^2/\alpha$$, take the boundary value $$\lambda = 1/\alpha$$: since $$\nu^2/\alpha < t$$, the exponent is $$-t/\alpha + \nu^2/(2\alpha^2) \le -t/\alpha + t/(2\alpha) = -t/(2\alpha)$$. The lower tail follows by applying the same argument to $$-X$$, and adding the two bounds gives the factor $$2$$.
+</div>
 
-Since (b-a)^2 + 4ab \ge 0 \implies -ab \le \frac{(b-a)^2}{4}. Hence, by the second‐order Taylor expansion of $F(\lambda)$ around 0,
+Both classes are closed under independent sums, with the parameters combining as in the proofs above: $$\sigma^2$$ and $$\nu^2$$ add, and $$\alpha$$ becomes the maximum of the individual $$\alpha$$'s. Sums of sub-exponential variables therefore satisfy a Bernstein-type inequality with a Gaussian regime for small deviations and an exponential regime for large ones. This is the form in which concentration is used in high-dimensional statistics, for example in the proof of the Johnson–Lindenstrauss lemma in the [note on high-dimensional tail bounds](/notes/high-dimensional-stats-intro/).
 
-$$
-\log\mathbb{E}[e^{\lambda X}] \;=\; F(\lambda) 
-\;\le\; 0 \;+\; 0\cdot \lambda \;+\; \tfrac12\,\tfrac{(b-a)^2}{4}\,\lambda^2 
-\;=\; \frac{\lambda^2(b-a)^2}{8}.
-$$
+## Remarks
 
-Exponentiating both sides recovers the usual Hoeffding bound
-
-$$
-\mathbb{E}[e^{\lambda X}] \;\le\; \exp\!\Bigl(\tfrac{\lambda^2(b-a)^2}{8}\Bigr),
-$$
-
-This inequality holds for all $\lambda \in \mathbb{R}$, thereby completing the proof of Hoeffding's Lemma.
-
----
-
-### 3. Bernstein Inequality
-
-Bernstein’s inequality refines Hoeffding’s by incorporating both the variance and a bound on the maximum magnitude of each $X_i$.
-
-**Theorem (Bernstein).**  
-Let $X_1,\dots,X_n$ be independent, zero-mean random variables with $\mathrm{Var}(X_i) = \sigma_i^2$ and $\lvert X_i\rvert \le M$ almost surely. For any $t > 0$,  
-
-$$
-\mathbb{P}\Bigl(\sum_{i=1}^n X_i \ge t\Bigr) \le \exp\Bigl(-\frac{t^2}{2\sum_{i=1}^n \sigma_i^2 + \tfrac{2}{3}Mt}\Bigr).
-$$
-
-**Proof Sketch:**  
-One applies Chernoff’s bound to the sum $\sum_{i=1}^n X_i$ and exploits independence to factor the MGF. A Taylor expansion for $\mathbb{E}[e^{tX_i}]$ combined with the bound $\lvert X_i\rvert \le M$ shows that each factor is bounded by something akin to $\exp\bigl(t^2 \sigma_i^2/(2(1 - tM/3))\bigr)$. Multiplying these exponential factors and choosing $t$ optimally yields the stated bound. The variance term governs the small-deviation regime, while the $M$ term controls the tail from large (but bounded) fluctuations.
-
-Bernstein’s bound is more versatile than Hoeffding’s in scenarios where the variance of each $X_i$ is known or small, but the variables still remain bounded. It blends the “Gaussian-like” decay from variance considerations with the “boundedness-driven” exponential decay, making it a powerful tool in both theoretical and applied analyses.
-
----
-
-### 4. Subgaussian and Subexponential Random Variables
-
-A random variable $X$ is **subgaussian** if there exists a $\sigma > 0$ such that
-$$
-\mathbb{E}[e^{t(X - \mu)}] \le \exp\Bigl(\frac{t^2 \sigma^2}{2}\Bigr)
-\quad
-\text{for all real } t.
-$$
-
-This implies a Gaussian-style tail bound 
-
-$$
-\mathbb{P}(\lvert X - \mu\rvert \ge t) \le 2\,\exp\Bigl(-\frac{t^2}{2\sigma^2}\Bigr).
-$$
-
-Bounded random variables and Gaussian variables are prime examples of subgaussianity.  
-
-A random variable $X$ is **subexponential** if there exist $\nu > 0$ and $\alpha > 0$ such that
-
-$$
-\mathbb{E}[e^{t(X - \mu)}] \le \exp\Bigl(\frac{t^2 \nu^2}{2}\Bigr)
-\quad
-\text{for all } |t| \le 1/\alpha.
-$$
-
-This yields the tail bound 
-
-$$
-\mathbb{P}(\lvert X - \mu\rvert \ge t) \le 2\,\exp\Bigl(-\,\min\Bigl\{\frac{t^2}{2\nu^2}, \frac{t}{2\alpha}\Bigr\}\Bigr),
-$$
-
-illustrating that subexponential variables have heavier tails than subgaussian ones, though they still exhibit exponential decay (possibly with different regimes depending on the size of $t$).
-
-Subgaussian variables exhibit strong concentration around their mean—similar to or stronger than the Gaussian distribution—while subexponential variables have heavier tails. These concepts unify many classical distributions under a single theoretical framework, guiding both theoretical analyses (e.g., concentration of sample sums) and practical modeling assumptions (e.g., controlling rare but large deviations).
+Several refinements are standard. Bennett's inequality replaces the exponent in Theorem 6 by the sharper $$\frac{v}{M^2}h(Mt/v)$$ with $$h(u) = (1 + u)\log(1 + u) - u$$, of which Bernstein's bound is a simplification. For one-sided bounds with only a variance, Cantelli's inequality $$\P(X - \mu \ge t) \le \sigma^2/(\sigma^2 + t^2)$$ improves Chebyshev's. Comprehensive treatments are Boucheron, Lugosi and Massart, *Concentration Inequalities: A Nonasymptotic Theory of Independence*, and Wainwright, *High-Dimensional Statistics: A Non-Asymptotic Viewpoint* (Chapter 2), whose sub-exponential parametrization is the one used here.
