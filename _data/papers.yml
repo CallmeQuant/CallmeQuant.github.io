@@ -5,7 +5,7 @@
   year: 2026
   status: preprint
   links:
-    - { label: "bioRxiv", url: "https://doi.org/10.1101/2026.05.18.726043" }
+    - { label: "bioRxiv", url: "https://doi.org/10.64898/2026.05.18.726043" }
 
 - title: "A unified framework for variable selection in model-based clustering with missing not at random"
   authors: ["B. H. Ho", "L. N. Chi", "T. T. Nguyen", "B. T. Nguyen", "V. H. Hoang", "C. Drovandi"]
