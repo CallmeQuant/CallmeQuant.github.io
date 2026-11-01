@@ -1,0 +1,12 @@
+{% assign series = site.data.series[page.series] %}
+{% assign parts = site.posts | where: "series", page.series | sort: "part" %}
+<aside class="series" aria-label="{{ series.title }} series">
+  <p class="series-title">Part {{ page.part }} of a series on <a href="{{ '/notes/' | relative_url }}#{{ series.topic | slugify }}">{{ series.title | downcase }}</a>.</p>
+  {% if parts.size > 1 %}
+  <ol start="{{ parts.first.part }}">
+    {% for p in parts %}
+    <li{% if p.url == page.url %} aria-current="page"{% endif %}>{% if p.url == page.url %}{{ p.title }}{% else %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+</aside>

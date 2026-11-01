@@ -8,6 +8,7 @@ layout: default
       <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time>{% if page.topic %}<span class="topic">{{ page.topic }}</span>{% endif %}
     </p>
   </header>
+  {% if page.series %}{% include series.html %}{% endif %}
   <div class="prose">
     {{ content }}
   </div>

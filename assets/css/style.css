@@ -215,4 +215,12 @@ pre code { font-size: .84rem; }
 .year h2 { scroll-margin-top: 1rem; }
 
 /* MathJax 3 does not break long inline formulas; let the paragraph scroll instead of the page. */
-.prose p, .prose li, .prose figcaption, .result, .proof { overflow-x: auto; overflow-y: hidden; }
+.prose p, .prose figcaption, .prose ul, .prose ol, .result, .proof { overflow-x: auto; overflow-y: hidden; }
+
+/* Series box at the top of a multi-part note */
+.series { margin: -.6rem 0 2rem; padding: .65rem 1rem .7rem; border: 1px solid var(--rule); border-radius: 4px; font-size: .93rem; line-height: 1.5; }
+.series-title { margin: 0; color: var(--muted); }
+.series-title a { color: inherit; }
+.series ol { margin: .45rem 0 0; padding-left: 1.6rem; }
+.series li { margin: .15rem 0; }
+.series li[aria-current] { color: var(--ink); font-weight: 500; }

@@ -1,0 +1,4 @@
+# Multi-part series. Posts join a series with `series: <key>` and `part: <n>` in their front matter.
+mean-field-games:
+  title: Mean-field games
+  topic: Mean-field games

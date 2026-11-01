@@ -1,6 +1,7 @@
 # Order in which topics appear on the Notes page. Every post sets `topic:` to one of these names.
 - Probability
 - Stochastic processes and time series
+- Mean-field games
 - Statistical theory
 - Bayesian statistics
 - Computation

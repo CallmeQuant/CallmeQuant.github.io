@@ -9,7 +9,7 @@ permalink: /notes/
   {% for t in site.data.topics %}{% assign n = site.posts | where: "topic", t | size %}{% if n > 0 %}<a href="#{{ t | slugify }}">{{ t }}</a>{% endif %}{% endfor %}
 </nav>
 {% for t in site.data.topics %}
-{% assign posts = site.posts | where: "topic", t %}
+{% assign posts = site.posts | where: "topic", t %}{% assign unnumbered = posts | where_exp: "p", "p.part == nil" %}{% if posts.size > 0 and unnumbered.size == 0 %}{% assign posts = posts | sort: "part" %}{% endif %}
 {% if posts.size > 0 %}
 <section class="year" id="{{ t | slugify }}">
   <h2>{{ t }}</h2>
